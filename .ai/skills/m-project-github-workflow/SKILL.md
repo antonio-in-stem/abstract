@@ -20,7 +20,7 @@ description: Use when working with m-project GitHub repositories, creating branc
 
 ## Repository Text
 
-- In new README files, repository descriptions, planning docs, and public-facing metadata, refer to the organization/product umbrella as m-project.
+- In new README files, repository descriptions, planning docs, and public-facing metadata, refer to the umbrella as m-project.
 - Do not introduce legacy umbrella branding in repository metadata. Existing source code or imported legacy files may retain their original package names, namespaces, or text.
 
 ## Import and Organization Work
@@ -29,4 +29,5 @@ description: Use when working with m-project GitHub repositories, creating branc
 - Do not edit imported code unless a path or reference must be corrected for the new layout.
 - Keep generated dependencies and local state out of commits: 
 ode_modules, 	arget, uild, dist, .gradle, .kotlin, .vite, databases, logs, caches, and private binaries.
+- Put local-only reference material in .local-references/, and keep it ignored.
 - Keep agent-facing material in docs/ai/ or .ai/skills/.

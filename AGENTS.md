@@ -20,6 +20,6 @@ Use docs/ai/ for agent-facing notes, decisions, operating context, and handoff m
 - Use m-project in new public-facing repository descriptions, README text, and planning docs.
 - Keep source imports faithful. Avoid code edits during organization work unless a path/reference must be corrected for the new layout.
 
-## Local Organization Rule
+## Local Reference Material
 
-Treat imported source, generated output, local caches, and private binaries as different classes of material. Commit source and useful reference material; exclude dependency folders, build outputs, local databases, logs, and private third-party binaries.
+Large third-party source snapshots, private binaries, and legacy reference material belong in .local-references/ when useful locally. That directory is intentionally ignored and should not be pushed.

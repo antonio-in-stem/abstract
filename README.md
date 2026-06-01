@@ -1,77 +1,61 @@
-# Abstract
+﻿<div align="center">
 
-Abstract is a small schema-backed language for defining validated data with a
-pleasant authoring experience. It sits between JSON Schema and a full
-programming language: strict enough to protect data contracts, compact enough to
-write by hand, and readable enough to review.
+# abstract
 
-```text
-.abt schemas + .ab instances -> abstract compile -> human-readable RAW data
-```
+A small schema-backed language for defining validated data with a pleasant authoring experience.
 
-## Why Abstract Exists
+`	ext
+.abt schemas + .ab instances -> abstract compile -> canonical RAW data
+`
 
-Large content-heavy systems often drift into fragile YAML, noisy JSON, or custom
-validation scripts scattered across build steps. Abstract gives that data a
-single authored shape:
+</div>
 
-- schemas describe the allowed structure and vocabulary;
-- instances declare concrete records;
-- the compiler validates everything and emits canonical RAW data.
+<details>
+<summary>Setup & details</summary>
 
-## Quick Start
+## Why?
 
-```powershell
+Large content-heavy systems often drift into fragile YAML, noisy JSON, or custom validation scripts scattered across build steps. Abstract gives that data a single authored shape: schemas describe the contract, instances declare records, and the compiler validates everything before emitting canonical output.
+
+## Run locally
+
+`ash
 cargo test
 cargo run -- compile example
 cargo run -- lint example
-```
+`
 
-After installing the CLI:
+## Project layout
 
-```powershell
-abstract path\to\object.ab path\to\Template.abt JSON
-abstract path\to\object.ab path\to\Template.abt YML true
-abstract lint path\to\project
-abstract templates path\to\project
-```
+- src/: Rust compiler core and CLI.
+- 	ests/: compiler behavior tests.
+- example/: generic Abstract project.
+- docs/: language documentation and AI primer.
+- editors/: editor integrations.
+- site/: static documentation website.
+- docs/ai/: agent-facing repository context.
 
-## Project Layout
+## CLI examples
 
-```text
-project/
-  Cargo.toml
-  src/                     Rust compiler core and CLI
-  tests/                   Compiler behavior tests
-  example/                 Generic Abstract project
-  docs/                    Language documentation
-  editors/                 VSCode and Antigravity support
-  site/                    Static documentation website
-```
+`ash
+abstract path/to/object.ab path/to/Template.abt JSON
+abstract path/to/object.ab path/to/Template.abt YML true
+abstract lint path/to/project
+abstract templates path/to/project
+`
 
-## Current V0 Features
+</details>
 
-- `schema Name { ... }` templates.
-- Scalar fields with `text`, `int`, `enum`, `file`, and schema references.
-- List fields using `field[]`.
-- Nested groups using `group { ... }`.
-- Defaults using `= value`.
-- Optional fields using `@optional`.
-- Tag shorthand using `@tag` and `#value(...)`.
-- Instances using `Template :: @field.value`.
-- Dotted assignment paths like `owner.team`.
-- Multi-path assignment like `slots.{3, 4}`.
-- Tuple arrays like `copy(key, value): (...)`.
-- Enum prefix expansion like `es_*`.
-- Full-instance cloning with `&atlas.*`.
-- Root variable interpolation in paths and strings, such as `./assets/$id.png`.
-- Template `logic` with `derive`, `require`, `if`, `for`, `length`, `contains`, and `exists`.
-- JSON or YAML output through `abstract compile`.
+<div align="center">
 
-## Documentation
+## Stack
 
-- `docs/abstract-language.md`: complete language guide.
-- `docs/technical-reference.md`: junior-friendly technical reference for `.ab` and `.abt`.
-- `docs/raw-data.md`: RAW output contract.
-- `docs/ai-primer.md`: compact guide for AI collaborators.
-- `site/index.html`: public documentation website.
+Rust, static HTML/CSS/JS docs, and VS Code editor support.
+
+<p align="center">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=rust,html,css,js,vscode&perline=5&theme=dark" />
+  </a>
+</p>
+
+</div>
