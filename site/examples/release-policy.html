@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Release Policy Example - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="index.html" aria-current="page">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Example</p>
+        <h1>Release policy.</h1>
+        <p class="lede">A deliberately small example showing that Abstract can also model internal policy records, not just catalog data.</p>
+    </section>
+    <section class="section">
+        <div class="split">
+            <div class="terminal">
+                <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<pre><code>schema Policy {
+    id: text(1..40)
+    level: enum(info, warning, critical)
+    applies_to[]: enum(product, release, dataset)
+    rule: text(1..180)
+}</code></pre>
+            </div>
+            <div class="terminal">
+                <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<pre><code>Policy :: @id.public_release_checks, @level.critical
+    applies_to: [product, release]
+    rule: "Public releases must declare an owner, a stable status, and at least one documented capability."</code></pre>
+            </div>
+        </div>
+    </section>
+</main>
+<footer class="footer"><p>Small schemas are often the most useful schemas.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

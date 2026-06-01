@@ -1,0 +1,7 @@
+&atlas.*
+
+Product :: @id.beacon, @status.draft, @tier.standard
+    name: Beacon Export
+    tags: [experimental, internal]
+    capabilities: [#export(availability: alpha), #audit]
+

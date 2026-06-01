@@ -1,0 +1,7 @@
+Product :: @id.atlas, @status.active, @tier.premium, @release_year.2026
+    name: Atlas Search
+    tags: [core, public, ai_ready]
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com
+    capabilities: [#search, #sync(availability: beta), #analytics]
+

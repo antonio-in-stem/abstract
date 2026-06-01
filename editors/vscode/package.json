@@ -1,0 +1,165 @@
+{
+  "name": "abstract-language",
+  "displayName": "Abstract Language",
+  "description": "Syntax highlighting, completions, and CLI-backed linting for Abstract DSL files.",
+  "version": "0.1.5",
+  "publisher": "minhocreates",
+  "repository": {
+    "type": "git",
+    "url": "https://local.minhocreates/wardrobe-stickers"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "files": [
+    "package.json",
+    "LICENSE.txt",
+    "icons/**",
+    "language-configuration.json",
+    "syntaxes/**",
+    "themes/**",
+    "src/**"
+  ],
+  "activationEvents": [
+    "onLanguage:abstract"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "abstract.compileCurrentProject",
+        "title": "Abstract: Compile Current Project"
+      },
+      {
+        "command": "abstract.lintCurrentProject",
+        "title": "Abstract: Lint Current Project"
+      }
+    ],
+    "languages": [
+      {
+        "id": "abstract",
+        "aliases": [
+          "Abstract",
+          "abstract"
+        ],
+        "extensions": [
+          ".ab",
+          ".abt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "abstract",
+        "scopeName": "source.abstract",
+        "path": "./syntaxes/abstract.tmLanguage.json"
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "abstractSchemaKeyword",
+        "superType": "keyword",
+        "description": "Abstract schema block keywords."
+      },
+      {
+        "id": "abstractSchemaType",
+        "superType": "type",
+        "description": "Abstract schema primitive types."
+      },
+      {
+        "id": "abstractSchemaModifier",
+        "superType": "modifier",
+        "description": "Abstract schema decorators."
+      },
+      {
+        "id": "abstractSchemaField",
+        "superType": "property",
+        "description": "Abstract schema field declarations."
+      },
+      {
+        "id": "abstractLogicKeyword",
+        "superType": "keyword",
+        "description": "Abstract logic control keywords."
+      },
+      {
+        "id": "abstractLogicOperator",
+        "superType": "operator",
+        "description": "Abstract logic operators."
+      },
+      {
+        "id": "abstractLogicPath",
+        "superType": "variable",
+        "description": "Abstract logic root and variable paths."
+      },
+      {
+        "id": "abstractInterpolationVariable",
+        "superType": "variable",
+        "description": "Abstract $variables used in logic and interpolated paths."
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "abstract",
+        "scopes": {
+          "abstractSchemaKeyword": ["keyword.declaration.schema.abstract"],
+          "abstractSchemaType": ["support.type.primitive.schema.abstract"],
+          "abstractSchemaModifier": ["storage.modifier.schema.abstract"],
+          "abstractSchemaField": ["variable.other.field.schema.abstract"],
+          "abstractLogicKeyword": ["keyword.control.logic.abstract"],
+          "abstractLogicOperator": ["keyword.operator.logical.logic.abstract"],
+          "abstractLogicPath": ["variable.other.path.abstract"],
+          "abstractInterpolationVariable": ["variable.other.interpolation.abstract"]
+        }
+      }
+    ],
+    "themes": [
+      {
+        "label": "Abstract Orbit Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/abstract-orbit-dark-color-theme.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[abstract]": {
+        "editor.semanticHighlighting.enabled": true
+      }
+    },
+    "iconThemes": [
+      {
+        "id": "abstract-file-icons",
+        "label": "Abstract File Icons",
+        "path": "./icons/abstract-file-icon-theme.json"
+      }
+    ],
+    "configuration": {
+      "title": "Abstract",
+      "properties": {
+        "abstract.compilerPath": {
+          "type": "string",
+          "default": "abstract",
+          "description": "Path to the abstract compiler binary used for linting."
+        },
+        "abstract.projectPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional Abstract project path to lint. Empty means the workspace .abstract folder or the current document."
+        },
+        "abstract.outputFormat": {
+          "type": "string",
+          "default": "JSON",
+          "enum": ["JSON", "YML"],
+          "description": "Format used by the Abstract compile command."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.9.1"
+  }
+}

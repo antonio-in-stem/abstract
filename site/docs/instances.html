@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Instances - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Instance authoring</p>
+        <h1>Write the data people will actually maintain.</h1>
+        <p class="lede">Instances are where Abstract tries to feel good. The syntax rewards clean repetition, compact tables, and small declarations that are still easy to review.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html" aria-current="page">Instances</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">RAW</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>Instance header</h2>
+            <p>The header names the template and optionally assigns short values with <code>@field.value</code>.</p>
+<pre><code>Product :: @id.atlas, @status.active, @tier.premium</code></pre>
+            <p>If no explicit <code>id</code> is assigned, the compiler uses the file stem. A file named <code>atlas.ab</code> becomes <code>id: "atlas"</code>.</p>
+
+            <h2>Plain assignments</h2>
+<pre><code>name: Atlas Search
+release_year: 2026
+tags: [core, public, ai_ready]</code></pre>
+            <p>Unquoted bare words become strings. Use quotes when a value needs spaces, punctuation, or deliberate casing.</p>
+
+            <h2>Dotted paths</h2>
+            <p>Dotted paths fill nested objects without making the source visually heavy.</p>
+<pre><code>owner.team: Knowledge Systems
+owner.contact: systems@example.com</code></pre>
+
+            <h2>Tagged objects</h2>
+            <p>When a schema marks a child field with <code>@tag</code>, instances can use <code>#name</code> shorthand. Parentheses add overrides.</p>
+<pre><code>capabilities: [#search, #sync(availability: beta), #analytics]</code></pre>
+
+            <h2>Tuple arrays</h2>
+            <p>Tuple arrays are for data that reads like a table. The left side declares the destination field and the columns.</p>
+<pre><code>copy(key, value):
+    (en_us, "Welcome"),
+    (es_es, "Bienvenido"),
+    (fr_fr, "Bienvenue")</code></pre>
+            <p>The compiler emits an array of objects. If the field is named <code>lang</code>, the RAW field becomes <code>lang_values</code> for readability.</p>
+
+            <h2>Multi-path assignment</h2>
+            <p>Use braces on the left side to assign one value to multiple sibling keys.</p>
+<pre><code>thresholds.{warning, critical}: 90</code></pre>
+
+            <h2>File pattern expansion</h2>
+            <p>A brace pattern that looks like file paths expands into an array. This is intentionally simple and works well for small asset families.</p>
+<pre><code>images: ./assets/{hero,thumbnail,card}.png</code></pre>
+
+            <h2>Wildcard expansion</h2>
+            <p>Wildcard expansion works against tagged enum groups. A value such as <code>es_*</code> expands to every allowed enum value that starts with <code>es_</code>.</p>
+<pre><code>lang(key, value): (es_*, "Hola")</code></pre>
+
+            <h2>Clones</h2>
+            <p>Put <code>&target.*</code> before an instance to clone a compiled instance, then override fields in the new one.</p>
+<pre><code>&atlas.*
+
+Product :: @id.beacon, @status.draft
+    name: Beacon Export</code></pre>
+            <p>Clone targets are resolved by instance id. Cycles are rejected.</p>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>Ready to run it? Open the <a href="cli.html">CLI guide</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

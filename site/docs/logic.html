@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Logic Blocks - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Executable validation</p>
+        <h1>Logic blocks turn schemas into policy.</h1>
+        <p class="lede">Abstract now executes <code>logic</code> blocks after schema validation. Rules see typed data, can branch, loop through arrays, and fail compilation with human messages.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">RAW</a>
+                <a href="logic.html" aria-current="page">Logic blocks</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>Why logic exists</h2>
+            <p>Schemas catch structural mistakes. Logic catches business mistakes: a public object may require an owner, a premium tier may require a support contact, or one derived field may depend on which child fields exist.</p>
+            <p>The philosophy is deliberately narrow. Logic derives values and validates relationships inside the template. That keeps domain policy close to the schema instead of hiding it in the compiler.</p>
+
+            <h2>Basic rule</h2>
+<pre><code>logic Product {
+    derive .shipping_class = standard
+
+    if .status == "active" {
+        require .owner.contact exists
+            else throw "Active products need an owner contact."
+    }
+}</code></pre>
+            <p>The compiler validates the schema first, then evaluates the logic block bound to the instance template. A <code>derive</code> statement writes a computed value onto the current instance. If a <code>require</code> condition is false, compilation fails with the throw message.</p>
+
+            <h2>Derivations</h2>
+<pre><code>logic Card {
+    derive .size = small
+
+    if .parts.2 exists {
+        derive .size = large
+    }
+}</code></pre>
+            <p>Use <code>derive</code> when a field is a consequence of other fields. The derived value is validated against the schema after logic runs.</p>
+
+            <h2>Conditions</h2>
+            <table class="table">
+                <thead><tr><th>Operator</th><th>Example</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>exists</code></td><td><code>.owner.contact exists</code></td><td>The path resolves to at least one value.</td></tr>
+                    <tr><td><code>contains</code></td><td><code>.flags contains "public"</code></td><td>An array or projected path contains a value.</td></tr>
+                    <tr><td><code>length(...)</code></td><td><code>length(.items) == 1</code></td><td>Counts array items or projected path results.</td></tr>
+                    <tr><td><code>==</code>, <code>!=</code></td><td><code>.status == "active"</code></td><td>String or integer equality.</td></tr>
+                    <tr><td><code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code></td><td><code>.variant_count &gt;= 2</code></td><td>Integer comparison.</td></tr>
+                    <tr><td><code>and</code>, <code>or</code></td><td><code>.a exists and .b exists</code></td><td>Boolean composition. <code>&amp;&amp;</code> and <code>||</code> also work.</td></tr>
+                </tbody>
+            </table>
+
+            <h2>Loops</h2>
+<pre><code>logic Page {
+    for entry in .lang {
+        require entry.value exists
+            else throw "Every language entry needs a value."
+    }
+
+    for $slot in [1, 2] {
+        if .slots.$slot.mode == "custom" {
+            require .slots.$slot.distribution exists
+                else throw "slot $slot needs distribution"
+        }
+    }
+}</code></pre>
+            <p>A <code>for</code> loop iterates over an array path or a literal list. Plain variables such as <code>entry</code> read object fields with paths like <code>entry.value</code>. Dollar variables such as <code>$slot</code> can be used inside dynamic paths and throw messages.</p>
+
+            <h2>Path projection</h2>
+            <p>Paths can project through arrays. If <code>.applicable</code> is an array of objects, then <code>.applicable.id == "helmet"</code> is true when any entry has that id.</p>
+
+            <h2>Boundaries</h2>
+            <ul>
+                <li>Rules should read like policy, not like general-purpose code.</li>
+                <li>Diagnostics should point to the field that made the rule fail.</li>
+                <li>Derived values should be obvious from nearby schema fields.</li>
+                <li>Validation should still fail loudly when a relationship is impossible.</li>
+            </ul>
+
+            <div class="callout"><p>Use schema fields for shape and type. Use logic when the rule depends on relationships between fields.</p></div>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>For current validation errors, see <a href="../reference/diagnostics.html">diagnostics</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+Policy :: @id.public_release_checks, @level.critical
+    applies_to: [product, release]
+    rule: "Public releases must declare an owner, a stable status, and at least one documented capability."

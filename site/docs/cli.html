@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CLI - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Command line</p>
+        <h1>The compiler is small on purpose.</h1>
+        <p class="lede">Abstract ships as a single CLI. It reads projects, validates data, prints JSON or YAML, writes files only when asked, and lists known templates.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="cli.html" aria-current="page">CLI</a>
+                <a href="raw.html">Compiled data</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>Install</h2>
+            <p>Download the Windows executable from this site, or build from source with Rust.</p>
+<pre><code>cargo build --release
+target\release\abstract.exe --version</code></pre>
+            <p>For local development, install it into Cargo's binary directory:</p>
+<pre><code>cargo install --path .
+abstract --version</code></pre>
+
+            <h2><code>abstract &lt;object.ab&gt; &lt;Template.abt&gt; JSON|YML [true|false]</code></h2>
+            <p>Compiles explicit source files, validates every instance, and prints standard JSON or YAML to stdout.</p>
+<pre><code>abstract object.ab Template.abt JSON
+abstract object.ab Template.abt YML true</code></pre>
+            <p>The optional boolean controls file writing. <code>true</code> writes a sibling <code>.json</code> or <code>.yml</code> next to the first input. Missing or <code>false</code> prints only.</p>
+            <table class="table">
+                <thead><tr><th>Argument</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>&lt;path&gt;</code></td><td>A single <code>.ab</code>/<code>.abt</code> file or a directory containing Abstract files.</td></tr>
+                    <tr><td><code>JSON|YML</code></td><td>Output format.</td></tr>
+                    <tr><td><code>true|false</code></td><td>Optional write flag. Defaults to <code>false</code>.</td></tr>
+                </tbody>
+            </table>
+
+            <h2><code>abstract compile &lt;path&gt; [JSON|YML] [true|false]</code></h2>
+            <p>Compiles a file or directory. If the path is a directory, the compiler recursively reads <code>.abt</code> and <code>.ab</code> files, sorts sources by path, validates all instances, and prints JSON by default.</p>
+<pre><code>abstract compile example JSON
+abstract compile example YML true</code></pre>
+
+            <h2><code>abstract lint &lt;path&gt;</code></h2>
+            <p>Validates the same project as <code>compile</code>, but discards output. This is the command to put in a pre-commit hook or CI job.</p>
+<pre><code>abstract lint example</code></pre>
+            <p>A successful lint prints:</p>
+<pre><code>abstract: ok</code></pre>
+
+            <h2><code>abstract templates &lt;path&gt;</code></h2>
+            <p>Prints every schema name discovered in the project. This is useful for editor tooling, scripts, and quick checks when a project grows.</p>
+<pre><code>abstract templates example</code></pre>
+
+            <h2><code>abstract --help</code></h2>
+            <p>Prints the command summary built into the executable.</p>
+<pre><code>abstract 0.1.0
+
+USAGE:
+    abstract &lt;object.ab&gt; &lt;Template.abt&gt; JSON|YML [true|false]
+    abstract compile &lt;path&gt; [JSON|YML] [true|false]
+    abstract lint &lt;path&gt;
+    abstract templates &lt;path&gt;</code></pre>
+
+            <h2><code>abstract --version</code></h2>
+            <p>Prints the current compiler version.</p>
+<pre><code>abstract 0.1.0</code></pre>
+
+            <h2>Exit behavior</h2>
+            <p>On success, the CLI exits with code <code>0</code>. On failure, it prints an error beginning with <code>abstract:</code> and exits with code <code>1</code>. Errors include the source path when the compiler can attach the problem to a file.</p>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>For output details, continue to <a href="raw.html">compiled data</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
