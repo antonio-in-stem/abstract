@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>First Project - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="index.html" aria-current="page">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Tutorial</p>
+        <h1>Your first Abstract project.</h1>
+        <p class="lede">This walkthrough creates a small product catalog. It is intentionally ordinary; the point is to see the language do useful work without ceremony.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Learn</span>
+            <nav>
+                <a href="index.html">Overview</a>
+                <a href="first-project.html" aria-current="page">First project</a>
+                <a href="../docs/language.html">Language guide</a>
+                <a href="../docs/cli.html">CLI</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>1. Create folders</h2>
+<pre><code>mkdir abstract-demo
+cd abstract-demo
+mkdir templates data build</code></pre>
+
+            <h2>2. Write a schema</h2>
+            <p>Create <code>templates/Product.abt</code>:</p>
+<pre><code>schema Product {
+    id: text(1..40)
+    name: text(1..80)
+    status: enum(draft, active, retired) = draft
+    release_year: int(2000..2100)
+
+    owner {
+        team: text(1..50)
+        contact: text(1..80)
+    }
+
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}</code></pre>
+
+            <h2>3. Write an instance</h2>
+            <p>Create <code>data/atlas.ab</code>:</p>
+<pre><code>Product :: @id.atlas, @status.active
+    name: Atlas Search
+    release_year: 2026
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com
+    capabilities: [#search, #sync(availability: beta)]</code></pre>
+
+            <h2>4. Lint the project</h2>
+<pre><code>abstract lint .</code></pre>
+            <p>Expected output:</p>
+<pre><code>abstract: ok</code></pre>
+
+            <h2>5. Compile JSON</h2>
+<pre><code>abstract compile . JSON true</code></pre>
+            <p>The output will include defaults and expanded tagged objects:</p>
+<pre><code>data: [
+    {
+        template: "Product",
+        id: "atlas",
+        name: "Atlas Search",
+        status: "active",
+        release_year: 2026,
+        owner: {team: "Knowledge Systems", contact: "systems@example.com"},
+        capabilities: [{id: "search", availability: "stable"}, {id: "sync", availability: "beta"}]
+    }
+]</code></pre>
+
+            <h2>6. Break it on purpose</h2>
+            <p>Change <code>@status.active</code> to <code>@status.public</code> and run lint again. The compiler should reject it because <code>public</code> is not declared in the enum.</p>
+
+            <h2>7. What just happened?</h2>
+            <p>You authored compact source, but shipped validated output. The schema carried the rules; the instance stayed readable; the compiler caught the bad value before another tool had to guess what you meant.</p>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>Next, read the <a href="../docs/language.html">language guide</a> to learn the rest of the syntax.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

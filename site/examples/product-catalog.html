@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Product Catalog Example - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="index.html" aria-current="page">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Example</p>
+        <h1>Product catalog.</h1>
+        <p class="lede">A useful first schema because it has scalar fields, defaults, a nested owner object, list fields, and tagged capability objects.</p>
+    </section>
+    <section class="section">
+        <div class="split">
+            <div class="terminal">
+                <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<pre><code>schema Product {
+    id: text(1..40)
+    name: text(1..80)
+    status: enum(draft, active, retired)
+    tier: enum(free, standard, premium)
+    release_year: int(2000..2100)
+    tags[]: enum(core, experimental, internal, public, ai_ready) @optional
+
+    owner {
+        team: text(1..50)
+        contact: text(1..80)
+    }
+
+    capabilities[] {
+        id: enum(search, sync, export, audit, automation, analytics) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}</code></pre>
+            </div>
+            <div class="terminal">
+                <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<pre><code>Product :: @id.atlas, @status.active, @tier.premium, @release_year.2026
+    name: Atlas Search
+    tags: [core, public, ai_ready]
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com
+    capabilities: [#search, #sync(availability: beta), #analytics]</code></pre>
+            </div>
+        </div>
+    </section>
+</main>
+<footer class="footer"><p>See the full walkthrough in <a href="../learn/first-project.html">First project</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

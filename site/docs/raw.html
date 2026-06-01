@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RAW Data - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Compiled data</p>
+        <h1>The output is part of the language.</h1>
+        <p class="lede">Abstract emits standard JSON or YAML after validation and normalization. The authored language stays compact; the compiled artifact stays easy for other tools to consume.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html" aria-current="page">Compiled data</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>Top-level format</h2>
+<pre><code>{
+  "data": [
+    {
+      "template": "Product",
+      "id": "atlas",
+      "status": "active"
+    }
+  ]
+}</code></pre>
+            <p>The top-level value is always <code>data</code>, followed by an array of compiled objects. Each object includes <code>template</code> and <code>id</code>.</p>
+
+            <h2>Ordering</h2>
+            <p>Object fields are ordered predictably: <code>template</code>, <code>id</code>, then schema fields in the order they were declared. Extra fields, when they exist, stay after schema fields. This makes reviews calmer because unrelated fields do not jump around.</p>
+
+            <h2>Normalization</h2>
+            <table class="table">
+                <thead><tr><th>Input</th><th>Output behavior</th></tr></thead>
+                <tbody>
+                    <tr><td>Bare enum values</td><td>Normalized to lowercase snake case.</td></tr>
+                    <tr><td>Integer-like strings</td><td>Converted to numbers when the schema expects <code>int</code>.</td></tr>
+                    <tr><td>Missing defaults</td><td>Inserted before output.</td></tr>
+                    <tr><td>Optional missing lists</td><td>Emitted as empty arrays.</td></tr>
+                    <tr><td>Tagged shorthand</td><td>Expanded into objects with the tagged field filled.</td></tr>
+                    <tr><td>Wildcard tagged values</td><td>Expanded against matching enum values.</td></tr>
+                </tbody>
+            </table>
+
+            <h2>Strings</h2>
+            <p>Strings are quoted in JSON and YAML output. Backslashes and quotes are escaped. Bare words in source may become strings in output after schema validation.</p>
+
+            <h2>Arrays and objects</h2>
+            <p>JSON uses brackets and braces. YAML uses indentation. Both formats preserve the same validated structure.</p>
+
+            <h2>What compiled data is good for</h2>
+            <ul>
+                <li>Reviewable generated data.</li>
+                <li>Build pipelines that want a stable intermediate artifact.</li>
+                <li>Language bindings that can parse a small, predictable shape.</li>
+                <li>Diffs where humans still need to understand the compiled result.</li>
+            </ul>
+
+            <h2>File writing</h2>
+            <p>The compiler always prints the result. Add <code>true</code> as the final argument to also write a sibling <code>.json</code> or <code>.yml</code> file next to the first input.</p>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>For syntax details, see the <a href="../reference/grammar.html">grammar reference</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

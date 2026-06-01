@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Language Guide - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Language guide</p>
+        <h1>The shape of Abstract.</h1>
+        <p class="lede">Abstract has two author-facing file types. <code>.abt</code> files define schemas. <code>.ab</code> files define instances. The compiler reads both and emits validated JSON or YAML.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html" aria-current="page">Language guide</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">Compiled data</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>The mental model</h2>
+            <p>A schema is a class of data. It says which fields exist, what type each field accepts, which values are allowed, and which defaults fill in missing pieces. An instance is one concrete object. The compiler validates the object, normalizes it, and emits JSON or YAML.</p>
+            <p>That makes Abstract more specific than JSON and less broad than a general programming language. It is a language for authored data: data that gets reviewed, translated, versioned, generated, and eventually consumed by other systems.</p>
+
+            <h2>File types</h2>
+<pre><code>schema Product {
+    id: text(1..40)
+    status: enum(draft, active, retired)
+    release_year: int(2000..2100)
+}</code></pre>
+            <p>Schema files use the <code>.abt</code> extension. Instance files use <code>.ab</code>:</p>
+<pre><code>Product :: @id.atlas, @status.active
+    release_year: 2026</code></pre>
+            <p>Compiled data is printed by default. Add <code>true</code> as the final CLI argument when you want Abstract to write a sibling <code>.json</code> or <code>.yml</code> file.</p>
+
+            <h2>Schemas</h2>
+            <p>A schema starts with <code>schema Name { ... }</code>. Field names are normalized to lowercase snake case. V0 supports scalar fields, nested groups, list fields, defaults, optional fields, and tagged fields.</p>
+<pre><code>schema Service {
+    id: text(1..40)
+    tier: enum(free, standard, premium)
+    replicas: int(1..12) = 1
+    notes: text(1..120) @optional
+}</code></pre>
+
+            <h2>Instances</h2>
+            <p>An instance starts with <code>Template ::</code>. Header tags are a concise form for simple field assignments. Longer values can be placed below the header with normal assignment syntax.</p>
+<pre><code>Service :: @id.search, @tier.premium
+    replicas: 3
+    notes: "Runs on the public cluster."</code></pre>
+
+            <h2>Groups and lists</h2>
+            <p>Groups are nested objects. A group field ending in <code>[]</code> becomes a list of objects.</p>
+<pre><code>schema Product {
+    owner {
+        team: text(1..50)
+        contact: text(1..80)
+    }
+
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}</code></pre>
+
+            <h2>Tags</h2>
+            <p><code>@tag</code> marks the field that a shorthand tag fills. If <code>id</code> is tagged, <code>#search</code> means <code>{id: "search"}</code>. Tag calls can also include overrides.</p>
+<pre><code>capabilities: [#search, #sync(availability: beta)]</code></pre>
+
+            <h2>Paths, tables, and expansion</h2>
+            <p>Dotted paths assign nested fields, tuple arrays make small tables pleasant to read, and wildcard expansion lets a tagged enum family expand without repeating every member.</p>
+<pre><code>owner.team: Platform
+copy(key, value): (en_us, "Hello"), (es_*, "Hola")
+thresholds.{warning, critical}: 90</code></pre>
+
+            <h2>Cloning</h2>
+            <p>Clone syntax copies a previous instance and applies overrides. It is meant for families of data that share most fields but differ in a few intentional places.</p>
+<pre><code>&atlas.*
+
+Product :: @id.beacon, @status.draft
+    name: Beacon Export</code></pre>
+
+            <h2>Current boundaries</h2>
+            <p>Version 0.1.0 is useful, but not finished. <code>logic</code> blocks can derive values and execute validation rules, but they are still intentionally smaller than a general programming language. The priority is a small, stable language with standard readable output before adding a larger ecosystem.</p>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>Next: <a href="schemas.html">schema authoring</a> or <a href="instances.html">instance authoring</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

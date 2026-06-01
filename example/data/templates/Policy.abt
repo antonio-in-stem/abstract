@@ -1,0 +1,7 @@
+schema Policy {
+    id: text(1..40)
+    level: enum(info, warning, critical)
+    applies_to[]: enum(product, release, dataset)
+    rule: text(1..180)
+}
+

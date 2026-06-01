@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Guide - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html" aria-current="page">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">For AI collaborators</p>
+        <h1>How to work in Abstract without making a mess.</h1>
+        <p class="lede">Abstract is friendly to AI because the schema is explicit, the output is readable, and the compiler can check the work. This page is the operating manual.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">AI guide</span>
+            <nav>
+                <a href="#read-first">Read first</a>
+                <a href="#editing">Editing rules</a>
+                <a href="#generation">Generation checklist</a>
+                <a href="#prompt">Prompt template</a>
+                <a href="#limits">Limits</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2 id="read-first">Read first</h2>
+            <p>Before editing instances, read all relevant <code>.abt</code> schema files. Before changing a schema, compile the project once so you understand the current valid shape.</p>
+            <ul>
+                <li>Use schemas as the source of truth.</li>
+                <li>Use instances as authored source.</li>
+                <li>Treat compiled JSON/YAML as generated output unless a human explicitly asks you to inspect it.</li>
+                <li>Run <code>abstract lint</code> after edits.</li>
+                <li>Run <code>abstract &lt;object.ab&gt; &lt;Template.abt&gt; JSON|YML true</code> when the compiled artifact must be refreshed.</li>
+            </ul>
+
+            <h2 id="editing">Editing rules</h2>
+            <p>Do not guess enum values. They are declared in the schema. Do not invent nested fields unless the schema allows them. If a value needs spaces, quote it. If several values are mostly the same, prefer cloning over copy-pasting a full instance.</p>
+
+            <h2 id="generation">Generation checklist</h2>
+            <ol>
+                <li>Find the target template with <code>abstract templates &lt;path&gt;</code>.</li>
+                <li>Read the template schema.</li>
+                <li>Create or edit <code>.ab</code> files, not compiled JSON/YAML output.</li>
+                <li>Use tuple arrays for table-like repeated values.</li>
+                <li>Use tagged shorthand only when the schema has <code>@tag</code>.</li>
+                <li>Run <code>abstract lint &lt;path&gt;</code>.</li>
+                <li>Compile only after lint passes.</li>
+            </ol>
+
+            <h2 id="prompt">Useful prompt template</h2>
+<pre><code>You are editing an Abstract project.
+First read all .abt schemas.
+Then edit only .ab authored files unless I ask for schema changes.
+After editing, run:
+    abstract lint &lt;project&gt;
+If lint passes, run:
+    abstract &lt;object.ab&gt; &lt;Template.abt&gt; JSON true
+Summarize changed instances and any schema assumptions.</code></pre>
+
+            <h2 id="limits">Limits to respect</h2>
+            <p>Logic blocks can derive values and evaluate validation rules. Keep domain-specific derivations inside the relevant <code>.abt</code> template, not in external tooling. If you see a mismatch between source and output, regenerate from source instead of editing the compiled JSON or YAML by hand.</p>
+
+            <div class="callout"><p>The good AI workflow is simple: read schema, edit source, lint, compile, explain. Anything more clever should earn its keep.</p></div>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>For exact syntax, use the <a href="../reference/grammar.html">grammar reference</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

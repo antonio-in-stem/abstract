@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Schemas - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Schema authoring</p>
+        <h1>Put the rules where authors can see them.</h1>
+        <p class="lede">Schemas are the contract. They should be strict enough to catch mistakes and plain enough that a teammate can read them without a compiler course.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="schemas.html" aria-current="page">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">RAW</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>Schema declaration</h2>
+<pre><code>schema Product {
+    id: text(1..40)
+    name: text(1..80)
+}</code></pre>
+            <p>The schema name is emitted as <code>template</code> in RAW. Field order in the schema also controls field order in the output, which keeps diffs and reviews stable.</p>
+
+            <h2>Supported types</h2>
+            <table class="table">
+                <thead><tr><th>Type</th><th>Use it for</th><th>Example</th></tr></thead>
+                <tbody>
+                    <tr><td><code>text</code></td><td>Strings with character length limits.</td><td><code>name: text(1..80)</code></td></tr>
+                    <tr><td><code>int</code></td><td>Whole numbers with allowed ranges or exact values.</td><td><code>replicas: int(1, 3..8)</code></td></tr>
+                    <tr><td><code>enum</code></td><td>A closed vocabulary that normalizes to lowercase snake case.</td><td><code>status: enum(draft, active)</code></td></tr>
+                    <tr><td><code>file</code></td><td>Paths with approved extensions.</td><td><code>image: file(png, jpg)</code></td></tr>
+                    <tr><td><code>$(Name)</code></td><td>A nested object validated by another schema.</td><td><code>owner: $(Owner)</code></td></tr>
+                </tbody>
+            </table>
+
+            <h2>Ranges</h2>
+            <p><code>text</code> ranges count characters. <code>int</code> ranges validate the numeric value. A range can be exact or inclusive.</p>
+<pre><code>short_code: text(2, 4..8)
+version_support: int(1..3)</code></pre>
+
+            <h2>Defaults and optional fields</h2>
+            <p>Defaults are inserted when a field is missing. Optional fields may be omitted. Optional list fields compile to an empty array when missing, which makes downstream consumers simpler.</p>
+<pre><code>status: enum(draft, active, retired) = draft
+notes: text(1..160) @optional
+tags[]: enum(core, public, internal) @optional</code></pre>
+
+            <h2>Lists</h2>
+            <p>Add <code>[]</code> to the field name. Scalar lists accept arrays of values. Group lists accept arrays of objects or tagged shorthand objects.</p>
+<pre><code>tags[]: enum(core, public, internal)
+
+capabilities[] {
+    id: enum(search, sync, export) @tag
+    availability: enum(alpha, beta, stable) = stable
+}</code></pre>
+
+            <h2>Groups</h2>
+            <p>A group is an inline object. Groups are best when the nested fields only make sense inside the parent schema.</p>
+<pre><code>owner {
+    team: text(1..50)
+    contact: text(1..80)
+}</code></pre>
+
+            <h2>References</h2>
+            <p>Use <code>$(OtherSchema)</code> when a nested shape deserves its own name and may be reused in several schemas.</p>
+<pre><code>schema Address {
+    line: text(1..120)
+    country: text(2..80)
+}
+
+schema Office {
+    id: text(1..40)
+    address: $(Address)
+}</code></pre>
+
+            <h2>Tags</h2>
+            <p>A field marked <code>@tag</code> can be filled with <code>#value</code> shorthand inside instance lists. The tag field is usually <code>id</code>, but it does not have to be.</p>
+<pre><code>steps[] {
+    mode: enum(generate, custom, inherit) @tag
+    weight: int(1..100) = 1
+}</code></pre>
+
+            <div class="callout"><p>Good schemas are not maximal schemas. Start with the rules that catch real mistakes. Add more only when the data starts asking for them.</p></div>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>After the schema feels right, move to <a href="instances.html">instance authoring</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

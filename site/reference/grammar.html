@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grammar Reference - Abstract</title>
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="grammar.html" aria-current="page">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Reference</p>
+        <h1>Syntax at a glance.</h1>
+        <p class="lede">This is not a formal parser specification yet. It is the practical syntax reference for the compiler that exists today.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Reference</span>
+            <nav>
+                <a href="grammar.html" aria-current="page">Grammar</a>
+                <a href="diagnostics.html">Diagnostics</a>
+                <a href="../docs/cli.html">CLI</a>
+                <a href="../docs/raw.html">RAW</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>Comments</h2>
+<pre><code>// This is a comment.
+name: "http://example.test" // comments do not split quoted strings</code></pre>
+
+            <h2>Schema blocks</h2>
+<pre><code>schema Name {
+    field: type
+    field: type = default
+    field: type @optional
+    field[]: type
+
+    group {
+        child: type
+    }
+}</code></pre>
+
+            <h2>Types</h2>
+<pre><code>text(1..40)
+int(0, 2..15)
+enum(draft, active, retired)
+file(png, jpg, webp)
+$(OtherSchema)</code></pre>
+
+            <h2>Modifiers</h2>
+            <table class="table">
+                <thead><tr><th>Modifier</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>[]</code></td><td>The field is a list.</td></tr>
+                    <tr><td><code>@optional</code></td><td>The field may be omitted.</td></tr>
+                    <tr><td><code>@tag</code></td><td>The field receives shorthand tag values such as <code>#search</code>.</td></tr>
+                    <tr><td><code>= value</code></td><td>The field receives a default when omitted.</td></tr>
+                </tbody>
+            </table>
+
+            <h2>Instance blocks</h2>
+<pre><code>Template :: @field.value, @other.value
+    field: value
+    nested.field: value</code></pre>
+
+            <h2>Values</h2>
+<pre><code>bare_word
+"quoted string"
+123
+[one, two, three]
+{id: "inline", weight: 2}
+#tag
+#tag(field: value)</code></pre>
+
+            <h2>Tuple assignment</h2>
+<pre><code>(field_a, field_b): (value_a, value_b)
+lang(key, value): (en_us, Hello), (es_es, Hola)</code></pre>
+
+            <h2>Multi-path assignment</h2>
+<pre><code>object.{first, second}: value</code></pre>
+
+            <h2>Clone overlay</h2>
+<pre><code>&base_id.*
+
+Template :: @id.new_id
+    field: override</code></pre>
+
+            <h2>Logic blocks</h2>
+<pre><code>logic Template {
+    derive .computed_field = value
+
+    if .field == "value" {
+        require .other_field exists
+            else throw "Message for the author."
+    }
+
+    for item in .items {
+        require item.value exists
+            else throw "Every item needs a value."
+    }
+}</code></pre>
+            <table class="table">
+                <thead><tr><th>Syntax</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>if condition { ... }</code></td><td>Runs nested rules when a condition is true.</td></tr>
+                    <tr><td><code>derive .path = value</code></td><td>Writes a derived value onto the current instance.</td></tr>
+                    <tr><td><code>require condition else throw "message"</code></td><td>Fails compilation when the condition is false.</td></tr>
+                    <tr><td><code>for name in .path { ... }</code></td><td>Loops over array values and binds a variable.</td></tr>
+                    <tr><td><code>exists</code></td><td>Checks that a path resolves to at least one value.</td></tr>
+                    <tr><td><code>contains</code></td><td>Checks array or projected path membership.</td></tr>
+                    <tr><td><code>== != &gt; &gt;= &lt; &lt;=</code></td><td>Compares strings or integers.</td></tr>
+                    <tr><td><code>and or &amp;&amp; ||</code></td><td>Combines conditions.</td></tr>
+                </tbody>
+            </table>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>For how failures are reported, read <a href="diagnostics.html">diagnostics</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
