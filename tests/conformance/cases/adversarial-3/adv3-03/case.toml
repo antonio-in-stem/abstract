@@ -1,0 +1,15 @@
+id = '''ADV3-03'''
+area = '''adversarial-3'''
+title = '''E511's `{text}` is not the condition as written: in a `require` the value-mode `=` drags the `else throw "..."` clause into the quoted condition'''
+severity = '''minor'''
+kind = '''bug'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''6.6, 9.8, 10.5, 11.2'''
+expected_note = '''SPEC 6.6 requires that E511's message "quotes the condition as written". The condition as written is `.name === 3`; the `else throw "no"` clause is a separate part of the `require_statement` and is no part of the condition. The message must read Invalid condition '.name === 3': '=' is not an operand.'''
+actual_1_0 = '''exit 1 with the right identifier and the wrong text:
+  data/templates/T.abt:6:21: error[E511]: Invalid condition '.name == = 3 else throw "no"': '=' is not an operand.
+The clause is swallowed for the same reason as ADV3-01 - the third `=` starts a value run that runs to the end of the logical line - and the `===` is additionally re-spelled as `== =`.'''
+note_1_0 = '''src/logic.rs::spell_condition rebuilds the text from tokens rather than slicing the source, and its stop set does not include the `else` of a require once the value run has consumed it.'''

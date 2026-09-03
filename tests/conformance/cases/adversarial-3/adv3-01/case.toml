@@ -1,0 +1,16 @@
+id = '''ADV3-01'''
+area = '''adversarial-3'''
+title = '''`if .name === b {` reports a brace fault (E203, E205) instead of the E511 SPEC 6.6 prescribes: the third `=` puts the lexer into value mode and the block brace is swallowed into the value run'''
+severity = '''major'''
+kind = '''bug'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''3.6, 6.4, 6.6, 10.2, 10.5, 11.1'''
+expected_note = '''SPEC 6.6, as revision 7 rewrote it, names the two reachable reasons of E511 and gives this very shape as the first example: "a token that cannot begin an operand where an operand is due - `.a === "b"`, whose third `=` lands in operand position". SPEC 3.6 says the `{` that opens a logic block is a block brace, and the grammar gives `=` to `derive_statement` alone - an `if` head has no value and therefore no bare value run in which a brace could be an ordinary character. The only diagnostic this file may raise is E511 at the third `=`.'''
+actual_1_0 = '''exit 1 with two diagnostics and no E511 at all:
+  data/templates/T.abt:8:20: error[E203]: Unclosed '{' opened at 8:20.
+  data/templates/T.abt:11:1: error[E205]: Unexpected '}'.
+Both name braces the author balanced. With a quoted right-hand side (`.name === "b"`) the same file reports E511, because the value run ends at the closing quote and the block brace survives.'''
+note_1_0 = '''src/lexer.rs::scan_logic_line calls at_value_introducing_equals on every logic statement line. The predicate's own doc comment scopes it to a schema default and a derive right-hand side; restricting the call to a `derive` line leaves the block brace a block brace.'''

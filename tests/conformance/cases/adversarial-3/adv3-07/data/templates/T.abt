@@ -1,0 +1,23 @@
+schema T {
+    name: text(1..40)
+    ready: bool @optional
+    count: int @optional
+}
+
+logic T {
+    if .name == "z" {
+        derive .ready = true
+    }
+
+
+    // two blank lines and a comment before the else if
+    else if .name == "a" {
+        derive .ready = false
+    }
+
+
+    // and again before the else
+    else {
+        derive .count = 9
+    }
+}

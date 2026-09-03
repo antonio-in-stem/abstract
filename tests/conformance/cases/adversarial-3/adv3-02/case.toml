@@ -1,0 +1,15 @@
+id = '''ADV3-02'''
+area = '''adversarial-3'''
+title = '''The same value-mode fault in a `for` head: `for $v in === 3 {` reports E203 and E205 about the block brace instead of a parse error at the malformed iterable'''
+severity = '''major'''
+kind = '''bug'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''3.6, 6.2, 10.2, 10.5'''
+expected_note = '''GRAMMAR `for_statement` is "for", loop_variable, "in", iterable, block: there is no `=` in a `for` head, so the head is malformed and SPEC 10.2's E210 - "a token or construct that is not valid here" - is the diagnostic. SPEC 3.6 makes the trailing `{` a block brace, which the lexer must not read as an ordinary character of a value.'''
+actual_1_0 = '''exit 1:
+  data/templates/T.abt:8:21: error[E203]: Unclosed '{' opened at 8:21.
+  data/templates/T.abt:11:1: error[E205]: Unexpected '}'.'''
+note_1_0 = '''Same site as ADV3-01.'''

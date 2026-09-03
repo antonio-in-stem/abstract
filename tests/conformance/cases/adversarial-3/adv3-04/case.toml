@@ -1,0 +1,15 @@
+id = '''ADV3-04'''
+area = '''adversarial-3'''
+title = '''E511's `{text}` re-spells the condition: `and .name == "a"` is quoted as `and.name == "a"`, gluing the keyword to the path'''
+severity = '''minor'''
+kind = '''bug'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''6.6, 9.8, 10.5, 11.2'''
+expected_note = '''SPEC 6.6 requires E511 to quote "the condition as written", and names a condition that starts with `and` as one of its two reachable reasons. The message must read Invalid condition 'and .name == "a"': 'and' is not an operand.'''
+actual_1_0 = '''exit 1:
+  data/templates/T.abt:8:8: error[E511]: Invalid condition 'and.name == "a"': 'and' is not an operand.
+The same renderer inserts a space the source did not have (`.name === "a"` is quoted as `.name == = "a"`) and removes one the source did have, wherever a `.` follows a word.'''
+note_1_0 = '''src/logic.rs::append_spelling decides spacing from the token kind alone: `.` is always tight to its left. Slicing the source between the condition's first and last token would quote it as written and would need no spacing rule at all.'''

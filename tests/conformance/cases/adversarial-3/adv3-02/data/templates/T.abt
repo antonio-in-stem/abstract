@@ -1,0 +1,11 @@
+schema T {
+    name: text(1..40)
+    ready: bool @optional
+    count: int @optional
+}
+
+logic T {
+    for $v in === 3 {
+        derive .count = 1
+    }
+}
