@@ -1,8 +1,9 @@
 [package]
 name = "abstract-lang"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2021"
-description = "Abstract DSL compiler for schema-defined instances and human-readable RAW data."
+description = "Abstract 1.0: a schema-backed data language compiler with zero dependencies."
+license = "MIT"
 
 [lib]
 name = "abstract_lang"
@@ -12,4 +13,7 @@ path = "src/lib.rs"
 name = "abstract"
 path = "src/main.rs"
 
+# Abstract 1.0 has no dependencies and no dev-dependencies, by design.
 [dependencies]
+
+[dev-dependencies]
