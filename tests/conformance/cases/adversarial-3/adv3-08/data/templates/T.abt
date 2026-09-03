@@ -1,0 +1,13 @@
+schema T {
+    name: text(1..40)
+    ready: bool @optional
+    count: int @optional
+}
+
+logic T {
+    require .name exists
+
+
+        // the else of a require, past two blank lines and a comment
+        else throw "An item needs a name."
+}

@@ -1,0 +1,25 @@
+schema T {
+    name: text(1..40)
+    tier: text(1..10) @optional
+}
+
+logic T {
+    if .name == "alpha" {
+        derive .tier = one
+    }
+
+    // between the brace and the else if
+    else if .name == "beta" {
+        derive .tier = two
+    }
+
+    // and between the brace and the else
+    else {
+        derive .tier = other
+    }
+
+    require .name exists
+
+        // and between a require condition and its else throw
+        else throw "A T needs a name."
+}

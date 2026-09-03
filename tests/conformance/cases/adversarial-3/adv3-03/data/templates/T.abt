@@ -1,0 +1,7 @@
+schema T {
+    name: text(1..40)
+}
+
+logic T {
+    require .name === 3 else throw "no"
+}

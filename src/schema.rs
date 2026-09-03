@@ -715,8 +715,16 @@ fn is_modifier_run(text: &str) -> bool {
 
 /// Parses the `schema`, `logic` and `versions` items of one template file
 /// (SPEC §4.1).
-pub fn parse_template(file: &str, tokens: &[Token]) -> Result<TemplateFile, Diagnostics> {
-    let mut parser = Parser::new(file, tokens);
+///
+/// `text` is the file's source, which every token's span indexes into. A
+/// diagnostic that must quote a construct **as written** slices it from there
+/// rather than re-spelling it from the token stream.
+pub fn parse_template(
+    file: &str,
+    text: &str,
+    tokens: &[Token],
+) -> Result<TemplateFile, Diagnostics> {
+    let mut parser = Parser::new(file, text, tokens);
     let items = parser.parse_items();
     if parser.errors.is_empty() {
         let mut template = TemplateFile::new(file);
@@ -729,6 +737,8 @@ pub fn parse_template(file: &str, tokens: &[Token]) -> Result<TemplateFile, Diag
 
 struct Parser<'a> {
     file: &'a str,
+    /// The file's source text; token spans index into it.
+    text: &'a str,
     tokens: &'a [Token],
     index: usize,
     errors: Diagnostics,
@@ -737,13 +747,14 @@ struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    fn new(file: &'a str, tokens: &'a [Token]) -> Self {
+    fn new(file: &'a str, text: &'a str, tokens: &'a [Token]) -> Self {
         let position = tokens
             .last()
             .map(|token| token.position)
             .unwrap_or_else(|| Position::new(1, 1));
         Self {
             file,
+            text,
             tokens,
             index: 0,
             errors: Diagnostics::new(),
@@ -1019,7 +1030,7 @@ impl<'a> Parser<'a> {
             return None;
         }
         let (statements, index, errors) =
-            crate::logic::parse_block(self.file, self.tokens, self.index);
+            crate::logic::parse_block(self.file, self.text, self.tokens, self.index);
         self.index = index;
         self.errors.extend(errors);
         Some(LogicBlock {
@@ -3033,7 +3044,7 @@ mod tests {
     fn parse(text: &str) -> Result<TemplateFile, Diagnostics> {
         let source = SourceFile::new("templates/T.abt", text);
         let tokens = crate::lexer::tokenize(&source).expect("the fixture lexes");
-        parse_template("templates/T.abt", &tokens)
+        parse_template("templates/T.abt", &source.text, &tokens)
     }
 
     fn schemas(text: &str) -> Vec<SchemaDecl> {
@@ -4090,7 +4101,7 @@ mod tests {
         for input in inputs {
             let source = SourceFile::new("templates/T.abt", input);
             if let Ok(tokens) = crate::lexer::tokenize(&source) {
-                let _ = parse_template("templates/T.abt", &tokens);
+                let _ = parse_template("templates/T.abt", &source.text, &tokens);
             }
         }
     }

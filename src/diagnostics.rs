@@ -126,6 +126,7 @@ pub enum ErrorId {
     E520,
     E521,
     E522,
+    E523,
 
     // §10.6 E6xx — versions
     E601,
@@ -259,6 +260,7 @@ impl ErrorId {
         ErrorId::E520,
         ErrorId::E521,
         ErrorId::E522,
+        ErrorId::E523,
         ErrorId::E601,
         ErrorId::E602,
         ErrorId::E603,
@@ -386,6 +388,7 @@ impl ErrorId {
             ErrorId::E520 => "E520",
             ErrorId::E521 => "E521",
             ErrorId::E522 => "E522",
+            ErrorId::E523 => "E523",
             ErrorId::E601 => "E601",
             ErrorId::E602 => "E602",
             ErrorId::E603 => "E603",
@@ -621,6 +624,9 @@ impl ErrorId {
                 "derive cannot write {context}.{field} in version {v}; the field exists in versions {versions}.",
             ],
             ErrorId::E522 => &["Variable '${name}' is not a scalar; it is {kind}."],
+            ErrorId::E523 => &[
+                "Logic work limit exceeded at {context}: the logic executed more than 1000000 loop iterations in version {v}.",
+            ],
 
             ErrorId::E601 => &["The project already declares a version range."],
             ErrorId::E602 => &[
@@ -969,7 +975,7 @@ mod tests {
             assert!(!id.templates().is_empty());
             assert!(id.template().ends_with('.') || id.template().ends_with('}'));
         }
-        assert_eq!(seen.len(), 122);
+        assert_eq!(seen.len(), 123);
         assert_eq!(ErrorId::from_code("E000"), None);
         assert_eq!(ErrorId::from_code("E809"), None);
     }

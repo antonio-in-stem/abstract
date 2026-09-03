@@ -1,6 +1,6 @@
 # Abstract 1.0 conformance corpus - index
 
-Total cases: 278
+Total cases: 301
 
 ## Counts by area
 
@@ -8,6 +8,7 @@ Total cases: 278
 |---|---|
 | adversarial-1 | 27 |
 | adversarial-2 | 11 |
+| adversarial-3 | 19 |
 | cli-project | 29 |
 | docs-tests-examples | 32 |
 | instances-merge | 25 |
@@ -16,6 +17,7 @@ Total cases: 278
 | logic-engine | 28 |
 | media-bundle-crypto | 14 |
 | output-canon | 27 |
+| revision-7 | 4 |
 | schema-types | 30 |
 
 ## Counts by severity
@@ -24,15 +26,15 @@ Total cases: 278
 |---|---|
 | critical | 9 |
 | design | 19 |
-| major | 95 |
-| minor | 155 |
+| major | 104 |
+| minor | 169 |
 
 ## Counts by expected_kind
 
 | expected_kind | cases |
 |---|---|
-| document | 38 |
-| error | 127 |
+| document | 48 |
+| error | 140 |
 | ok | 2 |
 | undecided | 111 |
 
@@ -41,7 +43,7 @@ Total cases: 278
 | status | cases |
 |---|---|
 | manual | 9 |
-| ready | 269 |
+| ready | 292 |
 
 ## All cases
 
@@ -85,6 +87,25 @@ Total cases: 278
 | adversarial-2 | ADV2-09 | minor | error | A header tag whose applicability set is empty is E440, the same diagnostic the equivalent body statement gets |
 | adversarial-2 | ADV2-10 | minor | error | Interpolating a loop variable bound to a group object is E522, not a silent drop |
 | adversarial-2 | ADV2-11 | minor | error | A reversed window on a body statement is E604, the diagnostic an instance header already gets for it |
+| adversarial-3 | ADV3-01 | major | error | `if .name === b {` reports a brace fault (E203, E205) instead of the E511 SPEC 6.6 prescribes: the third `=` puts the lexer into value mode and the block brace is swallowed into the value run |
+| adversarial-3 | ADV3-02 | major | error | The same value-mode fault in a `for` head: `for $v in === 3 {` reports E203 and E205 about the block brace instead of a parse error at the malformed iterable |
+| adversarial-3 | ADV3-03 | minor | error | E511's `{text}` is not the condition as written: in a `require` the value-mode `=` drags the `else throw "..."` clause into the quoted condition |
+| adversarial-3 | ADV3-04 | minor | error | E511's `{text}` re-spells the condition: `and .name == "a"` is quoted as `and.name == "a"`, gluing the keyword to the path |
+| adversarial-3 | ADV3-05 | major | error | An `else` after the closing `}` of a `for` block is E210, not the E517 SPEC 6.3 prescribes for an `else` after a block that is not an `if` |
+| adversarial-3 | ADV3-06 | major | error | The same `for` block and `else`, separated by a blank line and a comment line: rule (b) joins them and the diagnostic is E210 rather than E517 |
+| adversarial-3 | ADV3-07 | minor | document | An `else` and an `else if` reached across two blank lines and a comment line are joined by rule (b) and compile |
+| adversarial-3 | ADV3-08 | minor | document | A `require` condition and its `else throw` separated by two blank lines and a comment line are one logical line and compile |
+| adversarial-3 | ADV3-09 | minor | document | A project whose only source file is an empty `.abt` compiles to an empty `data` array: a third way to reach the document SPEC 8.1 says is reachable in exactly two |
+| adversarial-3 | ADV3-10 | minor | document | A project whose only source declares `versions 1..3` and nothing else compiles to an empty `data` array whose envelope carries the declared range |
+| adversarial-3 | ADV3-11 | major | document | Exactly 1 000 000 loop iterations compile: nine five-level chains over ten-element lists (999 990) and a flat loop of ten spend the budget of SPEC 3.7 to the last unit |
+| adversarial-3 | ADV3-12 | major | error | One iteration more is E523, reported at the `for` whose iteration crossed the bound - the flat tail loop, on its eleventh iteration |
+| adversarial-3 | ADV3-13 | major | error | A nested `$(Schema)` block spends the same budget as the instance's own block: 555 550 in the nested block and 555 550 in the outer one is E523 |
+| adversarial-3 | ADV3-14 | minor | document | The budget is fresh for the next instance: two instances of 555 550 iterations each compile, though their sum is over the bound |
+| adversarial-3 | ADV3-15 | minor | document | The budget is fresh for the next version: one instance compiled for two versions at 555 550 iterations each compiles |
+| adversarial-3 | ADV3-16 | minor | error | E523 carries the instance-header note and one `at index ..., item ....` note per enclosing loop, which SPEC 10.5 now prescribes |
+| adversarial-3 | ADV3-17 | major | error | E413 against a `text` range renders the value's Unicode scalar count and never the text: an astral character and a combining mark each count one |
+| adversarial-3 | ADV3-18 | minor | error | `{ranges}` collapses an integer part whose bounds are equal and keeps both bounds of a float part: `text(1..3, 8, 12..14, 20..20)` renders `1..3, 8, 12..14, 20` |
+| adversarial-3 | ADV3-19 | minor | error | E413 at an element of a list group names the element with a 0-based index and still renders the scalar count: `atlas.copy[2].tier: 5 is not in 1..3` |
 | cli-project | cli-01 | minor | document | Single-file compile cannot find templates outside the file's own directory - the layout `abstract init` generates fails |
 | cli-project | cli-02 | major | document | Direct/subdirectory compile resolves file()/image() against the .ab file's own folder, so any project with assets fails in direct mode |
 | cli-project | cli-03 | major | error | file()/image() values are not confined to the project: `../..` traversal and absolute paths are validated on disk and emitted verbatim |
@@ -295,6 +316,10 @@ Total cases: 278
 | output-canon | OC-25 | design | document | Huge and tiny floats expand to 300+ digit decimal literals, and JSON output size is quadratic in nesting depth |
 | output-canon | OC-26 | minor | undecided | docs/raw-data.md's JSON example and CLI section do not match the emitter (inline arrays, missing RAW/.abraw, wrong write condition) |
 | output-canon | OC-27 | minor | undecided | Output-format tests are substring assertions only: no parser validation, no JSON/YAML equivalence, no key-safety, empty-project or empty-object coverage |
+| revision-7 | R7-01 | major | error | Seven `for` blocks nested over a literal list of ten cross the logic work limit of SPEC 3.7 and are E523 |
+| revision-7 | R7-02 | minor | document | Five of the same `for` blocks demand 111110 iterations, stay under the work limit and compile |
+| revision-7 | R7-03 | minor | document | A project whose sources declare schemas and logic but no instance compiles to an empty `data` array |
+| revision-7 | R7-04 | minor | document | Blank lines and comment lines may sit between a closing brace and its `else`, and between a `require` and its `else throw` |
 | schema-types | abs-skip | minor | error | --skip-assets does not skip on-disk checks for absolute paths, contradicting the CLI help and both docs |
 | schema-types | bad-default | minor | error | `abstract lint` reports 'ok' for a schema whose own defaults violate its own types — schema defaults are only validated when an instance happens to omit the field |
 | schema-types | bom | major | document | A UTF-8 BOM makes an entire .abt file invisible: schemas silently vanish and the error blames the instance |

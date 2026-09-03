@@ -1,0 +1,16 @@
+id = '''ADV3-05'''
+area = '''adversarial-3'''
+title = '''An `else` after the closing `}` of a `for` block is E210, not the E517 SPEC 6.3 prescribes for an `else` after a block that is not an `if`'''
+severity = '''major'''
+kind = '''bug'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''3.6, 6.3, 10.2, 10.5'''
+expected_note = '''SPEC 6.3, as revision 7 rewrote it: "An `else` that does not immediately follow a closing `}` of an `if` is E517: an `else` that begins a logical line of its own - at the top of a block, or after a block that is not an `if` - has no `if` to attach to." The same bullet reserves E210 for the other spelling, an `else` that follows some other statement, which rule (b) joins to that statement. A `for` block is a block, not a statement rule (b) can join to, so this file is E517 at the `else`.'''
+actual_1_0 = '''exit 1:
+  data/templates/T.abt:11:5: error[E210]: Unexpected 'else' here; expected end of line.
+  data/templates/T.abt:14:1: error[E210]: Unexpected '}' here; expected 'schema', 'logic' or 'versions'.
+The same `else` after an `if` block compiles, and after no block at all (at the top of a block) is E517, so only the non-`if` block case is wrong.'''
+note_1_0 = '''The logic parser reports E517 only where it looks for a statement head and finds `else`; after a `for` block it is still finishing that statement's logical line, so the generic end-of-line check fires first.'''

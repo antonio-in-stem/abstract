@@ -1,0 +1,16 @@
+schema T {
+    name: text(1..40)
+    ready: bool @optional
+    count: int @optional
+}
+
+logic T {
+    for $v in [1, 2] {
+        derive .count = $v
+    }
+
+    // a comment between the brace and the else
+    else {
+        derive .ready = false
+    }
+}

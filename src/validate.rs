@@ -12,13 +12,14 @@
 //! §8.3, so the bytes that are emitted and the values that were checked can
 //! never disagree.
 
+use std::cell::Cell;
 use std::path::{Component, Path, PathBuf};
 
 use crate::ast::Located;
 use crate::diagnostics::{Diagnostic, Diagnostics, ErrorId, Note, Position};
 use crate::instance::{InstanceDecl, ListSpelling, SyntaxValue};
 use crate::lexer::{is_float_literal, is_int_literal, normalise};
-use crate::limits::DOCUMENT_DEPTH;
+use crate::limits::{DOCUMENT_DEPTH, LOGIC_WORK};
 use crate::media::{probe_image, ImageFormat, ProbeError};
 use crate::output::Value;
 use crate::resolve::{
@@ -64,11 +65,26 @@ pub struct ValidationContext<'a> {
     /// `<project root>/assets`.
     pub assets_dir: &'a Path,
     pub asset_checks: AssetChecks,
+    /// Loop iterations spent so far by the logic of this instance in this
+    /// version (SPEC §3.7, E523). The budget belongs to the instance and
+    /// not to one logic block, because a nested `$(Schema)` value runs a
+    /// block of its own (SPEC §6.11); this context is built once per
+    /// instance and per version, so holding it here gives it exactly that
+    /// lifetime.
+    pub work: Cell<u64>,
 }
 
 impl ValidationContext<'_> {
     fn project(&self) -> VersionRange {
         self.tables.versions
+    }
+
+    /// Charges one unit of logic work — one execution of a `for` body —
+    /// and reports whether the budget of SPEC §3.7 is still unspent.
+    pub fn charge_logic_work(&self) -> bool {
+        let spent = self.work.get().saturating_add(1);
+        self.work.set(spent);
+        spent <= LOGIC_WORK
     }
 }
 
@@ -109,6 +125,7 @@ pub fn compile_instance(
         version,
         assets_dir,
         asset_checks,
+        work: Cell::new(0),
     };
 
     header_tag_targets(decl, schema, &context)?;
@@ -2268,6 +2285,10 @@ mod tests {
 
     #[test]
     fn a_range_violation_names_the_measured_quantity() {
+        // SPEC §9.8: against a `text` range the quantity constrained is the
+        // value's length, so `{value}` is its scalar count and never its
+        // text. `{ranges}` renders an integer part whose bounds are equal as
+        // the bare number, so `text(2..2)` reads `2`.
         let error = compile(
             "schema Item {\n    caption: text(1..4)\n}\n",
             "Item :: @id.one\n    caption: abcdefg\n",
@@ -2276,6 +2297,51 @@ mod tests {
         let text = error.to_string();
         assert!(
             text.contains("Range mismatch at one.caption: 7 is not in 1..4."),
+            "{text}"
+        );
+
+        let error = compile(
+            "schema Item {\n    code: text(2..2)\n    tier: text(1..3, 8, 12..14)\n}\n",
+            "Item :: @id.one\n    code: abc\n    tier: abcde\n",
+        )
+        .expect_err("both are out of range");
+        let text = error.to_string();
+        assert!(
+            text.contains("Range mismatch at one.code: 3 is not in 2."),
+            "{text}"
+        );
+        assert!(
+            text.contains("Range mismatch at one.tier: 5 is not in 1..3, 8, 12..14."),
+            "{text}"
+        );
+
+        // An astral character is one scalar value, not its bytes and not
+        // its UTF-16 code units.
+        let error = compile(
+            "schema Item {\n    code: text(2..2)\n}\n",
+            "Item :: @id.one\n    code: \u{1f600}\n",
+        )
+        .expect_err("one scalar value, not two or four");
+        let text = error.to_string();
+        assert!(
+            text.contains("Range mismatch at one.code: 1 is not in 2."),
+            "{text}"
+        );
+
+        // Against an `int` or a `float` range `{value}` is the number
+        // itself, and a float part always renders both bounds.
+        let error = compile(
+            "schema Item {\n    replicas: int(1, 3, 12)\n    ratio: float(1.0..1.0)\n}\n",
+            "Item :: @id.one\n    replicas: 99\n    ratio: 2.5\n",
+        )
+        .expect_err("both are out of range");
+        let text = error.to_string();
+        assert!(
+            text.contains("Range mismatch at one.replicas: 99 is not in 1, 3, 12."),
+            "{text}"
+        );
+        assert!(
+            text.contains("Range mismatch at one.ratio: 2.5 is not in 1.0..1.0."),
             "{text}"
         );
     }

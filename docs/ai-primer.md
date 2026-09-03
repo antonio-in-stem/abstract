@@ -356,7 +356,9 @@ names.
 - [ ] Every path operand starts with `.` or with a loop variable.
 - [ ] Every condition is boolean; no bare paths except `bool` fields.
 - [ ] Projected paths are used only with `contains` and `exists`.
-- [ ] Every `require` has an `else throw "…"` with a quoted message.
+- [ ] Every `require` has an `else throw "…"` with a quoted message. It may sit
+      on its own line, and blank lines and comments may come between; only
+      another token in between breaks the pair.
 - [ ] `derive?` targets no field that declares a default.
 - [ ] Every `derive` on a version-scoped field is guarded by `version` or by a
       condition that cannot be true in a version where the field is absent.
@@ -675,6 +677,7 @@ The full catalogue is SPEC 10. These are the ones an agent meets most often.
 | E518 | `derive?` on a defaulted field | use `derive`, or remove the default |
 | E519 | an operand can project several values | use `contains` |
 | E521 | a `derive` wrote a field absent in this version | guard it with `if version >= n` |
+| E523 | the logic asked for more than 1 000 000 loop iterations for one instance in one version | flatten the nested `for` blocks, or iterate a shorter list |
 
 ---
 
