@@ -23,7 +23,7 @@
       "patterns": [
         {
           "name": "comment.line.double-slash.abstract",
-          "match": "//.*$"
+          "match": "(?:^|(?<=\\s))//.*$"
         }
       ]
     },
@@ -110,7 +110,11 @@
       "patterns": [
         {
           "name": "support.type.primitive.schema.abstract",
-          "match": "\\b(text|int|enum|file)\\b(?=\\s*\\()"
+          "match": "\\b(text|int|float|enum|file|image)\\b(?=\\s*\\()"
+        },
+        {
+          "name": "support.type.primitive.bare.schema.abstract",
+          "match": "(?<=:)\\s*\\b(text|int|float|bool)\\b(?!\\s*\\()"
         }
       ]
     },
@@ -146,7 +150,7 @@
       "patterns": [
         {
           "name": "keyword.control.logic.abstract",
-          "match": "\\b(if|require|else|throw|for|in|derive)\\b"
+          "match": "\\bderive\\?|\\b(if|require|else|throw|for|in|derive|not)\\b"
         }
       ]
     },
@@ -154,7 +158,7 @@
       "patterns": [
         {
           "name": "keyword.operator.logical.logic.abstract",
-          "match": "\\b(contains|exists|length|and|or)\\b|&&|\\|\\||==|!=|>=|<=|>|<"
+          "match": "\\b(contains|exists|length|and|or)\\b|&&|\\|\\||==|!=|>=|<=|>|<|!(?=[(.\\w])"
         }
       ]
     },
@@ -214,7 +218,11 @@
       "patterns": [
         {
           "name": "constant.numeric.range.abstract",
-          "match": "\\b\\d+\\.\\.\\d*\\b"
+          "match": "\\b\\d+(?:\\.\\d+)?\\.\\.\\d+(?:\\.\\d+)?\\b"
+        },
+        {
+          "name": "constant.numeric.float.abstract",
+          "match": "(?<![\\w.])[-+]?\\d+\\.\\d+(?:[eE][+-]?\\d+)?\\b"
         },
         {
           "name": "constant.numeric.integer.abstract",

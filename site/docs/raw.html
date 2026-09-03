@@ -32,11 +32,13 @@
             <span class="sidebar-title">Docs</span>
             <nav>
                 <a href="language.html">Language guide</a>
+                <a href="types.html">Types</a>
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
+                <a href="logic.html">Logic blocks</a>
                 <a href="cli.html">CLI</a>
                 <a href="raw.html" aria-current="page">Compiled data</a>
-                <a href="logic.html">Logic blocks</a>
+                <a href="java.html">Java &amp; bundles</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
@@ -47,14 +49,27 @@
     {
       "template": "Product",
       "id": "atlas",
-      "status": "active"
+      "status": "active",
+      "price": 9.5,
+      "featured": true
     }
   ]
 }</code></pre>
-            <p>The top-level value is always <code>data</code>, followed by an array of compiled objects. Each object includes <code>template</code> and <code>id</code>.</p>
+            <p>The top-level value is always <code>data</code>, followed by an array of compiled objects. Each object includes <code>template</code> and <code>id</code>. Numbers and booleans are native JSON values: an authored <code>9.5</code> is a number, an authored <code>true</code> is a boolean, never the strings <code>"9.5"</code> or <code>"true"</code>.</p>
+
+            <h2>The RAW text format</h2>
+            <p><code>abstract compile &lt;path&gt; RAW</code> emits the human-oriented <code>.abraw</code> form: same data, unquoted keys, four-space indentation. It exists for reviews and diffs where JSON punctuation is noise.</p>
+<pre><code>data: [
+    {
+        template: "Product",
+        id: "atlas",
+        status: "active",
+        price: 9.5
+    }
+]</code></pre>
 
             <h2>Ordering</h2>
-            <p>Object fields are ordered predictably: <code>template</code>, <code>id</code>, then schema fields in the order they were declared. Extra fields, when they exist, stay after schema fields. This makes reviews calmer because unrelated fields do not jump around.</p>
+            <p>Object fields are ordered predictably: <code>template</code>, <code>id</code>, then schema fields in the order they were declared. Nested groups and <code>$(Schema)</code> objects are also ordered by their schema. Extra fields, when they exist, stay after schema fields. This makes reviews calmer because unrelated fields do not jump around.</p>
 
             <h2>Normalization</h2>
             <table class="table">
@@ -62,15 +77,18 @@
                 <tbody>
                     <tr><td>Bare enum values</td><td>Normalized to lowercase snake case.</td></tr>
                     <tr><td>Integer-like strings</td><td>Converted to numbers when the schema expects <code>int</code>.</td></tr>
+                    <tr><td>Decimal literals</td><td>Kept as native floats (<code>9.5</code>); multi-dot values like <code>1.21.5</code> stay text.</td></tr>
+                    <tr><td><code>true</code> / <code>false</code></td><td>Kept as native booleans.</td></tr>
                     <tr><td>Missing defaults</td><td>Inserted before output.</td></tr>
                     <tr><td>Optional missing lists</td><td>Emitted as empty arrays.</td></tr>
                     <tr><td>Tagged shorthand</td><td>Expanded into objects with the tagged field filled.</td></tr>
-                    <tr><td>Wildcard tagged values</td><td>Expanded against matching enum values.</td></tr>
+                    <tr><td>Wildcard enum values</td><td>Expanded against matching vocabulary members.</td></tr>
+                    <tr><td><code>$field</code> interpolation</td><td>Resolved after clone overrides, before validation.</td></tr>
                 </tbody>
             </table>
 
             <h2>Strings</h2>
-            <p>Strings are quoted in JSON and YAML output. Backslashes and quotes are escaped. Bare words in source may become strings in output after schema validation.</p>
+            <p>Strings are quoted in JSON, YAML, and RAW output. Backslashes, quotes, newlines, and tabs are escaped (<code>\\</code>, <code>\"</code>, <code>\n</code>, <code>\t</code>, <code>\r</code>), so multi-line text round-trips safely. Bare words in source may become strings in output after schema validation.</p>
 
             <h2>Arrays and objects</h2>
             <p>JSON uses brackets and braces. YAML uses indentation. Both formats preserve the same validated structure.</p>
@@ -84,7 +102,10 @@
             </ul>
 
             <h2>File writing</h2>
-            <p>The compiler always prints the result. Add <code>true</code> as the final argument to also write a sibling <code>.json</code> or <code>.yml</code> file next to the first input.</p>
+            <p>The compiler always prints the result. Add <code>true</code> as the final argument to write a sibling <code>.json</code>, <code>.yml</code>, or <code>.abraw</code> file next to the first input, or pass <code>--out &lt;file&gt;</code> for an explicit path.</p>
+
+            <h2>Sealed bundles</h2>
+            <p>When compiled data ships inside an application instead of a repository, <code>abstract bundle</code> seals the JSON document into an encrypted, tamper-evident <code>.abx</code> container. The <a href="java.html">Java &amp; bundles</a> page covers the format and the runtime.</p>
         </article>
     </div>
 </main>

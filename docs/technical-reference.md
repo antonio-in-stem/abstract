@@ -64,9 +64,21 @@ Compile or lint a whole project:
 ```powershell
 abstract compile ./data JSON
 abstract compile ./data YML true
+abstract compile ./data RAW --out review.abraw
 abstract lint ./data
 abstract templates ./data
 ```
+
+Scaffold, seal, and inspect:
+
+```powershell
+abstract init my-pack
+abstract bundle ./data --key "release passphrase" --out data.abx
+abstract unbundle data.abx --key "release passphrase"
+```
+
+Useful flags: `--skip-assets` (skip on-disk file/image checks),
+`--allow-unknown` (accept undeclared fields), `--out <file>`.
 
 When compiling direct files, Abstract loads sibling `.ab` and `.abt` files as
 symbol context so clone references can resolve. The emitted data is still
@@ -285,11 +297,19 @@ schema Product {
 
 Supported field types:
 
-- `text(1..40)`: text with allowed length ranges.
+- `text(1..40)`: text with allowed length ranges (bare `text` allows any).
 - `int(0, 2..15)`: integer with exact values and ranges.
+- `float(0..1)`: decimal number with ranges; emitted as a native number.
+- `bool`: `true` or `false`; emitted as a native boolean.
 - `enum(a, b, c)`: one normalized value from a fixed set.
-- `file(png, jpg)`: path text whose extension must match one of the listed extensions.
+- `file(png, jpg)`: path whose extension must match; the file must exist on disk.
+- `image(png 128x128, jpg)`: image path validated by its real header bytes
+  (format, dimensions, extension-content mismatches). `*` means any size on
+  one axis: `image(png 64x*)`.
 - `$(OtherSchema)`: nested object validated by another schema.
+
+Instances may only assign declared fields; unknown names fail with a
+suggestion. Duplicate field names, schema names, and instance ids are errors.
 
 ### Lists
 
@@ -354,19 +374,27 @@ Rules:
 
 ### File Types and `exists`
 
-`file(png, jpg)` validates only the extension. Physical file existence is
-checked in logic with `exists`.
+`file(png, jpg)` validates the extension and, when compiling from disk, that
+the file exists. `image(...)` additionally probes the file header (reading
+only the first bytes) to verify the real format and dimensions. The logic
+operator `exists` performs the same on-disk resolution inside conditions.
 
 ```abstract
 schema Asset {
-    image: file(png, jpg)
+    image: image(png 128x128)
+    manual: file(pdf) @optional
+    has_manual: bool = false
 }
 
 logic Asset {
-    require .image exists
-        else throw "Missing image asset: image must point to an existing png or jpg under the project assets folder."
+    if .manual exists {
+        derive .has_manual = true
+    }
 }
 ```
+
+`--skip-assets` disables all of these on-disk checks for machines that do not
+have the binary assets checked out.
 
 Resolution rules:
 
@@ -391,25 +419,33 @@ Validation order:
 6. Re-validate schema after derived values.
 7. Emit JSON or YAML.
 
-### `derive`
+### `derive` and `derive?`
 
 `derive` writes a value to the current instance:
 
 ```abstract
 logic Product {
     derive .shipping_class = standard
+    derive? .release_wave = 1
 }
 ```
 
-Derived values are data, not hidden metadata; they appear in output.
+`derive?` writes only when the field is missing, so authored values win. Both
+appear in output; derived values are data, not hidden metadata. Derive values
+interpolate `$loop` variables and root `$fields`; a value that is exactly one
+variable keeps its native type (`derive .count = $n` stays an int).
 
-### `if`
+### `if` / `else if` / `else`
 
-`if` runs nested statements when the condition is true:
+`if` runs nested statements when the condition is true; chains branch:
 
 ```abstract
 if .status == "active" {
     derive .published = true
+} else if .status == "retired" {
+    derive .published = false
+} else {
+    derive .published = false
 }
 ```
 
@@ -452,13 +488,18 @@ Supported checks:
 .field
 .field exists
 .flags contains "public"
+not .flags contains "banned"
+!(.count > 3)
 .status == "active"
 .status != "draft"
 .count >= 2
+.price < 99.5
 length(.items) == 1
 .a == "x" && .b exists
 .a == "x" || .b == "y"
 ```
+
+Comparisons work across ints and floats; equality also understands booleans.
 
 Paths over arrays are projected. For example:
 
@@ -479,17 +520,23 @@ Indexed access is supported:
 Abstract diagnostics are designed to name the broken contract:
 
 - Missing required field: add the field, header tag, default, or `@optional`.
+- Unknown field: strict mode rejects typos with a "did you mean" suggestion.
 - Type mismatch: the value shape does not match the schema type.
-- Enum mismatch: the value is not in the schema vocabulary.
-- Range mismatch: the text length or integer value is outside allowed ranges.
+- Enum mismatch: the value is not in the schema vocabulary (with suggestion).
+- Range mismatch: the text length or numeric value is outside allowed ranges.
+- Image mismatch: wrong size, or content that does not match the extension.
+- Duplicate id / duplicate schema: both definition sites are named.
+- Tuple arity mismatch: a row has the wrong number of values.
 - Unknown template: the instance references a schema that was not loaded.
 - Unknown clone target: `&id.*` cannot find an instance with that id.
-- Missing asset: `exists` could not find a referenced file.
+- Missing asset: a `file(...)`/`image(...)` value or `exists` check could not
+  find the referenced file.
 
 The terminal format is:
 
 ```text
 abstract: path/to/file.ab: Detailed message.
+abstract: path/to/file.ab:12: Parse-stage message with a line number.
 ```
 
 Editor integrations use this format to attach diagnostics to the relevant file.

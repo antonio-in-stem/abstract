@@ -32,68 +32,84 @@
             <span class="sidebar-title">Docs</span>
             <nav>
                 <a href="language.html">Language guide</a>
+                <a href="types.html">Types</a>
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
+                <a href="logic.html">Logic blocks</a>
                 <a href="cli.html" aria-current="page">CLI</a>
                 <a href="raw.html">Compiled data</a>
-                <a href="logic.html">Logic blocks</a>
+                <a href="java.html">Java &amp; bundles</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
             <h2>Install</h2>
-            <p>Download the Windows executable from this site, or build from source with Rust.</p>
-<pre><code>cargo build --release
-target\release\abstract.exe --version</code></pre>
-            <p>For local development, install it into Cargo's binary directory:</p>
-<pre><code>cargo install --path .
+            <p>Download the Windows executable from this site and install it (adds it to your PATH):</p>
+<pre><code>powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Prebuilt abstract-windows-x64.exe</code></pre>
+            <p>Or build from source on any platform with <a href="https://rustup.rs">Rust</a> installed:</p>
+<pre><code># Windows
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+
+# Linux / macOS
+sh scripts/install.sh
+
 abstract --version</code></pre>
 
-            <h2><code>abstract &lt;object.ab&gt; &lt;Template.abt&gt; JSON|YML [true|false]</code></h2>
-            <p>Compiles explicit source files, validates every instance, and prints standard JSON or YAML to stdout.</p>
+            <h2><code>abstract init &lt;directory&gt;</code></h2>
+            <p>Scaffolds a working project: <code>pack.ab</code>, schemas under <code>data/templates/</code>, a sample instance, and an <code>assets/</code> folder. The scaffold compiles immediately and demonstrates floats, bools, images, and <code>derive?</code>.</p>
+<pre><code>abstract init my-pack
+abstract compile my-pack JSON</code></pre>
+
+            <h2><code>abstract compile &lt;path&gt; [JSON|YML|RAW] [true] [--out &lt;file&gt;]</code></h2>
+            <p>Compiles a file or directory. Directories are read recursively (<code>.abt</code> and <code>.ab</code>), sources sort by path, every instance is validated, and JSON prints by default. <code>RAW</code> emits the human-oriented <code>data: [...]</code> format.</p>
+<pre><code>abstract compile example JSON
+abstract compile example YML true          # also writes example/abstract.yml
+abstract compile example RAW --out out.abraw</code></pre>
+
+            <h2><code>abstract &lt;object.ab&gt; [Template.abt ...] JSON|YML|RAW [true]</code></h2>
+            <p>Direct form: compiles explicit source files. Sibling files load as context (clones resolve), but only the requested instances are emitted and validated.</p>
 <pre><code>abstract object.ab Template.abt JSON
 abstract object.ab Template.abt YML true</code></pre>
-            <p>The optional boolean controls file writing. <code>true</code> writes a sibling <code>.json</code> or <code>.yml</code> next to the first input. Missing or <code>false</code> prints only.</p>
+
+            <h2><code>abstract lint &lt;path&gt;</code></h2>
+            <p>Validates the same project as <code>compile</code> but discards output. This is the command for pre-commit hooks and CI jobs. Success prints <code>abstract: ok</code>.</p>
+
+            <h2><code>abstract templates &lt;path&gt;</code></h2>
+            <p>Prints every schema name discovered in the project: useful for editor tooling and scripts.</p>
+
+            <h2><code>abstract bundle &lt;path&gt; --key &lt;k&gt; [--out &lt;file.abx&gt;] [--plain]</code></h2>
+            <p>Compiles a project and seals the JSON result into a tamper-evident <code>.abx</code> container (ChaCha20-Poly1305). The key is a passphrase (hashed with SHA-256) or exact bytes as <code>hex:&lt;64 digits&gt;</code>. <code>--plain</code> writes an unencrypted bundle for debugging. See <a href="java.html">Java &amp; bundles</a>.</p>
+<pre><code>abstract bundle my-pack --key "release passphrase" --out my-pack.abx</code></pre>
+
+            <h2><code>abstract unbundle &lt;file.abx&gt; [--key &lt;k&gt;]</code></h2>
+            <p>Opens a bundle and prints the JSON payload. A wrong key or a modified byte fails with an authentication error.</p>
+
+            <h2>Options</h2>
             <table class="table">
-                <thead><tr><th>Argument</th><th>Meaning</th></tr></thead>
+                <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
                 <tbody>
-                    <tr><td><code>&lt;path&gt;</code></td><td>A single <code>.ab</code>/<code>.abt</code> file or a directory containing Abstract files.</td></tr>
-                    <tr><td><code>JSON|YML</code></td><td>Output format.</td></tr>
-                    <tr><td><code>true|false</code></td><td>Optional write flag. Defaults to <code>false</code>.</td></tr>
+                    <tr><td><code>--skip-assets</code></td><td>Skips on-disk checks (<code>file(...)</code> existence, <code>image(...)</code> probing, file-path <code>exists</code>). For authoring on machines without the binary assets.</td></tr>
+                    <tr><td><code>--allow-unknown</code></td><td>Accepts instance fields the schema does not declare (lenient migration mode).</td></tr>
+                    <tr><td><code>--out &lt;file&gt;</code></td><td>Writes output to an explicit path instead of the default sibling file.</td></tr>
+                    <tr><td><code>--key &lt;material&gt;</code></td><td>Bundle key: passphrase or <code>hex:&lt;64 hex digits&gt;</code>.</td></tr>
+                    <tr><td><code>--plain</code></td><td>Unencrypted bundle (debugging only).</td></tr>
                 </tbody>
             </table>
 
-            <h2><code>abstract compile &lt;path&gt; [JSON|YML] [true|false]</code></h2>
-            <p>Compiles a file or directory. If the path is a directory, the compiler recursively reads <code>.abt</code> and <code>.ab</code> files, sorts sources by path, validates all instances, and prints JSON by default.</p>
-<pre><code>abstract compile example JSON
-abstract compile example YML true</code></pre>
-
-            <h2><code>abstract lint &lt;path&gt;</code></h2>
-            <p>Validates the same project as <code>compile</code>, but discards output. This is the command to put in a pre-commit hook or CI job.</p>
-<pre><code>abstract lint example</code></pre>
-            <p>A successful lint prints:</p>
-<pre><code>abstract: ok</code></pre>
-
-            <h2><code>abstract templates &lt;path&gt;</code></h2>
-            <p>Prints every schema name discovered in the project. This is useful for editor tooling, scripts, and quick checks when a project grows.</p>
-<pre><code>abstract templates example</code></pre>
-
-            <h2><code>abstract --help</code></h2>
-            <p>Prints the command summary built into the executable.</p>
-<pre><code>abstract 0.1.0
+            <h2><code>abstract --help</code> / <code>--version</code></h2>
+<pre><code>abstract 0.2.0
 
 USAGE:
-    abstract &lt;object.ab&gt; &lt;Template.abt&gt; JSON|YML [true|false]
-    abstract compile &lt;path&gt; [JSON|YML] [true|false]
+    abstract compile &lt;path&gt; [JSON|YML|RAW] [true] [--out &lt;file&gt;]
+    abstract &lt;object.ab&gt; [Template.abt ...] JSON|YML|RAW [true] [--out &lt;file&gt;]
     abstract lint &lt;path&gt;
-    abstract templates &lt;path&gt;</code></pre>
-
-            <h2><code>abstract --version</code></h2>
-            <p>Prints the current compiler version.</p>
-<pre><code>abstract 0.1.0</code></pre>
+    abstract templates &lt;path&gt;
+    abstract init &lt;directory&gt;
+    abstract bundle &lt;path&gt; --key &lt;passphrase|hex:...&gt; [--out &lt;file.abx&gt;] [--plain]
+    abstract unbundle &lt;file.abx&gt; [--key &lt;passphrase|hex:...&gt;]</code></pre>
 
             <h2>Exit behavior</h2>
-            <p>On success, the CLI exits with code <code>0</code>. On failure, it prints an error beginning with <code>abstract:</code> and exits with code <code>1</code>. Errors include the source path when the compiler can attach the problem to a file.</p>
+            <p>On success, the CLI exits with code <code>0</code>. On failure, it prints an error beginning with <code>abstract:</code> and exits with code <code>1</code>. Parse errors include the source path and line (<code>stickers/bad.ab:3: ...</code>); validation errors include the source path and the field context.</p>
         </article>
     </div>
 </main>

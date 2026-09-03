@@ -25,7 +25,7 @@
     <section class="doc-hero">
         <p class="eyebrow">Diagnostics</p>
         <h1>When Abstract says no.</h1>
-        <p class="lede">The compiler's errors are still young, but the core failure modes are predictable. This page explains what each kind of problem usually means.</p>
+        <p class="lede">Every failure mode has a predictable message. Parse problems carry file and line (<code>stickers/bad.ab:3:</code>); validation problems carry file and field context. This page explains what each kind of problem means.</p>
     </section>
     <div class="doc-shell">
         <aside class="sidebar">
@@ -54,18 +54,43 @@
 <pre><code>abstract: data/atlas.ab: Product.release_year value 1800 is outside allowed range 2000..2100</code></pre>
             <p>The value is outside the numeric range, or a text value has a length outside the allowed character count.</p>
 
+            <h2>Unknown field (typo protection)</h2>
+<pre><code>abstract: stickers/typo.ab: Unknown field 'rarty' at Sticker. Did you mean 'rarity'?
+Declared fields: id, rarity, origin, ...</code></pre>
+            <p>Strict mode rejects fields the schema does not declare and suggests the closest declared name. Use <code>--allow-unknown</code> only during migrations.</p>
+
+            <h2>Duplicate ids and schemas</h2>
+<pre><code>abstract: things/b.ab:1: Duplicate instance id 'same'. It is already declared in 'things/a.ab' (line 1)
+abstract: templates/B.abt: Duplicate schema 'Thing'. It is already defined in 'templates/A.abt'</code></pre>
+            <p>Every instance id and every schema name must be unique across the compiled project. The error names both definition sites.</p>
+
             <h2>File extension mismatch</h2>
 <pre><code>abstract: data/atlas.ab: Product.image has extension 'gif', expected png, jpg</code></pre>
             <p>The file path extension does not match the <code>file(...)</code> declaration.</p>
 
-            <h2>Clone cycle</h2>
-<pre><code>abstract: clone cycle detected for 'atlas'</code></pre>
-            <p>Two or more instances clone each other in a loop. Break the cycle by introducing a shared base instance or by removing one clone directive.</p>
+            <h2>Image mismatches</h2>
+<pre><code>Image size mismatch at Sticker.icon: './icons/small.png' is 16x16, but this schema allows only: png 32x32.
+Image content mismatch at Sticker.icon: './icons/fake.png' is named .png but its header is gif data.</code></pre>
+            <p><code>image(...)</code> fields probe the real file header. Size mismatches report the actual dimensions; content mismatches mean the file was renamed or exported with the wrong format.</p>
+
+            <h2>Tuple arity mismatch</h2>
+<pre><code>abstract: pages/bad.ab:3: tuple arity mismatch in 'copy': declared 2 column(s) (key, value), found a tuple with 3 value(s)</code></pre>
+            <p>A tuple row has more or fewer values than the declared columns. A missing quote around a value containing commas is the usual cause.</p>
+
+            <h2>Clone problems</h2>
+<pre><code>abstract: clone cycle detected for 'atlas'
+abstract: things/b.ab:1: clone path '&hero.stats' not found on the source instance</code></pre>
+            <p>Cycles need a shared base instance instead of mutual clones. A missing clone path means the source instance never defined that subtree.</p>
+
+            <h2>Bundle errors</h2>
+<pre><code>abstract: bundle authentication failed (wrong key or modified data)
+abstract: bundle claims to be unencrypted but a key was provided; refusing the downgrade</code></pre>
+            <p>The first means a wrong key or a tampered file; the second is downgrade protection, a loader holding a key refuses plain bundles.</p>
 
             <h2>Schema parse errors</h2>
-            <p>Errors such as <code>invalid schema line</code>, <code>schema is missing a name</code>, or <code>schema block was not closed</code> usually mean a typo in a <code>.abt</code> file. Check braces first; most strange schema errors start there.</p>
+            <p>Errors such as <code>invalid schema line</code>, <code>schema is missing a name</code>, or <code>schema block was not closed</code> usually mean a typo in a <code>.abt</code> file, and carry the line number. Check braces first; most strange schema errors start there.</p>
 
-            <div class="callout"><p>Diagnostics will get richer over time. The current rule is simple: when an error names a schema field, trust the schema first and fix the source around it.</p></div>
+            <div class="callout"><p>When an error names a schema field, trust the schema first and fix the source around it. When it names a line, start exactly there.</p></div>
         </article>
     </div>
 </main>

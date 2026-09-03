@@ -14,7 +14,7 @@ Use docs/ai/ for agent-facing notes, decisions, operating context, and handoff m
 
 - Use the configured user identity for all commits: Antonio M. <yosoyantoniomartinez@gmail.com>.
 - Do not attribute commits, branch names, pull requests, release notes, or repository history to AI systems.
-- Use branches under the ntonio-in-stem/ prefix for work intended to be pushed.
+- Use branches under the antonio-in-stem/ prefix for work intended to be pushed.
 - Do not push directly to main for repository changes. Create a pull request into main.
 - When the requested work is complete and checks are acceptable, the pull request may be approved/merged by the repository owner as part of the workflow.
 - Use m-project in new public-facing repository descriptions, README text, and planning docs.

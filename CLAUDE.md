@@ -7,6 +7,6 @@ Key requirements:
 - Work under the repository owner's configured Git identity.
 - Never describe version-control actions as AI-authored.
 - Use PRs for changes to main.
-- Prefer branches prefixed with ntonio-in-stem/.
+- Prefer branches prefixed with antonio-in-stem/.
 - Use m-project in new public-facing repo text.
 - Keep code changes scoped and intentional.

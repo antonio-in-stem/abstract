@@ -2,7 +2,7 @@
   "name": "abstract-language",
   "displayName": "Abstract Language",
   "description": "Syntax highlighting, completions, and CLI-backed linting for Abstract DSL files.",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "publisher": "minhocreates",
   "repository": {
     "type": "git",

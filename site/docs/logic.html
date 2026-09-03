@@ -32,11 +32,13 @@
             <span class="sidebar-title">Docs</span>
             <nav>
                 <a href="language.html">Language guide</a>
+                <a href="types.html">Types</a>
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
-                <a href="cli.html">CLI</a>
-                <a href="raw.html">RAW</a>
                 <a href="logic.html" aria-current="page">Logic blocks</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">Compiled data</a>
+                <a href="java.html">Java &amp; bundles</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
@@ -56,15 +58,34 @@
 }</code></pre>
             <p>The compiler validates the schema first, then evaluates the logic block bound to the instance template. A <code>derive</code> statement writes a computed value onto the current instance. If a <code>require</code> condition is false, compilation fails with the throw message.</p>
 
+            <h2>Branches</h2>
+<pre><code>logic Card {
+    if .kind == "big" {
+        derive .size = large
+    } else if .kind == "medium" {
+        derive .size = mid
+    } else {
+        derive .size = small
+    }
+}</code></pre>
+            <p><code>if</code> chains support <code>else if</code> and <code>else</code>. Both close-brace styles parse: <code>}</code> on its own line followed by <code>else {</code>, or the compact <code>} else {</code>.</p>
+
             <h2>Derivations</h2>
 <pre><code>logic Card {
-    derive .size = small
+    derive .size = small          // always writes
+
+    derive? .wave = 1             // writes only when the instance did not set it
 
     if .parts.2 exists {
         derive .size = large
     }
 }</code></pre>
-            <p>Use <code>derive</code> when a field is a consequence of other fields. The derived value is validated against the schema after logic runs.</p>
+            <p>Use <code>derive</code> when a field is a consequence of other fields; the value is validated against the schema after logic runs. <code>derive?</code> respects authored values: it fills the field only when it is missing, which is the clean way to express "default that the author may override".</p>
+            <p>Derive values interpolate variables. A value that is exactly one variable keeps its native type; mixed text becomes a string:</p>
+<pre><code>for $n in [3] {
+    derive .slot_count = $n                    // stays an int
+    derive .banner = "pack $id uses $n slots"  // interpolated text
+}</code></pre>
 
             <h2>Conditions</h2>
             <table class="table">
@@ -73,8 +94,9 @@
                     <tr><td><code>exists</code></td><td><code>.owner.contact exists</code></td><td>The path resolves to at least one value.</td></tr>
                     <tr><td><code>contains</code></td><td><code>.flags contains "public"</code></td><td>An array or projected path contains a value.</td></tr>
                     <tr><td><code>length(...)</code></td><td><code>length(.items) == 1</code></td><td>Counts array items or projected path results.</td></tr>
-                    <tr><td><code>==</code>, <code>!=</code></td><td><code>.status == "active"</code></td><td>String or integer equality.</td></tr>
-                    <tr><td><code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code></td><td><code>.variant_count &gt;= 2</code></td><td>Integer comparison.</td></tr>
+                    <tr><td><code>==</code>, <code>!=</code></td><td><code>.status == "active"</code></td><td>Equality across text, numbers, and booleans.</td></tr>
+                    <tr><td><code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code></td><td><code>.price &gt;= 99.5</code></td><td>Numeric comparison (ints and floats).</td></tr>
+                    <tr><td><code>not</code>, <code>!</code></td><td><code>not .flags contains "banned"</code></td><td>Negates the condition that follows. <code>!(...)</code> also works.</td></tr>
                     <tr><td><code>and</code>, <code>or</code></td><td><code>.a exists and .b exists</code></td><td>Boolean composition. <code>&amp;&amp;</code> and <code>||</code> also work.</td></tr>
                 </tbody>
             </table>

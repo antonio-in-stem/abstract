@@ -25,18 +25,20 @@
     <section class="doc-hero">
         <p class="eyebrow">Language guide</p>
         <h1>The shape of Abstract.</h1>
-        <p class="lede">Abstract has two author-facing file types. <code>.abt</code> files define schemas. <code>.ab</code> files define instances. The compiler reads both and emits validated JSON or YAML.</p>
+        <p class="lede">Abstract has two author-facing file types. <code>.abt</code> files define schemas. <code>.ab</code> files define instances. The compiler reads both and emits validated JSON, YAML, or RAW data, and can seal the result into encrypted bundles for applications.</p>
     </section>
     <div class="doc-shell">
         <aside class="sidebar">
             <span class="sidebar-title">Docs</span>
             <nav>
                 <a href="language.html" aria-current="page">Language guide</a>
+                <a href="types.html">Types</a>
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
+                <a href="logic.html">Logic blocks</a>
                 <a href="cli.html">CLI</a>
                 <a href="raw.html">Compiled data</a>
-                <a href="logic.html">Logic blocks</a>
+                <a href="java.html">Java &amp; bundles</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
@@ -57,11 +59,14 @@
             <p>Compiled data is printed by default. Add <code>true</code> as the final CLI argument when you want Abstract to write a sibling <code>.json</code> or <code>.yml</code> file.</p>
 
             <h2>Schemas</h2>
-            <p>A schema starts with <code>schema Name { ... }</code>. Field names are normalized to lowercase snake case. V0 supports scalar fields, nested groups, list fields, defaults, optional fields, and tagged fields.</p>
+            <p>A schema starts with <code>schema Name { ... }</code>. Field names are normalized to lowercase snake case. Fields can be <code>text</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>enum</code>, <code>file</code>, <code>image</code>, references to other schemas, nested groups, and lists, with defaults, optional markers, and tags. The full catalog lives in the <a href="types.html">type reference</a>.</p>
 <pre><code>schema Service {
     id: text(1..40)
     tier: enum(free, standard, premium)
     replicas: int(1..12) = 1
+    price: float(0..999) = 0.0
+    public: bool = false
+    icon: image(png 128x128) @optional
     notes: text(1..120) @optional
 }</code></pre>
 
@@ -95,15 +100,24 @@
 copy(key, value): (en_us, "Hello"), (es_*, "Hola")
 thresholds.{warning, critical}: 90</code></pre>
 
-            <h2>Cloning</h2>
-            <p>Clone syntax copies a previous instance and applies overrides. It is meant for families of data that share most fields but differ in a few intentional places.</p>
-<pre><code>&atlas.*
+            <h2>Cloning: the template-instance heart</h2>
+            <p>Clone syntax copies a previous instance and applies overrides. It is meant for families of data that share most fields but differ in a few intentional places. <code>&amp;id.*</code> clones everything; <code>&amp;id.field.path</code> clones one subtree; several clone lines merge in order, later clones winning per field.</p>
+<pre><code>&atlas.*                 // start from all of atlas
+&pricing_2026.tiers      // then borrow just the tiers subtree
 
 Product :: @id.beacon, @status.draft
     name: Beacon Export</code></pre>
 
+            <h2>Interpolation</h2>
+            <p>Strings and paths can reference the instance's own scalar fields with <code>$field</code> or <code>${field}</code>. Values resolve after clone overrides, which is what makes cloned families point at their own assets. <code>$$</code> writes a literal dollar sign.</p>
+<pre><code>Product :: @id.red_dragon
+    icon: ./textures/item/sets/$id/icon.png</code></pre>
+
+            <h2>Strict by default</h2>
+            <p>The compiler rejects fields the schema does not declare (with a "did you mean" suggestion), duplicate instance ids, and duplicate schema names. Values keep their authored types all the way to the output: <code>9.5</code> is a number, <code>true</code> is a boolean, and <code>1.21.5</code> stays text.</p>
+
             <h2>Current boundaries</h2>
-            <p>Version 0.1.0 is useful, but not finished. <code>logic</code> blocks can derive values and execute validation rules, but they are still intentionally smaller than a general programming language. The priority is a small, stable language with standard readable output before adding a larger ecosystem.</p>
+            <p>Version 0.2.0 stays deliberately small. <code>logic</code> blocks derive values, branch with <code>if / else if / else</code>, loop, and validate relationships, but they are not a general programming language. Outputs are JSON, YAML, RAW, and sealed <code>.abx</code> bundles for the <a href="java.html">Java runtime</a>. The priority remains a small, stable language with standard readable output.</p>
         </article>
     </div>
 </main>
