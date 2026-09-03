@@ -13,7 +13,7 @@ description: Use when working with m-project GitHub repositories, creating branc
 
 ## Branches and Pull Requests
 
-- Create work branches using the ntonio-in-stem/ prefix.
+- Create work branches using the antonio-in-stem/ prefix.
 - Do not push directly to main for normal work.
 - Push the branch, open a pull request into main, and complete the merge/auto-accept step when the user requests an end-to-end GitHub flow.
 - Prefer concise PR titles that describe the repository change, not the tooling used.
@@ -27,7 +27,6 @@ description: Use when working with m-project GitHub repositories, creating branc
 
 - Copy source content faithfully.
 - Do not edit imported code unless a path or reference must be corrected for the new layout.
-- Keep generated dependencies and local state out of commits: 
-ode_modules, 	arget, uild, dist, .gradle, .kotlin, .vite, databases, logs, caches, and private binaries.
+- Keep generated dependencies and local state out of commits: node_modules, target, build, dist, .gradle, .kotlin, .vite, databases, logs, caches, and private binaries.
 - Put local-only reference material in .local-references/, and keep it ignored.
 - Keep agent-facing material in docs/ai/ or .ai/skills/.
