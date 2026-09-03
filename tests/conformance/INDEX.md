@@ -1,6 +1,6 @@
 # Abstract 1.0 conformance corpus - index
 
-Total cases: 278
+Total cases: 282
 
 ## Counts by area
 
@@ -16,6 +16,7 @@ Total cases: 278
 | logic-engine | 28 |
 | media-bundle-crypto | 14 |
 | output-canon | 27 |
+| revision-7 | 4 |
 | schema-types | 30 |
 
 ## Counts by severity
@@ -24,15 +25,15 @@ Total cases: 278
 |---|---|
 | critical | 9 |
 | design | 19 |
-| major | 95 |
-| minor | 155 |
+| major | 96 |
+| minor | 158 |
 
 ## Counts by expected_kind
 
 | expected_kind | cases |
 |---|---|
-| document | 38 |
-| error | 127 |
+| document | 41 |
+| error | 128 |
 | ok | 2 |
 | undecided | 111 |
 
@@ -41,7 +42,7 @@ Total cases: 278
 | status | cases |
 |---|---|
 | manual | 9 |
-| ready | 269 |
+| ready | 273 |
 
 ## All cases
 
@@ -295,6 +296,10 @@ Total cases: 278
 | output-canon | OC-25 | design | document | Huge and tiny floats expand to 300+ digit decimal literals, and JSON output size is quadratic in nesting depth |
 | output-canon | OC-26 | minor | undecided | docs/raw-data.md's JSON example and CLI section do not match the emitter (inline arrays, missing RAW/.abraw, wrong write condition) |
 | output-canon | OC-27 | minor | undecided | Output-format tests are substring assertions only: no parser validation, no JSON/YAML equivalence, no key-safety, empty-project or empty-object coverage |
+| revision-7 | R7-01 | major | error | Seven `for` blocks nested over a literal list of ten cross the logic work limit of SPEC 3.7 and are E523 |
+| revision-7 | R7-02 | minor | document | Five of the same `for` blocks demand 111110 iterations, stay under the work limit and compile |
+| revision-7 | R7-03 | minor | document | A project whose sources declare schemas and logic but no instance compiles to an empty `data` array |
+| revision-7 | R7-04 | minor | document | Blank lines and comment lines may sit between a closing brace and its `else`, and between a `require` and its `else throw` |
 | schema-types | abs-skip | minor | error | --skip-assets does not skip on-disk checks for absolute paths, contradicting the CLI help and both docs |
 | schema-types | bad-default | minor | error | `abstract lint` reports 'ok' for a schema whose own defaults violate its own types — schema defaults are only validated when an instance happens to omit the field |
 | schema-types | bom | major | document | A UTF-8 BOM makes an entire .abt file invisible: schemas silently vanish and the error blames the instance |

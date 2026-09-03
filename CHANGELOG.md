@@ -6,6 +6,65 @@ and by the `abstract.format` number in every compiled document.
 
 ---
 
+## 1.0.1
+
+Five specification questions that the 1.0 freeze recorded as open are settled.
+Four of them only make the specification say what the compiler already did; one
+adds a limit, an error identifier and the code that enforces it.
+
+- **A project with schemas and no instances compiles to an empty document.**
+  §8.1 named single-file mode as the only way to reach an empty `data` array,
+  and §7.2 blesses a whole-project compile of a project with zero instances at
+  the same time. §8.1 now states both, and keeps them apart from the third
+  case: a project with no source files at all is E103 and emits no document.
+  No behaviour changed.
+
+- **E511's unreachable condition is removed.** §6.6 said an unbalanced
+  parenthesis was E511, which no input could produce: `(` and `)` ride the
+  value-bracket stack of §3.6, so an unclosed `(` is E203, a stray `)` is E205
+  and a `]` closing a `(` is E204, each reported while the file is lexed. §6.6
+  now names the two reasons the compiler does report — a token that cannot
+  begin an operand, and a token that is not an operator where one is due — and
+  §10.5's row and the reference site say the same. E511 stays in the catalogue
+  and stays reachable; no message changed.
+
+- **Blank lines and comment lines may sit between `}` and `else`.** §3.6 rule
+  (b) suppresses the line terminator when the next *token* is `else`, and
+  neither a blank line nor a comment line carries one. The strict reading of
+  the rule as "the next physical line" made a commented `else` E517. §3.6, §6.2
+  and §6.3 now state it, with an example, and the grammar's L5 says it too. The
+  parser already accepted it; there are now tests that keep it accepted, for
+  `} else`, `} else if` and `require` / `else throw` alike.
+
+- **Logic work is bounded, and E523 reports a program that crosses the bound.**
+  Nothing bounded the work a legal program could demand: §3.7's limits are
+  about nesting, and seven `for` blocks nested over ten-element lists sit
+  inside every one of them while asking for eleven million iterations. §3.7
+  gains a row — **the logic of one instance MUST NOT execute more than
+  1 000 000 loop iterations for one version** — counted as one unit per
+  execution of a `for` body, spent by every block that runs for that instance
+  in that version including nested `$(Schema)` blocks, and fresh again for the
+  next instance and the next version. Crossing it stops that instance and is
+  the new **E523**, positioned at the `for` whose iteration crossed the bound
+  and naming the bound. This is the only behavioural change in 1.0.1: a project
+  that compiled under 1.0.0 and demanded more than a million iterations for one
+  instance in one version is now refused.
+
+- **E413's `{value}` is defined for a `text` range.** A `text` range constrains
+  the value's length, so E413 substitutes the number of Unicode scalar values
+  in the value, never the text; §9.8 said `{value}` renders a scalar as JSON
+  would, which was right for `int` and `float` and wrong here. §9.8 now defines
+  both, and defines `{ranges}`: an integer part whose bounds are equal renders
+  as the bare number, so `text(2..2)` reads `2`, while a float part always
+  renders both bounds. The compiler already rendered exactly this, and the
+  catalogue's message template already matched it, so no message changed.
+
+Also: the conformance corpus gains a `revision-7` area with four cases — the
+work limit from both sides, the schemas-only project, and the commented `else`
+— for 282 cases in all.
+
+---
+
 ## 1.0.0
 
 - Plain (unencrypted) `.abx` containers now carry a keyless checksum in the header bytes a sealed container uses for its nonce, so a sealed container whose encryption flag was cleared is refused with or without a key. Plain containers written by 0.2.0 no longer open; sealed containers are unaffected. The Rust and Java readers agree byte for byte.

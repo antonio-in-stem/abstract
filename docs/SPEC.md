@@ -279,7 +279,7 @@ A `{` that opens a schema body (§4.2), a group body (§4.7), a logic block (§6
 There are exactly two further continuation rules, and both suppress the `NL`:
 
 - **(a)** inside a header tag list (§5.2), when the logical line so far ends with `,`;
-- **(b)** inside a logic block (§6), when the next token after the line terminator is `else`, so that `require …` / `else throw …` and `}` / `else {` may be written on two physical lines.
+- **(b)** inside a logic block (§6), when the next token after the line terminator is `else`, so that `require …` / `else throw …` and `}` / `else {` may be written on two physical lines. The test is on the next **token**, not on the next physical line: blank lines and comment lines carry no token (§3.1, §3.2), so any number of them MAY sit between the `}` and its `else`, or between a `require` condition and its `else throw`, and the `NL` is still suppressed. The rule does not ask what *precedes* the `else`; it joins the lines wherever the next token is one. That is well formed only where §6.3 admits an `else`, and elsewhere the joined line is malformed and is reported as such (§6.3).
 
 There is no other continuation mechanism. In particular a trailing `,` at value-bracket depth 0 does **not** continue a statement; it is E442.
 
@@ -308,7 +308,7 @@ Product :: @id.atlas,
 
 ### 3.7 Nesting and size limits
 
-An implementation MUST enforce these limits and MUST report E209 when one is exceeded, naming the subject and the limit. The limits exist so that a hostile or corrupted source can never exhaust the stack.
+An implementation MUST enforce these limits and MUST report the identifier named below when one is exceeded, naming the subject and the limit. The limits exist so that a hostile or corrupted source can never exhaust the stack, and so that no legal program can ask the compiler for unbounded work.
 
 | Subject | Limit |
 |---|---|
@@ -319,12 +319,17 @@ An implementation MUST enforce these limits and MUST report E209 when one is exc
 | Length of a clone chain (transitive clone depth) | 64 |
 | Nesting depth of one compiled instance | 64 |
 | Number of versions in the project range (`max - min + 1`) | 4096 |
+| Loop iterations executed by the logic of one instance for one version | 1 000 000 |
 
-The last row is the one limit **not** reported as E209: a range too wide is a defect of the `versions` declaration itself, so it is E602 and its message names the bound (§4.12, §10.6). Every other row is E209.
+The last two rows are the limits **not** reported as E209. A range too wide is a defect of the `versions` declaration itself, so it is E602 and its message names the bound (§4.12, §10.6). Logic work past its bound is a defect of what a program *does* rather than of how deeply it is written, so it is E523 and its message names the bound (§6.2, §10.5). Every other row is E209.
 
 **How instance depth is counted.** The subject of the depth row is the resolved value tree of one instance, counted from **the instance object as level 1**; every object and every list one level down adds one. A scalar leaf adds nothing, and the document envelope — the top-level object, the `data` array, the `overlays` array — adds nothing, because it is fixed by §8.1 and is not something a source can nest. So an instance whose deepest chain is `child.child.…child.leaf` with 61 `child` objects is 62 levels deep and compiles, and a schema that nests groups 63 deep is 64 levels deep and compiles: the depth row and the group row of this table agree on the same structure.
 
 The limit is checked once, in validation (§7.3 steps 3 and 7), and the diagnostic is positioned at the statement that reaches the limit, or at the instance header when the depth is reached through defaults, clones or logic. The output stage performs **no** depth check of its own: by the time a document is rendered its depth is already known to be within the limit.
+
+**How logic work is counted.** Every other row of the table bounds the *shape* of a program; the last row bounds the *work* one demands, because nesting alone does not: seven `for` blocks nested over ten-element lists are seven levels deep, well inside every other row, and ask for eleven million iterations. One unit of work is **one execution of the body of a `for`** — one iteration. Nothing else is charged: `derive`, `derive?`, `require` and `if` each run at most once per enclosing iteration, so charging the iteration bounds the whole evaluation. The budget is spent by every `for` that runs while one instance is compiled for one version — the block of the instance's own schema and the block of every nested `$(Schema)` value alike (§6.11) — and it is fresh again for the next version and for the next instance, so the bound is on one instance-version and never on the project.
+
+The check is made in §7.3 step 5, as the iteration is about to run, and the diagnostic is positioned at the `for` statement whose iteration crossed the bound. An implementation MUST stop that instance there: it MUST NOT run the remaining iterations, which is what makes the bound a bound and not a report. So seven `for` blocks nested over a literal list of ten elements demand 11 111 110 iterations and are E523, reported at the 1 000 001st; five of them demand 111 110 and compile.
 
 An implementation MUST NOT abort, panic or crash on any input. Every failure MUST be a diagnostic with an identifier and, where a source position is known, a position.
 ---
@@ -1302,6 +1307,10 @@ Grammar: `logic_statement`.
 
 Statements execute in source order. Only `derive` and `derive?` mutate; `require`, `if` and `for` never write.
 
+A statement's logical line MAY be broken before an `else`: `}` and `else`, and a `require` condition and its `else throw`, MAY each be written on two physical lines, with any number of blank lines and comment lines between them (§3.6 rule (b), §6.3).
+
+The work a `for` may demand is bounded. §3.7 limits the loop iterations the logic of one instance may execute for one version to 1 000 000, counting one unit for each execution of a `for` body; a program that crosses the bound is **E523** and its message names the bound (§3.7, §10.5).
+
 The elements of a **literal list** iterable are interpreted without a target type, by the literal grammars of §3.5: an integer or float literal is a number, `true` and `false` are booleans, a `quoted_string` is a string, and any other bare text is a string, normalised as an identifier when it is one. Iterating a list field that resolves to no value, or to an empty list, runs the body zero times and is not an error.
 
 ```abstract
@@ -1327,8 +1336,31 @@ logic Product {
 
 - A block opens with `{` at the end of the statement's logical line and closes with `}`.
 - `}` and a following `else` MAY share a physical line (`} else {`) or MAY be written on two lines (`}` then `else {`), and a `require` condition and its `else throw` MAY likewise be written on two physical lines: inside a logic block a line terminator immediately before `else` does not end the logical line (§3.6, rule (b)).
-- An `else` that does not immediately follow a closing `}` of an `if` is E517.
-- Blocks nest to the limit in §3.7 (E209).
+- **Blank lines and comment lines MAY sit between the `}` and the `else`.** Rule (b) of §3.6 tests the next token, and neither a blank line nor a `//` comment line produces one, so any number of them may separate a `}` from its `else`, a `}` from its `else if`, and a `require` condition from its `else throw`. This is not a third continuation rule: it is what "the next token is `else`" means.
+- An `else` that does not immediately follow a closing `}` of an `if` is E517: an `else` that begins a logical line of its own — at the top of a block, or after a block that is not an `if` — has no `if` to attach to. An `else` that follows some **other** statement is a different fault: rule (b) joins it to that statement rather than ending the line, so the malformed logical line is reported where it is malformed, as E210 at the `else` or at the token the statement was still expecting. Neither spelling is ever silently accepted.
+- Blocks nest to the limit in §3.7 (E209), and the iterations their `for` statements execute are bounded by the work limit of §3.7 (E523).
+
+```abstract
+logic Item {
+    if .status == "active" {
+        derive .visibility = public
+    }
+
+    // the else may sit past a blank line and a comment
+    else if .status == "retired" {
+        derive .visibility = hidden
+    }
+
+    else {
+        derive .visibility = internal
+    }
+
+    require .name exists
+
+        // and so may the else of a require
+        else throw "An item needs a name."
+}
+```
 
 ### 6.4 `derive` and `derive?`
 
@@ -1405,7 +1437,8 @@ Grammar: `condition`, `or_condition`, `and_condition`, `not_condition`, `compari
 - `not` applies to a whole comparison: `not .a == .b` means `not (.a == .b)`, and `not .flags contains "banned"` means `not (.flags contains "banned")`. To negate an operand, parenthesise it: `(not .a) == .b`.
 - Comparisons do not chain: `a < b < c` is E512.
 - A condition MUST evaluate to a boolean. A bare path is a valid condition only when it names a `bool` field; anything else (a bare `text` field, a bare `length(...)`, a bare literal) is E513. Abstract has no truthiness.
-- An unknown operator, a missing operand, or an unbalanced parenthesis is E511.
+- A malformed condition is E511, whose message quotes the condition as written and names the reason. Exactly two reasons are reachable, and together they are the whole of E511: a token that **cannot begin an operand** where an operand is due — `.a === "b"`, whose third `=` lands in operand position, `if .a == {`, and a condition that starts with `and` — and a token that is **not an operator** where the condition should have ended or continued, as in `.a == "b" .c` and `(.a) xor (.b)`.
+- An unbalanced parenthesis is **not** E511. `(` and `)` are value brackets (§3.6), so an unclosed `(` is E203, a `)` with nothing open is E205 and a `]` closing a `(` is E204; each is reported while the file is lexed, before any condition is parsed, and §11.1's precedence keeps it (P1 precedes P3). A condition can therefore never reach the parser with its parentheses out of balance.
 - `!` is the spelling of `not`; `!=` is always the inequality operator and is never parsed as `!` followed by `=`.
 
 **The `version` built-in.** `version` is an operand whose value is the **integer version currently being compiled** (§7.4). It is the only built-in value in the logic language.
@@ -1576,7 +1609,7 @@ For version `v` and instance `I`, in the order of §2.7. `I` is compiled for `v`
 2. **Interpolation.** Build the variable table from the authored object's root scalar fields and resolve every `$` reference in the authored object (§5.11). The table is retained for step 4, where defaults are interpolated against it.
 3. **Authored type checks and interpretation.** Interpret every present value against the declared type of its field (§5.10) — brace expansion, enum wildcard expansion, `#tag` normalisation, per-element type, range and enum checks, then list coercion and the cardinality check — considering only fields that exist in `v` (§4.12), and replace each authored syntax value with its interpreted value. An assignment to a field that does not exist in `v` cannot occur, because such statements are rejected before P4 (E430, E440).
 4. **Defaults.** Walk the object top-down. For every field that exists in `v`, whose parent object is **present** (§4.7), that is absent, and that declares a default: interpolate the default (§5.11), then set and validate it. An absent `@optional` group or `$(Schema)` field is not walked into, so defaults inside it are not filled and it stays absent. The root object is always present.
-5. **Logic.** Evaluate nested schema logic, then this schema's logic (§6.11).
+5. **Logic.** Evaluate nested schema logic, then this schema's logic (§6.11). The loop iterations every block run here executes are charged against this instance-version's work budget, and crossing it is E523 (§3.7).
 6. **Required-field check.** Every field that exists in `v` and is neither `@optional` nor defaulted MUST have a value (E411).
 7. **Full re-validation.** Interpret and validate the whole object again (§5.10): types, ranges, enums, cardinality, `#tag` normalisation, list coercion, `ref` resolution, unknown-field rejection, and — unless `--skip-assets` is in force — `file` and `image` on-disk checks. Interpretation is idempotent, so nothing produced in step 3 changes here; in particular a brace pattern expanded in step 3 is now an ordinary path and is not expanded again.
 8. **Key ordering.** Reorder the object as §8.3 prescribes.
@@ -1743,7 +1776,12 @@ Either array MAY be empty; an overlay whose `data` and `removed` are both empty 
 }
 ```
 
-An empty `data` array is only reachable in single-file mode when the named files declare no instances; a project with no sources at all is E103.
+An empty `data` array is reachable in exactly two ways, and both of them are **successful** compiles that emit the envelope above with `data` and `overlays` both empty:
+
+- **single-file mode** (§2.5), when the named files declare no instances;
+- **a whole-project compile of a project whose sources declare schemas but no instances.** Discovery found source files and none of them declares an instance — a project of `.abt` files alone is the ordinary shape of it. §7.2 blesses such a project explicitly: P3 checks every schema and every logic block against no instance at all, so `abstract lint` on it reports `abstract: ok` and exits 0, and `abstract compile` on it emits the empty document.
+
+A project with **no source files at all** is neither: discovery collects nothing, which is E103 (§2.4, §10.1), and no document is emitted. An empty directory is not an empty project.
 
 ### 8.2 The instance object
 
@@ -2020,7 +2058,11 @@ It does **not** skip: the extension check (E420), the path-confinement check (E4
 - `<message>` is one sentence ending with a period.
 - Zero or more `note:` lines follow, indented by two spaces, each naming a second position (`<path>:<line>:<col>: note: …`) when it refers to one — for example the first declaration site of a duplicate.
 
-**Substitutions.** `{context}` is the dotted path of the object that contains the field, rooted at the instance id: the root object is the bare id (`atlas`), a group or `$(Schema)` value is `atlas.owner`, and an element of a list is `atlas.copy[2]`, with a 0-based index. `{field}` is the normalised field name. `{kind}` is one of `text`, `int`, `float`, `bool`, `enum`, `file`, `image`, `ref`, `object`, `list`, `absent`. A list substitution (`{members}`, `{ranges}`, `{list}`, `{columns}`) renders its items in declaration order, each without quotes, separated by `, `. `{versions}` renders a set of versions as ascending maximal ranges, `1..2` for a range and `3` for a single version, separated by `, `. `{value}` renders a scalar exactly as §8.7 and §8.8 would render it in JSON.
+**Substitutions.** `{context}` is the dotted path of the object that contains the field, rooted at the instance id: the root object is the bare id (`atlas`), a group or `$(Schema)` value is `atlas.owner`, and an element of a list is `atlas.copy[2]`, with a 0-based index. `{field}` is the normalised field name. `{kind}` is one of `text`, `int`, `float`, `bool`, `enum`, `file`, `image`, `ref`, `object`, `list`, `absent`. A list substitution (`{members}`, `{list}`, `{columns}`) renders its items in declaration order, each without quotes, separated by `, `. `{versions}` renders a set of versions as ascending maximal ranges, `1..2` for a range and `3` for a single version, separated by `, `. `{v}` is a single version, as a decimal integer.
+
+`{value}` renders a scalar exactly as §8.7 and §8.8 would render it in JSON, with one exception that E413 fixes explicitly. A `text` range constrains the value's **length**, not the value, so in E413 against a `text` range — and in E413 against an instance id, whose subject is the `id` declaration of §4.11 — `{value}` is the **number of Unicode scalar values in the value**, written as a decimal integer, unquoted; the text itself does not appear in the message at all. The count is the one §4.4.1 constrains and the one `<col>` above uses: a combining mark counts as one and an astral character counts as one, and neither bytes nor UTF-16 code units are ever counted. Against an `int` or a `float` range `{value}` is the number itself, rendered by §8.7. A five-character value against `text(1..3)` is therefore `Range mismatch at atlas.tier: 5 is not in 1..3.`, and an eight-character id against `id: text(1..4)` is `Range mismatch at abcdefgh.id: 8 is not in 1..4.`
+
+`{ranges}` renders a range list (§4.5) part by part in declaration order, separated by `, `. An interval renders as `{min}..{max}`. An **integer part whose two bounds are equal renders as the bare number**, because `2..2` and the exact value `2` are the same constraint and must not read as two different ones: `text(1..3, 8, 12..14)` renders as `1..3, 8, 12..14`, and both `text(2..2)` and `text(2)` render as `2`. A float part always renders both bounds, in the spelling of §8.7, so `float(1.0..1.0)` renders as `1.0..1.0`.
 
 **Suggestions.** A diagnostic that offers `Did you mean '{suggestion}'?` computes it as follows. The algorithm is normative because suggestions appear in the byte-exact `err.txt` of §11.2.
 
@@ -2108,7 +2150,7 @@ Every identifier is stable: within 1.x an identifier is never reused for a diffe
 | E410 | Assignment to `template` or `id` | `'{name}' is a reserved envelope key and cannot be assigned.` | `id: other` |
 | E411 | Required field absent after logic | `Missing required field {context}.{field}.` + `note: this field exists in versions {versions} and has no value in version {v}.` | omitted `name` |
 | E412 | Value shape does not match the type | `Type mismatch at {context}.{field}: expected {type}, found {found}.` | `count: "5"` |
-| E413 | Value outside declared ranges, including an instance id outside the `id` range (§4.11) | `Range mismatch at {context}.{field}: {value} is not in {ranges}.` | `replicas: 99`; a 70-character id against the implicit `id: text(1..64)` |
+| E413 | Value outside declared ranges, including an instance id outside the `id` range (§4.11) | `Range mismatch at {context}.{field}: {value} is not in {ranges}.` — against a `text` range and against an id, `{value}` is the value's scalar count, not its text (§9.8) | `replicas: 99`; a 70-character id against the implicit `id: text(1..64)`, which reads `70 is not in 1..64` |
 | E414 | Value not an enum member | `Enum mismatch at {context}.{field}: '{value}' is not one of {members}.` (+ suggestion) | `status: activ` |
 | E415 | Wildcard matched nothing | `Wildcard '{prefix}*' matches no member of {members}.` | `flags: cor_*` |
 | E416 | Tuple row arity mismatch | `Tuple row {n} has {found} values but {field} declares {expected} columns ({columns}).` | `(a, b, c)` for 2 columns |
@@ -2165,7 +2207,7 @@ error[E422]: Image content mismatch at frost.icon: 'a.bmp' is unreadable, not bm
 | E508 | Throw message is not a quoted string | `A throw message must be a quoted string.` | `else throw 42` |
 | E509 | `for` over a non-list | `'{path}' is not a list; for iterates lists and literal lists.` | `for $x in .name` |
 | E510 | Unbound loop variable | `Unbound variable '${name}'.` | `$slot` outside its loop |
-| E511 | Malformed condition | `Invalid condition '{text}': {reason}.` | `.a === "b"` |
+| E511 | Malformed condition: a token that cannot begin an operand, or a token that is not an operator where one is due (§6.6) | `Invalid condition '{text}': {reason}.` | `.a === "b"`, `(.a) xor (.b)` |
 | E512 | Chained comparison | `Comparisons cannot be chained; use 'and'.` | `.a < .b < .c` |
 | E513 | Operand type not allowed | `Operator '{op}' cannot compare {left} and {right}.` | `.tags == .other` |
 | E514 | Invalid `length()` argument | `length() requires a list or text value; '{path}' is {kind}.` | `length(.count)` |
@@ -2177,6 +2219,7 @@ error[E422]: Image content mismatch at frost.icon: 'a.bmp' is unreadable, not bm
 | E520 | Loop variable in a `derive` target | `A derive target cannot contain the variable '${name}'; write the field name.` | `derive .slots.$slot.mode = x` |
 | E521 | A `derive` executed against a field absent in this version | `derive cannot write {context}.{field} in version {v}; the field exists in versions {versions}.` + a note at the instance header + `note: guard the statement, for example with 'if version >= {n}'.` | `derive .glow = true` in version 1, where `glow` is `@since(2)` |
 | E522 | An interpolated `$name` in a `derive` value or a `throw` message is bound to a value that is not a scalar | `Variable '${name}' is not a scalar; it is {kind}.` + `note: interpolation inserts text; read a scalar field of it instead.` | `derive .label = cap-$c` inside `for $c in .caps`, where `caps` is a list of groups |
+| E523 | The logic of one instance executed more loop iterations for one version than §3.7 allows | `Logic work limit exceeded at {context}: the logic executed more than 1000000 loop iterations in version {v}.` + a note at the instance header | seven `for` blocks nested over a literal list of ten |
 
 ### 10.6 E6xx — versions
 
@@ -2273,7 +2316,8 @@ A conforming suite MUST contain at least one case for:
 - every command of §9.2 and every reachable `E8xx` identifier, exercised through the binary: `--out`, `--out=`, `--skip-assets`, `--max-errors`, a repeated flag, an unknown flag, an unknown format keyword, a mixed file-and-directory invocation, a destination the compiler must refuse, and a run piped into a reader that closes stdout;
 - validity: the runner MUST parse `out.json` as JSON and `out.yml` as YAML in addition to comparing bytes, so that a syntactically invalid document cannot pass;
 - cross-format equivalence: for one project the JSON and YAML cases MUST carry the same data, verified by the runner after coercing every mapping key to a string;
-- negative logic: at least one case for each of E501–E522, and one determinism case proving that two runs of a project whose logic fails report the same first failing `require`.
+- negative logic: at least one case for each of E501–E523, and one determinism case proving that two runs of a project whose logic fails report the same first failing `require`;
+- the work limit of §3.7 from both sides: a project whose logic crosses it (E523) and one that stays under it and compiles.
 ---
 
 ## Appendix A — Migration from 0.2.0

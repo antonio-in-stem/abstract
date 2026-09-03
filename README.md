@@ -8,7 +8,7 @@ YAML or RAW document that every other tool reads.
 .abt schemas + .ab instances  ->  abstract compile  ->  JSON | YAML | RAW
 ```
 
-Version 1.0.0 is the first stable definition of the language. It is specified
+Version 1.0 is the first stable definition of the language. It is specified
 byte for byte in [`docs/SPEC.md`](docs/SPEC.md), with the complete grammar in
 [`docs/GRAMMAR.ebnf`](docs/GRAMMAR.ebnf). The compiler is written in Rust with
 **zero dependencies**.
@@ -206,7 +206,7 @@ abstract/                  the repository root
   java/                    optional Java runtime for sealed containers
   scripts/                 install.ps1, install.sh
   site/                    the static documentation website
-  CHANGELOG.md             every change in 1.0.0, with before and after
+  CHANGELOG.md             every release, with before and after
 ```
 
 A **project** you author looks like this:
@@ -247,8 +247,8 @@ Then:
   a checklist for assistants and agents writing Abstract.
 - [`docs/examples/README.md`](docs/examples/README.md) — every documented
   example as a project you can compile.
-- [`CHANGELOG.md`](CHANGELOG.md) — every 1.0.0 change with before and after, and
-  the migration checklist.
+- [`CHANGELOG.md`](CHANGELOG.md) — every release, with before and after, and the
+  migration checklist.
 
 ---
 

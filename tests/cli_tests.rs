@@ -773,6 +773,50 @@ fn compile_writes_exactly_the_stdout_bytes_to_out() {
 }
 
 #[test]
+fn a_project_with_schemas_and_no_instances_compiles_to_an_empty_document() {
+    // SPEC §8.1: a whole-project compile of a project whose sources declare
+    // schemas but no instance is the second way to an empty `data` array,
+    // and it is a success. SPEC §7.2 checks every schema and logic block
+    // against no instance at all, so `lint` reports ok.
+    let root = temp_dir("schemas_only");
+    write(
+        &root,
+        "data/templates/item.abt",
+        "schema Item {\n    name: text(1..40)\n    ready: bool @optional\n}\n\
+         logic Item {\n    if .name == \"a\" {\n        derive .ready = true\n    }\n}\n",
+    );
+
+    let linted = run_in(&root, &["lint", "data"]);
+    linted.assert_code(0);
+    assert_eq!(linted.stdout, "");
+    assert_eq!(linted.stderr, "abstract: ok\n");
+
+    let compiled = run_in(&root, &["compile", "data", "JSON"]);
+    compiled.assert_code(0);
+    assert!(
+        compiled.stdout.contains("\"data\": []"),
+        "{}",
+        compiled.stdout
+    );
+    assert!(
+        compiled.stdout.contains("\"overlays\": []"),
+        "{}",
+        compiled.stdout
+    );
+
+    // A project with no source files at all is the third case, and it is
+    // E103 rather than an empty document (SPEC §2.4, §8.1).
+    let bare = temp_dir("no_sources");
+    write(&bare, "data/readme.txt", "not a source\n");
+    let refused = run_in(&bare, &["compile", "data", "JSON"]);
+    refused.assert_code(1);
+    assert!(refused.stderr.contains("error[E103]"), "{}", refused.stderr);
+    let _ = fs::remove_dir_all(&bare);
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
 fn lint_prints_ok_to_stderr_and_nothing_to_stdout() {
     let root = sample_project("lint_ok");
     let run = run_in(&root, &["lint", "data"]);

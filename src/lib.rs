@@ -72,6 +72,10 @@ pub mod limits {
     pub const CLONE_CHAIN: usize = 64;
     /// Nesting depth of the emitted document.
     pub const DOCUMENT_DEPTH: usize = 64;
+    /// Loop iterations the logic of one instance may execute for one
+    /// version. This is the one limit of SPEC §3.7 that bounds work
+    /// rather than depth, and exceeding it is E523, not E209.
+    pub const LOGIC_WORK: u64 = 1_000_000;
 }
 
 /// Compiler behaviour switches.

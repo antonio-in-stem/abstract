@@ -1,0 +1,10 @@
+schema T {
+    name: text(1..40)
+    ready: bool @optional
+}
+
+logic T {
+    if .name == "a" {
+        derive .ready = true
+    }
+}

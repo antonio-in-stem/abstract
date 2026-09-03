@@ -19,14 +19,15 @@
 //! Because P3 decides everything that can be decided from the schema, the
 //! evaluator has very little left to report: a failed `require` (E515), a
 //! `derive` that executes against a field absent in this version (E521), a
-//! `derive` whose value cannot be assigned to its target (E412) and an unknown
-//! `$name` in a value or a message (E425).
+//! `derive` whose value cannot be assigned to its target (E412), an unknown
+//! `$name` in a value or a message (E425), and logic that demands more loop
+//! iterations than SPEC §3.7 allows one instance in one version (E523).
 
 use crate::ast::Located;
 use crate::diagnostics::{Diagnostic, Diagnostics, ErrorId, Note};
 use crate::instance::{ListSpelling, SyntaxValue};
 use crate::lexer::{is_float_literal, is_identifier, is_int_literal, normalise, Token, TokenKind};
-use crate::limits::{BRACKET_DEPTH, LOGIC_BLOCK_DEPTH, PATH_SEGMENTS};
+use crate::limits::{BRACKET_DEPTH, LOGIC_BLOCK_DEPTH, LOGIC_WORK, PATH_SEGMENTS};
 use crate::resolve::{
     element_fields, lookup_path, substitute, variable_table, AuthoredObject, PathLookup, Step,
     ValuePath, VariableTable,
@@ -1071,6 +1072,12 @@ impl<'a> Parser<'a> {
             self.bump();
             let inner = self.condition(text, depth + 1)?;
             if !self.at_punctuation(")") {
+                // Defensive only, and no condition reaches it: `(` and `)`
+                // ride the value-bracket stack of SPEC §3.6, so an unclosed
+                // `(` is E203 and a stray `)` is E205, both reported while
+                // the file is lexed and therefore before this parser runs.
+                // SPEC §6.6 states the two reasons that do reach E511 and
+                // no longer names this one.
                 self.report_invalid(text, "the parentheses are unbalanced");
                 return None;
             }
@@ -2505,8 +2512,9 @@ impl<'t> Evaluator<'_, 't> {
                 variable,
                 iterable,
                 body,
+                at,
                 ..
-            } => self.for_statement(variable, iterable, body, object),
+            } => self.for_statement(variable, iterable, body, at, object),
         }
     }
 
@@ -2515,6 +2523,7 @@ impl<'t> Evaluator<'_, 't> {
         variable: &str,
         iterable: &Iterable,
         body: &[LogicStatement],
+        at: &Located,
         object: &mut AuthoredObject,
     ) -> Result<(), Diagnostics> {
         let elements: Vec<(SyntaxValue, Shape<'t>)> = match iterable {
@@ -2543,6 +2552,7 @@ impl<'t> Evaluator<'_, 't> {
         };
 
         for (index, (value, shape)) in elements.into_iter().enumerate() {
+            self.charge(at)?;
             self.loops.push(LoopBinding {
                 name: variable.to_string(),
                 value,
@@ -2554,6 +2564,27 @@ impl<'t> Evaluator<'_, 't> {
             outcome?;
         }
         Ok(())
+    }
+
+    /// SPEC §3.7: one unit of logic work is one execution of a `for` body,
+    /// and one instance may spend [`LOGIC_WORK`] of them in one version.
+    /// Nothing else in the language multiplies: `derive`, `require` and
+    /// `if` each run at most once per enclosing iteration, so charging the
+    /// iteration bounds the whole evaluation. Crossing the bound is E523,
+    /// reported at the `for` whose iteration crossed it.
+    fn charge(&self, at: &Located) -> Result<(), Diagnostics> {
+        if self.validation.charge_logic_work() {
+            return Ok(());
+        }
+        Err(self.diagnostic(
+            ErrorId::E523,
+            at,
+            format!(
+                "Logic work limit exceeded at {}: the logic executed more than {LOGIC_WORK} loop iterations in version {}.",
+                self.binding.context, self.validation.version
+            ),
+            Vec::new(),
+        ))
     }
 
     // ------------------------------------------------------------- derive
@@ -3608,6 +3639,113 @@ mod tests {
         let text = "schema T {\n    wave: int = 1\n}\nlogic T {\n    derive? .wave = 3\n}\n";
         assert_eq!(ids(&check(text)), [ErrorId::E518]);
     }
+
+    #[test]
+    fn blank_lines_and_comments_may_sit_between_a_block_and_its_else() {
+        // SPEC §3.6 rule (b), §6.3: the rule tests the next *token*, and
+        // neither a blank line nor a comment line produces one, so any
+        // number of them may separate a `}` from its `else`, a `}` from its
+        // `else if`, and a `require` condition from its `else throw`.
+        let tables = tables(&with_logic(
+            "    if .ready == true {\n\
+             \x20       derive .name = \"a\"\n\
+             \x20   }\n\
+             \n\
+             \x20   // a comment between the brace and the else if\n\
+             \x20   else if .count == 1 {\n\
+             \x20       derive .name = \"b\"\n\
+             \x20   }\n\
+             \n\
+             \x20   else {\n\
+             \x20       derive .name = \"c\"\n\
+             \x20   }\n\
+             \n\
+             \x20   require .count > 0\n\
+             \n\
+             \x20       // and between a require and its else\n\
+             \x20       else throw \"positive\"\n",
+        ))
+        .expect("the block parses");
+        let block = tables.logic_for("T").expect("a block");
+        assert_eq!(block.statements.len(), 2);
+        let LogicStatement::If {
+            branches,
+            otherwise,
+            ..
+        } = &block.statements[0]
+        else {
+            panic!("an if");
+        };
+        assert_eq!(branches.len(), 2);
+        assert!(otherwise.is_some());
+        assert!(matches!(
+            block.statements[1],
+            LogicStatement::Require { .. }
+        ));
+        assert!(check_logic_blocks(&tables).is_empty());
+    }
+
+    #[test]
+    fn a_statement_between_a_block_and_its_else_is_malformed() {
+        // Only blank lines and comments carry no token. Rule (b) does not
+        // ask what precedes the `else`, so a statement in between is joined
+        // to it and the joined logical line is malformed where it is
+        // malformed — not silently accepted (SPEC §3.6 rule (b), §6.3).
+        let errors = check(&with_logic(
+            "    if .ready == true {\n\
+             \x20       derive .name = \"a\"\n\
+             \x20   }\n\
+             \x20   derive .count = 1\n\
+             \x20   else {\n\
+             \x20       derive .name = \"c\"\n\
+             \x20   }\n",
+        ));
+        assert_eq!(errors.first().map(|item| item.id), Some(ErrorId::E210));
+
+        // An `else` that does begin a logical line is E517.
+        assert_eq!(
+            check(&with_logic("    else {\n    }\n"))
+                .first()
+                .map(|item| item.id),
+            Some(ErrorId::E517)
+        );
+    }
+
+    #[test]
+    fn e511_reports_the_two_reachable_malformed_conditions() {
+        // SPEC §6.6: a token that cannot begin an operand, and a token
+        // that is not an operator where one is due. There is no third.
+        let errors = check(&with_logic(
+            "    require .name === \"a\" else throw \"x\"\n",
+        ));
+        assert_eq!(ids(&errors), [ErrorId::E511]);
+        let text = errors.to_string();
+        assert!(text.contains("'=' is not an operand"), "{text}");
+
+        let errors = check(&with_logic(
+            "    require (.ready == true) xor (.count == 1) else throw \"x\"\n",
+        ));
+        assert_eq!(ids(&errors), [ErrorId::E511]);
+        let text = errors.to_string();
+        assert!(text.contains("'xor' is not an operator"), "{text}");
+    }
+
+    #[test]
+    fn an_unbalanced_parenthesis_is_lexical_and_never_e511() {
+        // SPEC §6.6: `(` and `)` ride the value-bracket stack of §3.6, so
+        // the lexer reports E203 and E205 before a condition is parsed.
+        let errors = check(&with_logic(
+            "    require (.ready == true else throw \"x\"\n",
+        ));
+        assert_eq!(errors.first().map(|item| item.id), Some(ErrorId::E203));
+        assert!(!ids(&errors).contains(&ErrorId::E511));
+
+        let errors = check(&with_logic(
+            "    require .ready == true) else throw \"x\"\n",
+        ));
+        assert_eq!(errors.first().map(|item| item.id), Some(ErrorId::E205));
+        assert!(!ids(&errors).contains(&ErrorId::E511));
+    }
 }
 
 /// Evaluation, run through the whole of P2 to P4 so that the order of SPEC
@@ -4064,5 +4202,72 @@ mod evaluation_tests {
         let second = failure(template, instance).to_string();
         assert_eq!(first, second);
         assert!(first.contains("at index 1, item bad."), "{first}");
+    }
+
+    /// A logic block of `widths.len()` nested `for` statements, the outer
+    /// one over a literal list of `widths[0]` elements and so on inward.
+    /// It executes `sum over k of (widths[0] * .. * widths[k])` bodies,
+    /// which is what SPEC §3.7 charges.
+    fn nested_loops(widths: &[usize]) -> String {
+        let mut text = String::from("schema T {\n    seen: int @optional\n}\nlogic T {\n");
+        for (level, width) in widths.iter().enumerate() {
+            let list = (1..=*width)
+                .map(|n| n.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            let pad = "    ".repeat(level + 1);
+            text.push_str(&format!("{pad}for $v{level} in [{list}] {{\n"));
+        }
+        let pad = "    ".repeat(widths.len() + 1);
+        text.push_str(&format!("{pad}derive .seen = $v{}\n", widths.len() - 1));
+        for level in (0..widths.len()).rev() {
+            text.push_str(&format!("{}}}\n", "    ".repeat(level + 1)));
+        }
+        text.push_str("}\n");
+        text
+    }
+
+    #[test]
+    fn logic_work_past_the_limit_of_the_specification_is_e523() {
+        // SPEC §3.7: seven `for` blocks over a literal list of ten demand
+        // 11 111 110 iterations and are E523, reported at the 1 000 001st
+        // and at the `for` whose iteration crossed the bound.
+        let errors = failure(&nested_loops(&[10; 7]), "T :: @id.one\n");
+        assert_eq!(errors.first().map(|item| item.id), Some(ErrorId::E523));
+        let text = errors.to_string();
+        assert!(
+            text.contains(
+                "Logic work limit exceeded at one: the logic executed more than \
+                 1000000 loop iterations in version 1."
+            ),
+            "{text}"
+        );
+        // The bound is named, and the position is the second `for`: one
+        // iteration of it costs 111 111, and the tenth crosses 1 000 000.
+        assert!(text.contains("data/schema.abt:6:9"), "{text}");
+    }
+
+    #[test]
+    fn logic_work_under_the_limit_compiles() {
+        // Five of the same blocks demand 111 110 iterations and compile.
+        let object = last(&nested_loops(&[10; 5]), "T :: @id.one\n");
+        assert_eq!(object.get("seen"), Some(&Value::Int(10)));
+    }
+
+    #[test]
+    fn the_logic_work_budget_is_fresh_for_every_instance() {
+        // SPEC §3.7: the bound is on one instance in one version, not on
+        // the project. Each of these two instances spends 511 106
+        // iterations; a project-wide budget would refuse the second.
+        let documents = compile(
+            &nested_loops(&[46, 10, 10, 10, 10]),
+            "T :: @id.one\n\nT :: @id.two\n",
+        )
+        .unwrap_or_else(|errors| panic!("the project compiles:\n{errors}"));
+        let document = documents.last().expect("one version");
+        assert_eq!(document.len(), 2);
+        for object in document {
+            assert_eq!(object.get("seen"), Some(&Value::Int(10)));
+        }
     }
 }

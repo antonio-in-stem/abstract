@@ -57,7 +57,7 @@ project. A directory *inside* `data/` is E806 (SPEC 2.3).
 | Boolean literal | `true` / `false`, lowercase | 3.5 |
 | Quoted string | `"…"` on one physical line; escapes `\"` `\\` `\n` `\r` `\t` only | 3.5 |
 | Bare text | any other unquoted run, kept verbatim after trimming. Every Unicode scalar value except a C0 control, `U+007F` and a C1 control (E210); non-ASCII whitespace is literal. It may not begin with `//`, wherever it begins, and its braces and brackets must balance | 3.2, 3.5, 3.6 |
-| Line joining | only while `(`/`[`/multi-path `{` are open, after a header-tag comma, and before `else` in logic | 3.6 |
+| Line joining | only while `(`/`[`/multi-path `{` are open, after a header-tag comma, and before `else` in logic — the `else` may sit past any number of blank lines and comment lines | 3.6, 6.3 |
 | Longest match | except `..`, which is never part of a float: `1..3` is `1`, `..`, `3` | 3.1 |
 
 ### What is normalised, and what is not
@@ -70,7 +70,7 @@ project. A directory *inside* `data/` is E806 (SPEC 2.3).
 | instance ids, clone targets, `ref` values | asset path text |
 | logic path segments, loop variable names | — |
 
-### Limits (E209)
+### Limits (E209, and the two that are not)
 
 | Subject | Limit | SPEC |
 |---|---|---|
@@ -81,6 +81,12 @@ project. A directory *inside* `data/` is E806 (SPEC 2.3).
 | clone chain length | 64 | 3.7 |
 | instance nesting depth (the instance object is level 1; object or list = one level) | 64 | 3.7 |
 | versions in the project range (`max - min + 1`) | 4096, reported as E602 | 3.7, 4.12 |
+| loop iterations executed by the logic of one instance for one version | 1 000 000, reported as E523 | 3.7, 6.2 |
+
+Every row is E209 except the last two. One unit of logic work is one execution of
+a `for` body; `derive`, `require` and `if` cost nothing, the budget is spent by
+every block that runs for one instance in one version — nested `$(Schema)` blocks
+included — and it is fresh for the next instance and the next version.
 
 ---
 
@@ -429,6 +435,12 @@ else (E437).
 | `derive? <path> = <expr>` | `derive_statement` | 6.4 |
 | `require <cond> else throw "<msg>"` | `require_statement` | 6.2 |
 | `if … { } else if … { } else { }` | `if_statement` | 6.3 |
+
+A `}` and its `else`, and a `require` condition and its `else throw`, may be
+written on two physical lines with any number of blank lines and comment lines
+between them: the continuation rule tests the next token, not the next line
+(SPEC 3.6 rule (b), 6.3). Any other token in between ends the statement, and the
+`else` after it is E517.
 | `for $x in <iterable> { }` | `for_statement` | 6.2 |
 
 ### 6.1 Precedence
@@ -501,6 +513,7 @@ every `derive` expression (SPEC 6.6).
 | E520 | loop variable in a `derive` target | 6.4 |
 | E521 | a `derive` executed against a field absent in this version | 6.4 |
 | E522 | an interpolated `$name` bound to a value that is not a scalar | 6.9 |
+| E523 | the logic of one instance executed more than 1 000 000 loop iterations for one version | 3.7, 6.2 |
 
 ---
 

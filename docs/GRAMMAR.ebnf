@@ -53,7 +53,12 @@
        the NL:
          (a) inside a header_tag_list, when the logical line so far ends ",";
          (b) inside a logic_decl, when the next token after the line terminator
-             is "else".
+             is "else". The test is on the next TOKEN: blank lines and comment
+             lines carry none, so any number of them may sit between a "}" and
+             its "else", or between a require condition and its "else throw"
+             (SPEC 3.6, 6.3). The rule does not ask what precedes the "else":
+             it joins the lines wherever the next token is one, and a join the
+             grammar does not admit is a malformed logical line (SPEC 6.3).
    L6. A quoted_string MUST open and close on the same physical line, and is
        lexed as one token: brackets, comment starts, annotations and separators
        inside it are ordinary characters.
@@ -337,6 +342,10 @@ if_statement        = "if" , condition , block ,
                       [ "else" , block ] ;
 
 for_statement       = "for" , loop_variable , "in" , iterable , block ;
+(* Iteration is the one construct in the language that multiplies work, so it
+   is the one that is charged: the logic of one instance may execute at most
+   1000000 for-bodies for one version, and crossing that is E523, not E209
+   (SPEC 3.7, 6.2, 10.5). *)
 
 loop_variable       = "$" , identifier ;
 
@@ -346,7 +355,8 @@ iterable            = logic_path | list_value ;
 
 block               = "{" , NL , logic_body , "}" , NL ;
 (* A "}" and a following "else", and a require condition and a following
-   "else throw", MAY be written on two physical lines: see L5 rule (b). *)
+   "else throw", MAY be written on two physical lines, with any number of blank
+   lines and comment lines between them: see L5 rule (b). *)
 
 (* --- conditions: lowest precedence first ------------------------------- *)
 
