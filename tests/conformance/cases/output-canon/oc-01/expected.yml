@@ -1,0 +1,20 @@
+"abstract":
+  "format": 1
+  "compiler": "1.0.0"
+  "versions":
+    "min": 1
+    "max": 1
+"data":
+  - "template": "T"
+    "id": "a"
+    "slots":
+      "1":
+        "mode": "generate"
+    "switches":
+      "yes": "A"
+      "no": "B"
+      "on": "C"
+      "off": "D"
+      "null": "E"
+      "y": "F"
+"overlays": []

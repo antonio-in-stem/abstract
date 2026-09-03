@@ -1,0 +1,14 @@
+schema E {
+    id: text(1..40)
+    items[] {
+        name: text
+    }
+}
+
+logic E {
+    derive .undeclared_field = oops
+    for item in .items {
+        require item.name != "bad"
+            else throw "an item is invalid"
+    }
+}

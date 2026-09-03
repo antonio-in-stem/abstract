@@ -1,0 +1,5 @@
+schema Thing {
+    id: text(1..40)
+    a: image(png 128x128)
+    b: image(png 1024x*)
+}

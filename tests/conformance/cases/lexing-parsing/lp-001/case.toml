@@ -1,0 +1,30 @@
+id = '''LP-001'''
+area = '''lexing-parsing'''
+title = '''A trailing comma at the end of a statement silently swallows the following statements — and can delete an entire instance'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-35-comma-deletes-instance/ (also references: repro/lexing-parsing/bug-05-trailing-comma-swallows/)'''
+command = '''`cd repro/lexing-parsing/bug-35-comma-deletes-instance && abstract compile . JSON` and the same command in bug-05-trailing-comma-swallows; also `... abstract.exe lint .` in both.'''
+expected_kind = '''undecided'''
+expected_note = '''Either a trailing comma at the end of a complete `field: value` statement is accepted and ignored (the documented multi-line continuation only needs to apply while brackets are open), or it is a compile error with a line number. An instance header must never be absorbed into a preceding value.'''
+actual_0_2_0 = '''bug-35 source:
+```
+Thing :: @id.a
+    name: Alpha,
+Thing :: @id.b
+    name: Beta
+```
+output: `{ "data": [ { "template": "Thing", "id": "a", "name": "Beta" } ] }` — instance `b` is gone, and `a` got `b`'s name. `abstract lint .` -> `abstract: ok`.
+
+bug-05 source:
+```
+Thing :: @id.x
+    tags: a, b,
+    name: Widget
+```
+output: `"tags": [ "a", "b", "name: Widget" ]` with no `name` field. `abstract lint .` -> `abstract: ok`.'''
+spec_ref = '''3.6, 5.5, 5.12, 10.4 (E442)'''
+status = '''ready'''
+expected_files = '''expected-error.txt (root tree); bug-05-trailing-comma-swallows/expected-error.txt'''
+spec_note = '''Both trees are rejections. 3.6: a trailing "," at value-bracket depth 0 does not continue a statement, it is E442; 5.5 repeats the rule for list values. The next physical line is therefore an ordinary logical line, so no instance header can be absorbed. Root tree: "name: Alpha," in data/things/x.ab. Second tree: "tags: a, b," in bug-05-trailing-comma-swallows/data/things/x.ab.'''

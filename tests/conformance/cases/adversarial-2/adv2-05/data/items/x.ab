@@ -1,0 +1,6 @@
+Item :: @id.src
+    name: Src
+
+Item :: @id.dst
+&src.id
+    name: Dst

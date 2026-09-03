@@ -1,0 +1,10 @@
+schema Brace {
+    id: text(1..40)
+    images[]: text @optional
+    label: text @optional
+    slots {
+        one: text @optional
+        two: text @optional
+    }
+    tmpl: text @optional
+}

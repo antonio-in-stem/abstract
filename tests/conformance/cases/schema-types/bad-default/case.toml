@@ -1,0 +1,17 @@
+id = '''bad-default'''
+area = '''schema-types'''
+title = '''`abstract lint` reports 'ok' for a schema whose own defaults violate its own types — schema defaults are only validated when an instance happens to omit the field'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/schema-types/bad-default/'''
+command = '''...\abstract.exe lint repro/schema-types/bad-default/data      (with data/items empty)
+  ...\abstract.exe compile repro/schema-types/bad-default/data JSON'''
+expected_kind = '''error'''
+expected_note = '''lint reports the bad defaults at Thing.abt:3 and Thing.abt:4.'''
+actual_0_2_0 = '''lint: abstract: ok
+compile (after adding an instance): abstract: items/a.ab: Range mismatch at Thing.n: received value 999, expected one of: 1..10.'''
+spec_ref = '''4.10, 7.2, 10.3'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (identical outcome for: lint data)'''
+expected_1_0 = '''Defaults are validated in P3, against their own field type, whether or not any instance omits the field (SPEC 4.10, 7.2). Two diagnostics in field declaration order: E313 at templates/Thing.abt:3 (999 is outside int(1..10)) and E313 at templates/Thing.abt:4 (green is not a member of enum(red, blue)). P4 never runs, so items/a.ab is not reached.'''

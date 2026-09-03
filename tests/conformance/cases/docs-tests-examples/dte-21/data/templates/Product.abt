@@ -1,0 +1,12 @@
+schema Product {
+    id: text(1..40)
+    status: enum(draft, active, retired)
+    release_year: int(2000..2100)
+    price: float(0..9999) = 0.0
+    featured: bool = false
+}
+
+logic Product {
+    derive .shipping_class = standard
+    derive? .release_wave = 1
+}

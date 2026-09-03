@@ -1,0 +1,3 @@
+schema Thing {
+    name: text(1..40)
+}

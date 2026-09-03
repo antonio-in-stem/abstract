@@ -1,0 +1,15 @@
+schema T {
+    id: text(1..40)
+    slots {
+        head: text(1..20) @optional
+    }
+    note: text(1..80) @optional
+}
+
+logic T {
+    for $Slot in [head] {
+        // dynamic path works (variable lookup normalizes case)
+        require .slots.$Slot exists else throw "slot $Slot is empty"
+        derive .note = "filled slot $Slot"
+    }
+}

@@ -1,0 +1,4 @@
+Thing :: @id.base
+    name: Base
+    color: red
+    size: 10

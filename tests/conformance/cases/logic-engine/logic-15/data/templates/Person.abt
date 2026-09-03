@@ -1,0 +1,4 @@
+schema Person {
+    id: text(1..40)
+    home: $(Address)
+}

@@ -1,0 +1,2 @@
+schema Thing { id: text(1..40) }
+schema Other { id: text(1..40) }

@@ -1,0 +1,20 @@
+id = '''LP-003'''
+area = '''lexing-parsing'''
+title = '''A field named `data` silently truncates the rest of the instance file and drops itself'''
+severity = '''critical'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-06-data-field-truncates/'''
+command = '''`cd repro/lexing-parsing/bug-06-data-field-truncates && abstract compile . JSON` (and `... lint .`)'''
+expected_kind = '''undecided'''
+expected_note = '''`data: important` assigns the schema's `data` field, and `name: Widget` on the next line is parsed normally. If the sentinel must exist, it should require an explicit marker (e.g. a `// expected output` comment or a `---` separator) and `data` should be documented as a reserved word.'''
+actual_0_2_0 = '''source:
+```
+Thing :: @id.x
+    data: important
+    name: Widget
+```
+output: `{ "template": "Thing", "id": "x", "tags": [] }` — both `data` and `name` are gone. Exit 0. `abstract lint .` -> `abstract: ok`.'''
+spec_ref = '''4.1, 4.11, 5.4, 8.3'''
+status = '''ready'''
+spec_note = '''Abstract 1.0 has no "data:" sentinel. Only "template" and "id" are reserved (4.11), so "data" is an ordinary declared field and both statements are assigned. Key order is schema declaration order (8.3): name before data.'''

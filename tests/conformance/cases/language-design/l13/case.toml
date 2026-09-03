@@ -1,0 +1,23 @@
+id = '''L13'''
+area = '''language-design'''
+title = '''`{...}` means fan-out on both sides of the colon with opposite semantics, and on the right its activation depends on whether the value contains a space'''
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case7/'''
+command = '''tmpl'''
+expected_kind = '''undecided'''
+expected_note = '''Brace expansion on the right should be gated on the field's declared type being `file(...)`/`image(...)` (or a list), not on incidental whitespace; and the two fan-out directions should be visually distinct.'''
+actual_0_2_0 = '''Activation depends on a space anywhere outside the braces; any dotted unquoted value with braces becomes a list regardless of the schema; the same glyph means 'many keys' on the left and 'many values' on the right.'''
+spec_ref = '''3.6, 5.4, 5.5, 5.8, 5.10, 8.3, 10.4 (E434)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+1.0 makes both directions type-directed and unambiguous. On the left, "prefix.{a, b}" is a
+multi-path whose "{" is the one brace that joins lines, because it follows a "." (3.6, 5.4).
+On the right, brace expansion happens only in a value of a file or image LIST field (5.8); on
+a text list the braces are ordinary characters and the whole value is one element, so
+whitespace has no part in the decision. A brace pattern on a non-list file or image field is
+E434. See SPEC-ISSUES-docs-tests-examples.md issue 1 on braces inside a value and the
+value-bracket stack.
+'''

@@ -1,0 +1,19 @@
+id = '''OC-15'''
+area = '''output-canon'''
+title = '''`abstract compile <dir>` fails with 'missing input path' when the directory is named json, yml, yaml, raw, true or false'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/output-canon/oc15-cli-format/'''
+command = '''cd repro/output-canon/oc15-cli-format
+abstract compile raw   ; echo "exit=$?"
+abstract compile ./raw ; echo "exit=$?"
+(the same happens for a directory copied to ./true)'''
+expected_kind = '''document'''
+expected_note = '''`compile raw` compiles the directory named raw with the default JSON format, or at minimum reports 'raw' is ambiguous - it is both a format and an existing path; use ./raw.'''
+actual_0_2_0 = '''compile raw  -> abstract: missing input path (exit 1)
+compile ./raw -> compiles fine, JSON output (exit 0)
+compile true -> abstract: missing input path (exit 1)'''
+spec_ref = '''8.4, 9.2'''
+status = '''ready'''
+note_1_0 = '''Case command in 1.0: 'compile raw'. The last positional is the FORMAT only when at least one other positional is present, so a sole positional is always an input path (SPEC 9.2): 'compile raw' compiles the directory named raw with the default JSON format, and so does 'compile true'. A directory whose name is a format keyword can be compiled only as the sole positional; naming it alongside another path is not expressible.'''

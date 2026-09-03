@@ -1,0 +1,3 @@
+T :: @id.a
+    files: ./x/{hero,thumb}/{small,large}.png
+    label: {name}.png

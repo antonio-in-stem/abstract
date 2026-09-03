@@ -1,0 +1,3 @@
+Head :: @id.h2, @note.from_header
+    note: from_body
+    owner.team: core

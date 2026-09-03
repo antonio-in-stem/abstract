@@ -1,0 +1,4 @@
+V :: @id.old, @rarity.epic
+    name: still fine
+    retired_field: was removed from the schema in v2
+    rarty: typo that should be caught

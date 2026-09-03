@@ -1,0 +1,22 @@
+id = '''cli-17'''
+area = '''cli-project'''
+title = '''Missing input paths produce a bare localized OS error for compile/lint/templates, while only the direct form gets the friendly message'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/cli-project/case-flags/ (also references: repro/cli-project/case-outfail/, repro/cli-project/case-junc-escape/)'''
+command = '''../../project/target/release/abstract.exe compile no-such-dir JSON
+... lint no-such-dir
+... templates no-such-dir
+... compile case-flags/data/items/zzz.ab JSON
+... no-such-dir/x.ab JSON
+... compile case-outfail/data JSON --out case-outfail/nope/out.json
+... unbundle case-junc-escape/data
+... init notafile.txt'''
+expected_kind = '''error'''
+expected_note = '''All entry points share one path-resolution error path with cwd, resolved path and a fix hint; write failures name the output path.'''
+actual_0_2_0 = '''compile/lint/templates: 'abstract: failed to read no-such-dir: El sistema no puede encontrar la ruta especificada. (os error 3)'. --out failure: 'abstract: El sistema no puede encontrar la ruta especificada. (os error 3)'. unbundle dir: 'abstract: Acceso denegado. (os error 5)'. init on a file: 'abstract: El nombre del directorio no es válido. (os error 267)'. Direct form: full 4-line message with Current directory / Resolved path / Fix.'''
+spec_ref = '''9.2, 9.4, 9.6, 9.8, 10.8'''
+status = '''ready'''
+command_1_0 = '''compile no-such-dir JSON'''
+expected_1_0 = '''A named path that does not exist is E806 with the message Input not found (SPEC 9.2), exit code 2, and never a raw localised operating-system string: SPEC 9.8 fixes the diagnostic format, and paths in diagnostics are project-relative with forward slashes. The other invocations of this finding: lint no-such-dir and templates no-such-dir are E806 as well, since all three commands share one path-resolution rule; compile data/items/zzz.ab JSON is E806; no-such-dir/x.ab JSON has no command word and is E801, because the three-argument direct form is removed (Appendix A53); compile case-outfail/data JSON --out case-outfail/nope/out.json is E810 with exit code 3, because the parent directory must exist (SPEC 9.4). The junction under case-junc-escape/data was recreated for the unbundle sub-invocation, which is optional tooling (SPEC 9.9).'''

@@ -1,0 +1,16 @@
+id = '''cli-04'''
+area = '''cli-project'''
+title = "Passing a file together with a directory that contains it yields a bogus 'Duplicate instance id ... already declared in <itself>'"
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-init-direct/ (also references: repro/cli-project/case-overlap-roots/)'''
+command = '''../../project/target/release/abstract.exe case-init-direct/data/items/starter_sword.ab case-init-direct/data JSON
+... case-overlap-roots/data/items/a.ab case-overlap-roots/data JSON'''
+expected_kind = '''error'''
+expected_note = '''The same physical file loaded through two overlapping roots is loaded once (dedup by canonical file path); no duplicate-id error.'''
+actual_0_2_0 = '''abstract: starter_sword.ab:3: Duplicate instance id 'starter_sword'. It is already declared in 'items/starter_sword.ab' (line 3); every instance needs a unique id. (exit 1)'''
+spec_ref = '''2.5, 9.2, 9.6, 10.8'''
+status = '''ready'''
+command_1_0 = '''compile data/items/starter_sword.ab data JSON   (variant: compile case-overlap-roots/data/items/a.ab case-overlap-roots/data JSON)'''
+expected_1_0 = '''Naming a directory and a file in one invocation is E807 (SPEC 2.5, 9.2), exit code 2, so the overlapping-roots situation that produced the bogus duplicate-id message is not expressible. The underlying dedup rule still holds for everything that is expressible: discovery collects a file once by canonical path (SPEC 2.4), so a file reachable by two paths never yields E402 against itself.'''

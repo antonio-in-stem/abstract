@@ -1,0 +1,17 @@
+id = '''unc-path'''
+area = '''schema-types'''
+title = '''file()/image() values are handed straight to the OS: a UNC path makes `abstract compile` open an outbound SMB connection (NTLM credential-leak vector) and --skip-assets does not stop it'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/schema-types/unc-path/'''
+command = '''time abstract compile repro/schema-types/unc-path/data JSON --skip-assets'''
+expected_kind = '''error'''
+expected_note = '''With --skip-assets, no filesystem or network access at all. Without it, a non-project path should be rejected as out of bounds (or at minimum never dialled over the network).'''
+actual_0_2_0 = '''abstract: items/a.ab: File not found at Thing.icon: '\\10.255.255.1\share\x.png' resolved to '\\10.255.255.1\share\x.png'. The schema declares file(...), so the file must exist.
+
+real	0m17.579s   <- 17.6 s spent waiting on an outbound SMB connection, with --skip-assets passed'''
+spec_ref = '''5.9, 7.6, 9.5, 10.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON --skip-assets   (same result without the flag)'''
+expected_1_0 = '''A UNC prefix is not a relative path, so the value is E424 (SPEC 5.9) and the path is never handed to the operating system. --skip-assets does not skip the confinement check (SPEC 9.5), so the diagnostic is the same with and without it, and no network access can occur: compilation reads only the discovered sources and the assets referenced by validated values (SPEC 7.6).'''

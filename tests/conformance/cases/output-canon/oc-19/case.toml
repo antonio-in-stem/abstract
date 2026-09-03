@@ -1,0 +1,20 @@
+id = '''OC-19'''
+area = '''output-canon'''
+title = '''UTF-8 BOM: a BOM in a .abt silently creates a schema whose name starts with U+FEFF, and the error blames the instance file'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/output-canon/oc21-bom-crlf/'''
+command = '''cd repro/output-canon/oc21-bom-crlf
+python -c "open('data/items/bom.ab','w',encoding='utf-8-sig',newline='\n').write('T :: @id.bom\n    label: hello\n')"
+abstract compile . JSON
+rm data/items/bom.ab
+python -c "open('data/templates/T.abt','w',encoding='utf-8-sig',newline='\n').write('schema T {\n    id: text(1..80)\n    label: text(1..80)\n}\n')"
+abstract compile . JSON'''
+expected_kind = '''undecided'''
+expected_note = '''The BOM is stripped and both files compile (CRLF files already compile correctly, verified in the same case dir), or the error names the BOM: "data/templates/T.abt:1: file starts with a UTF-8 BOM; remove it".'''
+actual_0_2_0 = '''BOM in .ab:  abstract: data/items/bom.ab:1: statement '﻿T :: @id.bom' appears before any instance header (expected 'Template :: ...' first)
+BOM in .abt: abstract: data/items/crlf.ab:1: Unknown template 'T'. Add a schema named 'T' in a .abt file, or change this instance header to an existing schema.  (blames the wrong file entirely)'''
+spec_ref = '''2.2, 8.4'''
+status = '''ready'''
+note_1_0 = '''The project as it stands compiles: data/items/crlf.ab uses CRLF line terminators, which are one line terminator (SPEC 2.2), and neither file carries a BOM. The BOM halves of the case have the same outcome: a UTF-8 BOM at offset 0 is removed before lexing and has no other effect, in a .ab and in a .abt alike, so adding one to either file leaves these bytes unchanged (SPEC 2.2). A BOM anywhere else is E210.'''

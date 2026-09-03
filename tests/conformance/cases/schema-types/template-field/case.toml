@@ -1,0 +1,24 @@
+id = '''template-field'''
+area = '''schema-types'''
+title = '''A schema field named `template` silently overwrites the compiled record's own `template` discriminator, destroying the schema identity in the output'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/template-field/'''
+command = '''abstract compile repro/schema-types/template-field/data JSON'''
+expected_kind = '''error'''
+expected_note = '''A parse-time error: "'template' is a reserved field name" (or, at worst, the compiler's discriminator winning and the user field being renamed).'''
+actual_0_2_0 = '''exit 0, output:
+{
+  "data": [
+    {
+      "template": "mine",
+      "id": "a"
+    }
+  ]
+}
+— the schema name "Thing" is gone from the document entirely.'''
+spec_ref = '''4.11, 5.12, 10.3'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''template is a reserved envelope key and cannot be declared as a field: E314 at templates/Thing.abt:3 (SPEC 4.11). P3 fails, so the E410 that items/a.ab would raise for assigning template is not reached; both rules exist, and either alone keeps the discriminator authored by the compiler.'''

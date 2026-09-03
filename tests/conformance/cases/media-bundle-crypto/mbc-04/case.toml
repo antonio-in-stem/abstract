@@ -1,0 +1,24 @@
+id = '''mbc-04'''
+area = '''media-bundle-crypto'''
+title = '''Valid 25-29 byte VP8L WebP rejected as 'unrecognized image signature' due to the uniform 30-byte WebP gate'''
+severity = '''design'''
+verdict = '''partial'''
+kind = '''bug'''
+source_repro = '''repro/media-bundle-crypto/case09-media-truncation-vp8l/'''
+command = '''repro/media-bundle-crypto/case09-media-truncation-vp8l : a 25-byte valid VP8L (640x360) fails with 'Invalid image ...: unrecognized image signature'; the identical content padded to 30 bytes compiles fine.'''
+expected_kind = '''undecided'''
+expected_note = '''A structurally valid VP8L header should probe successfully regardless of trailing container padding.'''
+actual_0_2_0 = '''`compile` errors: `Invalid image at Tex.art: 'small.webp': unrecognized image signature (expected png, jpg, gif, bmp, or webp)`; padded copy succeeds.'''
+spec_ref = '''4.4.7, 4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+4.4.7.1 gives every format its own byte requirement and states that the requirement of one
+format never gates another, which is exactly the defect: VP8L needs 25 bytes, not 30.
+assets/padded.webp is 30 bytes of valid VP8L and decodes as 640x360, which satisfies
+image(webp). The failure is assets/trunc.png: 10 bytes that match the PNG signature but fall
+short of PNG's 24-byte requirement, which is E422 with "note: file is truncated."
+NOTE: assets/small.webp (25 bytes, the same VP8L payload unpadded) is present but unreferenced,
+so the 25-byte gate this case is named for is not actually exercised; a positive case needs
+"art: small.webp".
+'''

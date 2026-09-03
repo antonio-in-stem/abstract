@@ -1,0 +1,18 @@
+schema Thing {
+    id: text(1..40)
+    featured: bool @optional
+    count: int @optional
+    note: text @optional
+}
+
+logic Thing {
+    if not .featured exists {
+        derive .featured = true
+    }
+    if not .count exists {
+        derive .count = 99
+    }
+    if not .note exists {
+        derive .note = "filled-in"
+    }
+}

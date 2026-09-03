@@ -1,0 +1,3 @@
+﻿schema Thing {
+    id: text(1..40)
+}

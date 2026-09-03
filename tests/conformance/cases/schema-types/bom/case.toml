@@ -1,0 +1,17 @@
+id = '''bom'''
+area = '''schema-types'''
+title = '''A UTF-8 BOM makes an entire .abt file invisible: schemas silently vanish and the error blames the instance'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/bom/'''
+command = '''abstract compile repro/schema-types/bom/data JSON
+  abstract templates repro/schema-types/bom/data'''
+expected_kind = '''document'''
+expected_note = '''The BOM is stripped and the schema parses; or an explicit error naming Thing.abt.'''
+actual_0_2_0 = '''compile: abstract: items/a.ab:1: Unknown template 'Thing'. Add a schema named 'Thing' in a .abt file, or change this instance header to an existing schema.
+templates: (prints nothing at all)'''
+spec_ref = '''2.2, 4.11, 8.1, 8.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (also: templates data, which prints Thing)'''
+expected_1_0 = '''A UTF-8 BOM at offset 0 is removed before lexing and has no other effect (SPEC 2.2), so the schema parses and the project compiles. id: text(1..40) is one of the two legal explicit id declarations (SPEC 4.11). The abstract.compiler value is normalised before golden comparison (SPEC 11.2).'''

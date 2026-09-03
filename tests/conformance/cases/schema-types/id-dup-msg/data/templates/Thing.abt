@@ -1,0 +1,4 @@
+schema Thing {
+    id: text(1..40)
+    rarity: enum(common, rare)
+}

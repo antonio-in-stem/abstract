@@ -1,0 +1,26 @@
+id = '''DTE-13'''
+area = '''docs-tests-examples'''
+title = '''Direct/single-file compile loads sibling context only from the file's own directory, so it fails on the layout `abstract init` itself generates'''
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/direct-sibling-scope/'''
+command = '''cd .../repro/docs-tests-examples/direct-sibling-scope && abstract split/data/items/x.ab JSON
+abstract split/data/items/x.ab split/data/templates/T.abt JSON
+abstract flat/x.ab JSON'''
+expected_kind = '''undecided'''
+expected_note = '''Either the compiler walks up to the project root the way `abstract compile <dir>` does, or the docs state that direct mode only sees the file's own directory and that split layouts require naming the .abt.'''
+actual_0_2_0 = '''`abstract split/data/items/x.ab JSON` → exit 1, `abstract: x.ab:1: Unknown template 'T'. Add a schema named 'T' in a .abt file, or change this instance header to an existing schema.` — while `data/templates/T.abt` declares exactly that schema two directories away.'''
+spec_ref = '''2.3, 2.4, 2.5, 9.2, 10.8 (E806), A.3 (A53, A54)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile split/data/items/x.ab JSON                          -> expected.json
+compile flat/x.ab JSON                                      -> flat/expected.json
+compile split/data/items/x.ab split/data/templates/T.abt JSON -> expected-error-abt-arg.txt
+Single-file mode discovers the whole project in 1.0 (2.5, A.3 A54): from split/data/items the
+upward walk of 2.3 finds split/data as the data directory and split as the project root, so
+data/templates/T.abt resolves. The flat layout has no data/ marker at all, so the project root
+is the directory that contains the named file and both sources are collected. Naming a .abt
+file is E806 (2.5, 9.2); the 0.2.0 three-argument direct form is removed (A.3 A53).
+Both accepted invocations emit identical bytes.
+'''

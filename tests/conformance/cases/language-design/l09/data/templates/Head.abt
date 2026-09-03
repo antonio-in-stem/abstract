@@ -1,0 +1,9 @@
+schema Head {
+    id: text(1..40)
+    version: text @optional
+    owner {
+        team: text @optional
+    }
+    note: text @optional
+    featured: bool = false
+}

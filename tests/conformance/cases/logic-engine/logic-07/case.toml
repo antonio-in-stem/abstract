@@ -1,0 +1,28 @@
+id = '''LOGIC-07'''
+area = '''logic-engine'''
+title = '''A for-loop variable hijacks an identically named segment of a root-anchored '.path', silently reading a different field'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L11-loopvar-shadows-root-path/'''
+command = '''repro/logic-engine/L11-loopvar-shadows-root-path — cd repro/logic-engine/L11-loopvar-shadows-root-path && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''`.id` is root-anchored and must always be the root `id` field ("one"). Inside the loop the two requires `.id == "THE-LABEL-VALUE"` and `.id != "one"` should both FAIL.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "one",
+      "label": "THE-LABEL-VALUE",
+      "tags": [
+        "label"
+      ]
+    }
+  ]
+}
+EXIT=0
+
+(Both in-loop requires passed, proving `.id` silently resolved to the root `.label` field, because the loop variable `id` is bound to the tag value "label". An earlier variant with tags = alpha,beta produced "abstract: items/one.ab: Thing logic: INSIDE loop: root .id is not one" while the identical require OUTSIDE the loop passed.)'''
+spec_ref = '''6.2, 6.9, 10.2'''
+status = '''ready'''
+note_1_0 = ''''for id in .tags' is a parse error: the grammar is for_statement = "for", loop_variable, "in", iterable, block and loop_variable = "$" identifier (SPEC 6.9: loop variables are spelled with a leading '$' everywhere). The bare word 'id' is not a loop variable, so the statement is E210 and the hijacking of the root-anchored '.id' cannot arise. Written as 'for $id in .tags' the file would still behave correctly: '.id' is root-anchored and a loop variable is only a segment when it is written as '$id' inside the path (SPEC 6.5).'''

@@ -1,0 +1,30 @@
+id = '''DTE-28'''
+area = '''docs-tests-examples'''
+title = '''Logic `==` on text compares case-insensitively and treats `-` and `_` as equal, while ids are compared three different ways'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/docs-tests-examples/logic-equality-normalization/ (also references: repro/docs-tests-examples/id-normalization/)'''
+command = '''cd .../repro/docs-tests-examples/logic-equality-normalization && abstract compile data JSON
+if .label == "banned-user"
+cd .../repro/docs-tests-examples/id-normalization && abstract compile data JSON
+MyThing
+.id == "mything"
+&MyThing.*
+&mything.*'''
+expected_kind = '''undecided'''
+expected_note = '''Exact string equality for `text` values (with normalisation reserved for `enum`), and one consistent case policy for ids.'''
+actual_0_2_0 = '''label='BANNED_User' == 'banned-user' -> True; label='Banned-User' == 'banned-user' -> True; label='banned user' -> False. Separately: id `MyThing` matches `.id == "mything"` in logic (True) but `&mything.*` fails with `Unknown clone target 'mything'`, and two instances with ids `MyThing`/`mything` are accepted as distinct.'''
+spec_ref = '''3.3, 5.1, 5.3, 6.8, 10.4 (E403), A.1 (A29), A.2 (A35)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)                   -> expected.json
+compile data JSON (cwd = dte-28/id-normalization)     -> id-normalization/expected-error.txt
+String comparison in logic is exact: case and -/_ differences matter and no folding of any
+kind is applied (6.8, A.2 A35), so none of the three labels equals "banned-user" and all three
+keep blocked = false. The id-normalization tree is a rejection case for an unrelated reason: a
+clone statement must appear immediately after its instance header, so the "&MyThing.*" on line
+1 of c.ab, before any header in the file, is E403 (5.1). Ids themselves are normalised
+everywhere in 1.0 (3.3, 5.3, A.1 A29), so a corrected tree would match "mything" in logic and
+in a clone target alike.
+'''

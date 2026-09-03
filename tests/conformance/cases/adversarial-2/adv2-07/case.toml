@@ -1,0 +1,14 @@
+id = '''ADV2-07'''
+area = '''adversarial-2'''
+title = '''A `versions` declaration in a .ab file reports E403 instead of E210'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+expected_kind = '''error'''
+spec_ref = '''2.1, 5.1, 10.2, 10.4'''
+expected_note = '''SPEC 2.1 pins the diagnostic for this exact construct: encountering `versions` at statement position in a `.ab` file is E210. E403 is defined by SPEC 5.1 for a different condition - "A body statement or clone statement that appears before the first header" - and `versions 1..2` is neither a body statement nor a clone statement, so its message ("A statement cannot appear before the first instance header.") misdescribes the input and points the author at the header rather than at the file kind.'''
+actual_1_0 = '''exit 1 with
+  data/items/x.ab:1:1: error[E403]: A statement cannot appear before the first instance header.
+The same line written after an instance header is reported as E316 instead (see ADV2-06), so one construct that SPEC 2.1 assigns a single identifier produces two different wrong ones depending on where it sits in the file.'''
+status = '''ready'''
+note_1_0 = '''The `versions` declaration is the most likely of the three to be miscopied into a .ab, because it is the one top-level construct that carries no block and reads like a statement.'''

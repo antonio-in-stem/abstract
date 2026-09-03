@@ -1,0 +1,29 @@
+id = '''LOGIC-11'''
+area = '''logic-engine'''
+title = '''A for-loop over a missing or misspelled path iterates once, binding the literal path text as the item'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L09-for-over-missing-path/'''
+command = '''repro/logic-engine/L09-for-over-missing-path — cd repro/logic-engine/L09-for-over-missing-path && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''`for item in .tgas` names no field, so either a compile error naming the unknown path, or zero iterations leaving `seen` untouched.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "one",
+      "tags": [
+        "alpha",
+        "beta"
+      ],
+      "seen": [
+        ".tgas"
+      ]
+    }
+  ]
+}
+EXIT=0'''
+spec_ref = '''6.2, 6.9, 10.2'''
+status = '''ready'''
+note_1_0 = ''''for item in .tgas' is E210 at P1: the loop variable is missing its '$' (SPEC 6.9). Written as 'for $item in .tgas' it would be E503 at P3, because '.tgas' names no declared field (SPEC 6.5); a for over a path that resolves to no value runs zero times and never binds the path text as an item (SPEC 6.2).'''

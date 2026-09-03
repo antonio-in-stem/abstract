@@ -1,0 +1,23 @@
+id = '''mbc-07'''
+area = '''media-bundle-crypto'''
+title = '''JPEG marker walk hard-capped at 256 iterations rejects valid JPEGs whose SOF sits beyond segment 256'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/media-bundle-crypto/case10-jpeg-segment-cap/'''
+command = '''repro/media-bundle-crypto/case10-jpeg-segment-cap : SOF as ~256th segment compiles; the same file with SOF after 280 filler segments fails 'jpg file has no start-of-frame marker with dimensions'.'''
+expected_kind = '''undecided'''
+expected_note = '''Any valid JPEG whose SOF is reachable by walking length-prefixed segments should probe successfully (real files can legitimately have >256 pre-frame segments).'''
+actual_0_2_0 = '''`Invalid image at Tex.photo: 'deep.jpg': jpg file has no start-of-frame marker with dimensions`.'''
+spec_ref = '''4.4.7, 4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+4.4.7.1 replaces the segment cap with a byte budget: the JPEG walk starts at offset 2 and is
+bounded by bytes read, at most 65536, with runs of FF fill bytes skipped by a scan that counts
+against the budget. assets/ok.jpg (1545 bytes) carries its SOF0 marker at offset 0x5F6, so the
+u16 height at marker+5 is 240 and the u16 width at marker+7 is 320, which satisfies image(jpg).
+NOTE: assets/deep.jpg (SOF0 at offset 0x692, same dimensions, 1701 bytes total) is present but
+unreferenced. Under 1.0 it probes successfully too, since both offsets are far inside the
+budget; a case that exercises the change needs "photo: deep.jpg" as a second instance.
+'''

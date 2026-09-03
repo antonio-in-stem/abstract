@@ -1,0 +1,16 @@
+schema Var {
+    id: text(1..40)
+    tier: text = gold
+    path: text @optional
+    nested {
+        kind: text @optional
+    }
+    from_nested: text @optional
+    derived: text @optional
+    from_derived: text @optional
+}
+
+logic Var {
+    derive .derived = D1
+    derive .from_derived = "uses $derived"
+}

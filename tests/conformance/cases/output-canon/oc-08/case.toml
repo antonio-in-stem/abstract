@@ -1,0 +1,25 @@
+id = '''OC-08'''
+area = '''output-canon'''
+title = '''`abstract compile ... | head` panics on broken pipe (exit 101) and the --out file is never written'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc31-broken-pipe/'''
+command = '''cd repro/output-canon/oc31-broken-pipe
+abstract compile "<private corpus>/abstract-data" JSON --skip-assets --out piped.json | head -2
+ls piped.json'''
+expected_kind = '''document'''
+expected_note = '''exit 0, the first two lines printed, and piped.json written.'''
+actual_0_2_0 = '''exit=101, and stderr contains:
+  thread 'main' (46956) panicked at library\std\src\io\stdio.rs:1165:9:
+  failed printing to stdout: Ha terminado la canalizacion. (os error 109)
+  ls: cannot access 'piped.json': No such file or directory
+(the same panic occurs for a plain `abstract.exe compile <corpus> JSON --skip-assets | head -2`)'''
+spec_ref = '''9.4, 9.7, 11.3'''
+status = '''ready'''
+expected_kind = '''document'''
+expected_files = '''expected.json'''
+command_1_0 = '''compile . JSON --skip-assets --out piped.json'''
+note_1_0 = '''The case now carries a project of its own and pins the half of the behaviour a file comparison can hold: with '--out <file>' nothing goes to stdout, the file is written, and the process exits 0 with one informational line on stderr (SPEC 9.4). The runner takes `command_1_0` as the argument vector, runs it over a copy of the tree because it names `--out`, and compares the written file against expected.json — so the expectation is the bytes the destination receives, not the bytes stdout would have carried.
+
+The other half needs a reader that closes the pipe, which the corpus runner cannot arrange: without '--out', a closed stdout MUST end the process quietly with exit code 0 and MUST NOT report an error (SPEC 9.7). That leg is covered by tests/cli_tests.rs, which spawns the binary with a pipe it can drop.'''

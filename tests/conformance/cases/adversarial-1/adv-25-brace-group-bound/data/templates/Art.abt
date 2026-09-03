@@ -1,0 +1,4 @@
+schema Art {
+    name: text(1..40)
+    frames[]: file(png)
+}

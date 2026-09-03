@@ -1,0 +1,17 @@
+id = '''LOGIC-05'''
+area = '''logic-engine'''
+title = '''Compiled output is non-deterministic: throw messages and derived values differ run-to-run because loop variables are substituted in HashMap iteration order'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L04-nondeterministic-msg-interp/'''
+command = '''repro/logic-engine/L04-nondeterministic-msg-interp — cd repro/logic-engine/L04-nondeterministic-msg-interp && for i in $(seq 1 25); do abstract compile data JSON 2>&1 | grep label; done | sort | uniq -c'''
+expected_kind = '''undecided'''
+expected_note = '''25 identical lines — a compiler must be deterministic.'''
+actual_0_2_0 = '''     13       "label": "value=$b"
+     12       "label": "value=7"
+
+(The same nondeterminism appears in require messages: with `require false else throw "value=$a"` the same loop over 25 runs gave 14x "Thing logic: value=$b" and 11x "Thing logic: value=7".)'''
+spec_ref = '''5.11, 6.2, 6.4, 6.9, 6.12, 8.4'''
+status = '''ready'''
+note_1_0 = '''Accepted and deterministic. $a is bound to the literal string '$b' (SPEC 6.2: a quoted_string element of a literal list is a string). Interpolation of the derive value is a single left-to-right pass and substituted content is never rescanned (SPEC 5.11), so '$b' reaches the output verbatim and label is exactly 'value=$b' on every run (SPEC 6.12).'''

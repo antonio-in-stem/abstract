@@ -1,0 +1,4 @@
+schema Thing {
+    slug: text(1..80) @optional
+    doc: file(txt)
+}

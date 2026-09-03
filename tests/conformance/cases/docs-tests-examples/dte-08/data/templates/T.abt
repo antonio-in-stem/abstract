@@ -1,0 +1,4 @@
+schema T {
+    id: text(1..40)
+    tags[]: text(1..40)
+}

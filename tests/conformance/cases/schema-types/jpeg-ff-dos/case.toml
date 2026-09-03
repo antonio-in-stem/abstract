@@ -1,0 +1,17 @@
+id = '''jpeg-ff-dos'''
+area = '''schema-types'''
+title = '''probe_image's JPEG padding-skip loop is unbounded and reads one byte at a time: a 64 MB file of 0xFF costs 107 seconds'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/schema-types/jpeg-ff-dos/'''
+command = '''time abstract compile repro/schema-types/jpeg-ff-dos/data JSON'''
+expected_kind = '''error'''
+expected_note = '''A header probe rejects the malformed file in milliseconds, as the module documentation promises.'''
+actual_0_2_0 = '''abstract: items/a.ab: Invalid image at Thing.img: 'bomb.jpg': jpg stream ended while skipping padding
+
+real	1m47.019s'''
+spec_ref = '''4.4.7.1, 10.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''assets/bomb.jpg is FF D8 followed by 64 MiB of FF. The JPEG walk starts at offset 2 and is bounded by bytes read, and the compiler reads at most 65536 bytes from the head of the file whatever its size (SPEC 4.4.7.1). Reaching the byte budget with no start-of-frame marker is E422 with the note that names it. The run must finish in milliseconds; the file is never read past the budget.'''

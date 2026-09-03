@@ -1,0 +1,24 @@
+id = '''LOGIC-24'''
+area = '''logic-engine'''
+title = '''Interpolation is re-entrant: a '$' that came from instance DATA is expanded again, defeating the $$ escape'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L26-interpolation-reentrant/'''
+command = '''repro/logic-engine/L26-interpolation-reentrant — cd repro/logic-engine/L26-interpolation-reentrant && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''name is the literal "$id" (correctly escaped as "$$id" in the .ab), so `derive .note = "name is $name"` should yield note == "name is $id".'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "T",
+      "id": "one",
+      "name": "$id",
+      "note": "name is one"
+    }
+  ]
+}
+EXIT=0'''
+spec_ref = '''5.11, 6.9, 8.4'''
+status = '''ready'''
+note_1_0 = ''''$$' is a literal '$' and substitution is a single pass whose result is never rescanned (SPEC 5.11), so name is the two-character-plus-one string '$id'. The derive value '$name' resolves against the current object (SPEC 6.9) and inserts that text verbatim, giving note = 'name is $id'. Interpolation is not re-entrant.'''

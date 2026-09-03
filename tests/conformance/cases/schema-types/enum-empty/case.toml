@@ -1,0 +1,17 @@
+id = '''enum-empty'''
+area = '''schema-types'''
+title = '''enum(...)/file(...)/image(...) silently drop empty and duplicate entries instead of flagging the typo'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/schema-types/enum-empty/'''
+command = '''...\abstract.exe compile repro/schema-types/enum-empty/data JSON
+(Also verified earlier in this audit: `enum(red, red, blue)` compiles with a duplicate member.)'''
+expected_kind = '''error'''
+expected_note = '''Parse-time error at the schema line: "empty value in enum(...)" / "duplicate value 'red' in enum(...)".'''
+actual_0_2_0 = '''exit 0, compiles as enum(a, b):
+    { "template": "Thing", "id": "a", "c": "b" }'''
+spec_ref = '''4.4, 4.4.5, 10.3'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''An argument list must not contain an empty entry: enum(a,,b) is E306 (SPEC 4.4), reported at templates/Thing.abt:3. The same rule makes enum(red, red) E306 and file(png, png) E319.'''

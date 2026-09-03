@@ -1,0 +1,25 @@
+id = '''LOGIC-04'''
+area = '''logic-engine'''
+title = '''Any condition the evaluator does not recognise falls back to string truthiness and therefore evaluates TRUE — require guards silently pass'''
+severity = '''critical'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L01-typo-condition-always-true/'''
+command = '''repro/logic-engine/L01-typo-condition-always-true — cd repro/logic-engine/L01-typo-condition-always-true && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''Each of the three malformed conditions should be a parse error ("unknown operator '=' — did you mean '=='?"). Failing that, the instance has status "disabled" so at least one guard should fire.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "bad",
+      "status": "disabled"
+    }
+  ]
+}
+EXIT=0
+
+(All three requires passed: `require .status = "active"`, `require not(.status == "disabled")`, `require .status equals "active"`. A fourth variant `if .status = "disabled" { require false else throw "D" }` proves the fallback is TRUE, not false: it enters the then-branch and throws "D: if with single = took the then-branch".)'''
+spec_ref = '''6.6, 7.2, 10.5'''
+status = '''ready'''
+note_1_0 = ''''=' and 'equals' are not operators, so the conditions on lines 7 and 9 are both E511 (SPEC 6.6: an unknown operator, a missing operand or an unbalanced parenthesis is E511), reported in source position order. Line 8 is well formed: whitespace is insignificant (SPEC 3.1), so 'not(.status == "disabled")' parses as not ( ... ). Because P3 fails, P4 never runs and no E515 is reported.'''

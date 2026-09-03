@@ -1,0 +1,15 @@
+id = '''ADV2-04'''
+area = '''adversarial-2'''
+title = '''A clone chain of exactly the documented depth 64 is rejected as E209'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+expected_kind = '''document'''
+expect = '''ok'''
+spec_ref = '''3.7, 5.7, 10.2'''
+expected_note = '''SPEC 3.7 sets the limit for "Length of a clone chain (transitive clone depth)" at 64 and requires E209 only "when one is exceeded"; SPEC 5.7 repeats it as "Chains deeper than 64 are E209". This project declares q000..q064, each cloning its successor, which is 64 clone statements and a transitive clone depth of 64 for q000 - the limit, not past it. The project is legal and must compile.
+The counting convention is the corpus one, fixed by adversarial-1/adv-04: 64 nested brackets are depth 64, and 64 path segments compile while 65 are E209.'''
+actual_1_0 = '''exit 1, "data/items/chain.ab:257:1: error[E209]: Clone chain exceeds the limit of 64." The same chain one statement shorter (63 edges) compiles, so only the boundary itself is wrong.
+The ids run against the direction of the chain on purpose: instances are resolved in (template, id) order, so q000 - the deep end - is resolved first and the check is actually reached. Spelled the other way the check is not reached at all, which is the separate defect adversarial-1/adv-03 and adv-03b already file.'''
+status = '''ready'''
+note_1_0 = '''The at-limit half of the clone-chain problem, and the same off-by-one family as adversarial-1/adv-04 (brackets) and adv-06 (logic blocks). A fix for adv-03 that counts chain length structurally must count 64 as legal, or this case turns into a regression.'''

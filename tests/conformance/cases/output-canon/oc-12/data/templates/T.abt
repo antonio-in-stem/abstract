@@ -1,0 +1,13 @@
+schema Owner {
+    team: text(1..80)
+    region: text(1..80) @optional
+}
+
+schema T {
+    id: text(1..80)
+    owner: $(Owner)
+    caps[] {
+        name: text(1..80)
+        level: int(0..10)
+    }
+}

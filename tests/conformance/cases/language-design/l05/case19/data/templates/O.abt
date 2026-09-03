@@ -1,0 +1,5 @@
+schema O {
+    id: text(1..40)
+    rarity: enum(rare, epic, mythic)
+    legacy_flag: text @optional
+}

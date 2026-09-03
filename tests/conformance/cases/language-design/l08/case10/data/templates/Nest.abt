@@ -1,0 +1,9 @@
+schema Nest {
+    id: text(1..40)
+    caps[] {
+        id: enum(a, b) @tag
+        sub[] @optional {
+            name: text @optional
+        }
+    }
+}

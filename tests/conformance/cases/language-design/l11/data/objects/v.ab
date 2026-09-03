@@ -1,0 +1,4 @@
+Var :: @id.v
+    path: ./textures/$tier/$id.png
+    nested.kind: special
+    from_nested: "kind is $nested"

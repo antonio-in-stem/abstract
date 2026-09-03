@@ -1,0 +1,24 @@
+schema Item {
+    id: text(1..40)
+    name: text(1..80)
+    rarity: enum(common, rare, epic, legendary) = common
+    price: float(0..9999) = 0.0
+    tradable: bool = true
+    release_wave: int(1..99) @optional
+    tags[]: enum(starter, seasonal, exclusive) @optional
+    icon: image(png) @optional
+
+    stats {
+        power: int(0..100) = 0
+        agility: int(0..100) = 0
+    }
+}
+
+logic Item {
+    if .rarity == "legendary" {
+        require .price >= 100
+            else throw "Legendary items must cost at least 100."
+    }
+
+    derive? .release_wave = 1
+}

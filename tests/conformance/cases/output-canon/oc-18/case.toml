@@ -1,0 +1,20 @@
+id = '''OC-18'''
+area = '''output-canon'''
+title = '''The lang -> lang_values rename is not applied to tuple-array columns or #tag(...) arguments, producing a self-contradictory error'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/output-canon/oc32-lang-tuple/'''
+command = '''rows[] { key: text  lang: text }
+lang
+lang: en_us
+rows(key, lang): (a, uno), (b, dos)'''
+expected_kind = '''document'''
+expected_note = '''`rows(key, lang): ...` compiles, exactly like the plain `lang: en_us` assignment on the same instance does, and emits rows[].lang_values.'''
+actual_0_2_0 = '''With the declared name:
+  abstract: data/items/a.ab: Unknown field 'lang' at T.rows. Declared fields: key, lang_values.
+(the schema literally declares `lang`, and the sibling root assignment `lang: en_us` on the same file is accepted and emitted as lang_values)
+With `rows(key, lang_values): ...` it compiles and emits rows[].lang_values plus root lang_values.'''
+spec_ref = '''5.5, 5.12, 10.4'''
+status = '''ready'''
+note_1_0 = '''0.2.0-only source kept as a rejection case for an unrelated reason: with the rename gone (Appendix A, A6) the group 'rows' declares 'key' and 'lang', so the tuple column 'lang_values' names no field of the element group and is E409 (SPEC 5.5). The Levenshtein distance from 'lang_values' to 'lang' is 7, above both the limit of 2 and half the length of the offending text, so no 'Did you mean' clause is emitted (SPEC 9.8). Rewriting the column as 'rows(key, lang)' makes the project compile and emit rows[].lang, and the self-contradictory diagnostic disappears with the rename.'''

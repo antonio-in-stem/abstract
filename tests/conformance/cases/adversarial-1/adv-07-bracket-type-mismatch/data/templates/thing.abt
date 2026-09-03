@@ -1,0 +1,6 @@
+schema Thing {
+    name: text(1..40)
+    caps[] @optional {
+        id: enum(search, sync, export) @tag
+    }
+}

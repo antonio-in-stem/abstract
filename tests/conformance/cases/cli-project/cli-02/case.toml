@@ -1,0 +1,17 @@
+id = '''cli-02'''
+area = '''cli-project'''
+title = '''Direct/subdirectory compile resolves file()/image() against the .ab file's own folder, so any project with assets fails in direct mode'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-direct-assets/'''
+command = '''../../project/target/release/abstract.exe compile case-direct-assets/data JSON
+../../project/target/release/abstract.exe case-direct-assets/data/items/a.ab case-direct-assets/data/templates/Item.abt JSON
+... case-direct-assets/data/items/a.ab case-direct-assets/data/templates JSON --skip-assets'''
+expected_kind = '''document'''
+expected_note = '''Asset resolution is a property of the project, not of which file/subfolder was passed on the command line - both invocations resolve ./textures/icon.png to <project>/assets/textures/icon.png.'''
+actual_0_2_0 = '''abstract: a.ab: File not found at Item.icon: './textures/icon.png' resolved to '\\?\C:\...\case-direct-assets\data\items\assets\textures\icon.png'. The schema declares image(...), so the file must exist. (exit 1)'''
+spec_ref = '''2.3, 2.5, 4.4.7, 5.9, 7.6'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (must produce identical bytes for: compile . JSON  and  compile data/items/a.ab JSON)'''
+expected_1_0 = '''Asset resolution is a property of the project, never of which path was named: one leading ./ is stripped and the rest is resolved under the project root assets directory (SPEC 5.9), and every spelling of the roots resolves the same project root (SPEC 2.3, 7.6). assets/textures/icon.png is a 16x16 PNG and image(png) declares no size, so any size satisfies it (SPEC 4.4.7). The emitted value is the authored text.'''

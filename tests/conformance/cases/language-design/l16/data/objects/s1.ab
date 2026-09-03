@@ -1,0 +1,2 @@
+Shared :: @id.s1
+    name: uses a schema from another project

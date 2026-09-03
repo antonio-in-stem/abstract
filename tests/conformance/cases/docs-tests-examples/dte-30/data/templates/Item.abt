@@ -1,0 +1,21 @@
+schema Item {
+    id: text(1..40)
+    price: float(0..9999) = 0.0
+    tradable: bool = true
+    icon: image(png 128x128)
+
+    stats {
+        power: int(0..100) = 0
+    }
+
+    rarity: enum(common, rare) = common
+    manual: file(pdf) @optional
+}
+
+logic Item {
+    if .rarity == "rare" {
+        require not .price < 10
+            else throw "rare items cost at least 10"
+    }
+    derive? .wave = 1
+}

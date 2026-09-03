@@ -1,0 +1,23 @@
+id = '''LOGIC-08'''
+area = '''logic-engine'''
+title = ''''exists' probes the filesystem with no containment: absolute paths and '..' escape assets/ and the project, leaking file existence into compiled output'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/logic-engine/L10-exists-filesystem-oracle/'''
+command = '''repro/logic-engine/L10-exists-filesystem-oracle — cd repro/logic-engine/L10-exists-filesystem-oracle && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''Filesystem checks should be confined to declared file()/image() fields and to paths that resolve inside the project (assets/ and the project root). An absolute path or a '..' escape should be a compile error, not a probe.'''
+actual_0_2_0 = '''{
+  "data": [
+    { "template": "Probe", "id": "abs_hit",       "probe": "C:/Windows/win.ini",                       "leak": "present" },
+    { "template": "Probe", "id": "abs_miss",      "probe": "C:/Windows/definitely-not-here-9f3a.ini",   "leak": "absent"  },
+    { "template": "Probe", "id": "rel_traversal", "probe": "../../outside-project-marker.ini",           "leak": "present" }
+  ]
+}
+EXIT=0
+
+(`probe` is declared plain `text(1..200)`. The third row proves '..' escapes both assets/ and the project directory; the first two rows differ only in whether the out-of-project file exists.)'''
+spec_ref = '''2.7, 6.7, 8.4, 9.5'''
+status = '''ready'''
+note_1_0 = ''''exists' never touches the filesystem, for any field type, in any mode (SPEC 6.7), so '.probe exists' is true for all three instances purely because the field has a value. No filesystem oracle remains and the compiled bytes do not depend on --skip-assets (SPEC 9.5). Instances are ordered by (template, id) per SPEC 2.7.'''

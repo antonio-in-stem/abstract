@@ -1,0 +1,32 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Page",
+      "id": "dashed",
+      "name": "Dashed",
+      "langs": [
+        "es_es",
+        "es_mx"
+      ],
+      "copy": [
+        {
+          "key": "es_es",
+          "value": "Hola"
+        },
+        {
+          "key": "es_mx",
+          "value": "Hola"
+        }
+      ]
+    }
+  ],
+  "overlays": []
+}

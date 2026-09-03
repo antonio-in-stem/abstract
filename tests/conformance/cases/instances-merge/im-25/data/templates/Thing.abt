@@ -1,0 +1,4 @@
+schema Thing {
+    name: text(1..40)
+    flags[]: enum(hat_red, hat_blue, boot_x) = hat_*
+}

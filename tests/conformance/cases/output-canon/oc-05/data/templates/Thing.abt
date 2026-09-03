@@ -1,0 +1,4 @@
+schema Thing {
+    id: text(1..80)
+    label: text(1..200)
+}

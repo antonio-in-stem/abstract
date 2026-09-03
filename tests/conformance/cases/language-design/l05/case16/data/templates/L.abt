@@ -1,0 +1,15 @@
+schema L {
+    id: text(1..40)
+    kind: enum(big, small) = small
+    size: text @optional
+    banner: text @optional
+}
+
+logic L {
+    if .kind == "big" {
+        derive .size = large
+    } else {
+        derive .size = tiny
+    }
+    derive .banner = "banner for $id"
+}

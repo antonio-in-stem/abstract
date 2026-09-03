@@ -1,0 +1,19 @@
+id = '''LP-006'''
+area = '''lexing-parsing'''
+title = '''Panic (process abort) expanding a brace pattern whose `}` precedes its `{`'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-02-panic-brace-reversed/'''
+command = '''`cd repro/lexing-parsing/bug-02-panic-brace-reversed && abstract compile . JSON`'''
+expected_kind = '''undecided'''
+expected_note = '''The value `a}.{b` is not a brace pattern (braces are not balanced in order), so it should fall through to parse_scalar and become the literal string `a}.{b`, exactly as `a.b}c` already does (verified in bug-39-fuzz-sweep).'''
+actual_0_2_0 = '''source: `Thing :: @id.x` / `    icon: a}.{b`
+```
+thread 'main' (27728) panicked at src\lib.rs:2013:26:
+begin > end (4 > 1) when slicing `a}.{b`
+```
+exit code 101.'''
+spec_ref = '''3.5 (bare text), 3.6, 5.5, 5.8, 10.2 (E205)'''
+status = '''ready'''
+spec_note = '''GRAMMAR.ebnf, bare_text: "Brackets inside a bare_text MUST be balanced and correctly typed". In "a}.{b" the "}" closes nothing (E205 by 3.6) and the "{" is then left open (E203 at end of file); E205 wins on source position (11.1). Braces are ordinary characters in a value only while they are balanced (5.8), which is what makes "./art/{a,b}.png" a single bare_text.'''

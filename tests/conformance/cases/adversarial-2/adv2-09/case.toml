@@ -1,0 +1,15 @@
+id = '''ADV2-09'''
+area = '''adversarial-2'''
+title = '''A header tag whose applicability set is empty is E440, the same diagnostic the equivalent body statement gets'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''spec-gap'''
+expected_kind = '''error'''
+spec_ref = '''5.2, 5.13, 5.14, 7.2, 7.3'''
+expected_note = '''`glow` exists in versions 2..3 (@since(2)); the instance window `@removed(2)` is version 1 only. The header tag `@glow` therefore assigns a field that exists in no version in which the instance exists, and it writes nothing anywhere - the exact condition SPEC 5.13 makes E440 for a body statement.
+
+SPEC 5.2 calls a header tag "a compact assignment to a root field" and SPEC 7.3 step 1 applies header tags and body statements by the same plain assignment, so the applicability requirement now reaches both: SPEC 5.2, SPEC 5.13 and SPEC 7.2 state it for every assignment rather than for body statements alone. A tag carries no annotation of its own (E437), so its applicability set is the field's existence set clipped to the instance window and an empty set can only come from the window - which makes E440, not E430, the diagnostic. A tag whose field exists in no version at all is E605 at the schema and is reported first.
+
+The rule closes the last silent construct in the language: one assignment can no longer be an error and the other a no-op on the basis of the syntax chosen for it.'''
+actual_1_0 = '''exit 1: the tag is E440, with the message the body statement gets - "This statement applies to versions 2..3, but instance 'x' exists only in versions 1." - and a note at the instance header.'''
+status = '''ready'''

@@ -1,0 +1,18 @@
+id = '''dup-nonascii'''
+area = '''schema-types'''
+title = '''Identifier normalisation is ASCII-only: `CAFÉ` and `café` are two distinct fields (while `NAME`/`name` collide), and a half-lowercased key leaks into the output'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/dup-nonascii/ (also references: repro/schema-types/nonascii-case/)'''
+command = '''...\abstract.exe compile repro/schema-types/dup-nonascii/data JSON
+Related: repro/schema-types/nonascii-case/ (schema declares `CAFÉ`, instance writes `café`).'''
+expected_kind = '''error'''
+expected_note = '''Either full Unicode case folding (so the two are duplicates, consistent with the ASCII behaviour), or a parse error rejecting non-ASCII identifiers.'''
+actual_0_2_0 = '''dup-nonascii, exit 0:
+    { "template": "Thing", "id": "a", "cafÉ": "x", "café": "y" }
+nonascii-case: abstract: items/a.ab: Unknown field 'café' at Thing. Did you mean 'cafÉ'? Declared fields: id, cafÉ, template, id.'''
+spec_ref = '''3.3, 10.2'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variant: compile nonascii-case/data JSON)'''
+expected_1_0 = '''Non-ASCII characters are not identifier characters (SPEC 3.3), so every occurrence of CAFE-with-accent is E206 in P1. Sources are diagnosed in the sorted order of SPEC 2.4, so data/items/a.ab comes before data/templates/Thing.abt. The listed ids are one per file: the primary tree carries four offending identifiers (a.ab lines 2 and 3, Thing.abt lines 3 and 4) and the variant two (a.ab line 2, Thing.abt line 3); how many a conforming implementation reports after the first in one file depends on parse recovery, which the spec does not fix.'''

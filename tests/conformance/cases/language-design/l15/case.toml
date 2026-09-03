@@ -1,0 +1,22 @@
+id = '''L15'''
+area = '''language-design'''
+title = '''A domain-specific rename (`lang` -> `lang_values`) is hardcoded in the general-purpose compiler and leaks into error messages as a field name that cannot be spelled in a schema'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case25/'''
+command = '''lang_values: en_us
+lang[]
+lang_values'''
+expected_kind = '''undecided'''
+expected_note = '''The compiled key equals the schema field name. If a consumer needs a different key, the schema should say so explicitly, e.g. `lang[] @as(lang_values) { ... }`.'''
+actual_0_2_0 = '''`lang` is silently renamed for every project on earth; `lang_values` is silently accepted as an input alias; error messages advertise the renamed name.'''
+spec_ref = '''8.2, 8.3, 10.4 (E409), A.1 (A6), Not doing (no @as)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+The hardcoded rename is removed (A.1 A6): the compiled key is always the declared field name
+(8.2, 8.3). "lang_values" is therefore not an input alias for anything and is an undeclared
+field, which is E409 with the declared-field list of 5.12. 1.0 deliberately adds no @as output
+rename, so a consumer that needs a different key names the field that way in the schema.
+'''

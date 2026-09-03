@@ -1,0 +1,19 @@
+schema T {
+    id: text(1..40)
+    name: text(1..40)
+    len0: text(1..8) @optional
+    len1: text(1..8) @optional
+    len5: text(1..8) @optional
+}
+
+logic T {
+    if length(.name) == 0 {
+        derive .len0 = hit
+    }
+    if length(.name) == 1 {
+        derive .len1 = hit
+    }
+    if length(.name) == 5 {
+        derive .len5 = hit
+    }
+}

@@ -1,0 +1,24 @@
+id = '''L08'''
+area = '''language-design'''
+title = '''Schemas nest with brace groups but instances cannot: `.abt` and `.ab` use non-transferable nesting syntax, and nested list groups are unreachable from instance syntax'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case2/ (also references: repro/language-design/case10/)'''
+command = '''.items[0]'''
+expected_kind = '''undecided'''
+expected_note = '''One nesting notation, usable in both file types; and any shape a schema can declare should be expressible in an instance.'''
+actual_0_2_0 = '''Braces nest in .abt only; dots nest in .ab only; `#tag(...)` args are flat; no array indexing in data paths; `caps[].sub[]` is undeclarable-in-practice.'''
+spec_ref = '''4.7, 4.10, 5.4, 5.5, 8.3, 10.4 (E411), A.4'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)      -> expected-error.txt
+compile data JSON (cwd = l08/case10)     -> case10/expected.json
+Kept as a rejection case for an unrelated reason: schema Pack declares the group "slots"
+without @optional, so it is a required field, and braced.ab writes nothing at or under it. An
+absent required group is E411 (4.7, 4.10). The construct the case is about works in 1.0: body
+blocks are sugar for a dotted prefix (5.4, A.4), so braced.ab and dotted.ab are two spellings
+of one object, and case10 shows a nested list group reached from instance syntax - "caps: #a,
+#b" fills the @tag field of each element and the optional inner list group stays absent (5.5,
+8.9). A positive case for body blocks needs "slots" marked @optional or assigned.
+'''

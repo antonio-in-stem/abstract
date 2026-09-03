@@ -1,0 +1,29 @@
+id = '''L16'''
+area = '''language-design'''
+title = '''No imports, namespaces or constants: an .ab file cannot declare which schema it belongs to, and cross-project schema reuse only works by naming every file on the command line'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''missing-feature'''
+source_repro = '''repro/language-design/case12/'''
+command = '''# schema in a sibling tree is invisible:
+tree: case12/shared/templates/Shared.abt  and  case12/data/objects/s1.ab
+./project/target/release/abstract.exe compile repro/language-design/case12/data JSON
+OUTPUT: abstract: objects/s1.ab:1: Unknown template 'Shared'. Add a schema named 'Shared' in a .abt file, or change this instance header to an existing schema.
+# the only workaround is naming both files on the CLI:
+./project/target/release/abstract.exe repro/language-design/case12/data/objects/s1.ab repro/language-design/case12/shared/templates/Shared.abt JSON
+OUTPUT: { "data": [ { "template":"Shared","id":"s1","name":"uses a schema from another project" } ] }
+-> works, but the dependency lives in the invoker's shell history, not in the source.'''
+expected_kind = '''undecided'''
+expected_note = '''An .ab (or a per-directory manifest) should be able to state its dependencies, e.g. `use ../shared/templates` or `use stickers.Sticker`, and schema names should be scopeable so two subsystems can each own an `Item`. A `const` block for shared literals would remove the main source of copy-paste in the corpus.'''
+actual_0_2_0 = '''No imports; global flat schema namespace with a project-wide uniqueness requirement; no constants; dependencies expressible only as CLI arguments.'''
+spec_ref = '''2.3, 2.4, 4.2, 10.4 (E401), Not doing (no imports)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+1.0 keeps the language small and adds no imports, namespaces or constants, and it also removes
+the 0.2.0 workaround: the three-argument direct form is gone (A.3 A53) and a directory
+argument must be the project root or the data directory (2.3). Discovery walks the data
+directory only, so shared/templates/Shared.abt is outside the project however the compile is
+invoked, and the instance header names an undeclared schema, which is E401 with a suggestion.
+The 1.0 answer is to put shared schemas inside the project's data/ tree.
+'''

@@ -1,0 +1,3 @@
+&base.slug
+Thing :: @id.leak
+doc: ./$slug.txt

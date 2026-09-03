@@ -1,0 +1,21 @@
+id = '''root-tag-id'''
+area = '''schema-types'''
+title = '''@tag on a root-level schema field consumes the instance's id and then DELETES `id` from the compiled output'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/schema-types/root-tag-id/'''
+command = '''abstract compile repro/schema-types/root-tag-id/data JSON'''
+expected_kind = '''error'''
+expected_note = '''Either an error ("@tag is only meaningful on group fields") or, at minimum, `id` preserved in the output.'''
+actual_0_2_0 = '''exit 0:
+{
+  "data": [
+    { "template": "Thing", "status": "a" }
+  ]
+}
+— `id` is absent from the compiled record.'''
+spec_ref = '''4.8, 4.11, 10.3'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''@tag is only allowed on a field declared inside a group or list group; on a root field it is E311 (SPEC 4.8), reported at templates/Thing.abt:2. The instance id can therefore never be consumed by a tag field, and id can never be dropped from the output: it is always the second key of every instance object (SPEC 8.2).'''

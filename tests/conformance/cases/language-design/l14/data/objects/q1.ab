@@ -1,0 +1,6 @@
+Q :: @id.q1
+    desc: Hello world
+    email: team@example.com
+    url: https://example.com/a?b=1
+    tags: alpha, beta
+    caps: #search, #sync(availability: alpha)

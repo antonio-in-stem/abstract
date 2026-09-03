@@ -1,0 +1,20 @@
+id = '''DTE-02'''
+area = '''docs-tests-examples'''
+title = '''The primary `logic` example in every doc surface does not compile: `derive` to a field the schema does not declare is rejected'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/derive-undeclared-field/'''
+command = '''cd .../repro/docs-tests-examples/derive-undeclared-field && abstract compile data JSON'''
+expected_kind = '''document'''
+expected_note = '''Compiles, emitting `shipping_class: "standard"` and `release_wave: 1` (what the docs show).'''
+actual_0_2_0 = '''exit 1 — `abstract: items/atlas.ab: Unknown field 'shipping_class' at Product. Declared fields: id, status, release_year, price, featured, template, id.`'''
+spec_ref = '''6.4, 6.13, 7.2 (P3), 10.5 (E505)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+The documented 0.2.0 example is rejected by 1.0: a derive target must name a field the
+schema declares (6.4, 6.13). ".shipping_class" is undeclared, so P3 reports E505 before any
+instance is read; "derive? .release_wave" is a second E505 at the next line. The audit
+expected a document here; the spec wins - the doc surfaces must be rewritten, not the rule.
+'''

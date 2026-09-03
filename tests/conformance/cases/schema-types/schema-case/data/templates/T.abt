@@ -1,0 +1,8 @@
+schema Thing {
+    id: text(1..40)
+    a: text(1..9) = one
+}
+schema thing {
+    id: text(1..40)
+    b: text(1..9) = two
+}

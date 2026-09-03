@@ -1,0 +1,4 @@
+schema T {
+    id: int(0..100)
+    label: text(1..40)
+}

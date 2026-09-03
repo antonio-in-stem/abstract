@@ -1,0 +1,4 @@
+S :: @id.base
+    name: Base
+    legacy_flag: present_in_v1
+    tags: a, b

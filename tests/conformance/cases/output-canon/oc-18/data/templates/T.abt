@@ -1,0 +1,8 @@
+schema T {
+    id: text(1..80)
+    rows[] {
+        key: text(1..40)
+        lang: text(1..40)
+    }
+    lang: text(1..40) @optional
+}

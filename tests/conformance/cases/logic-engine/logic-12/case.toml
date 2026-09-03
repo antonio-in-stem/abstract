@@ -1,0 +1,28 @@
+id = '''LOGIC-12'''
+area = '''logic-engine'''
+title = ''''==' and '!=' against a path projected across a list of groups are existential (ANY), so 'no item is X' guards silently pass'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L19-projected-neq-is-any/'''
+command = '''repro/logic-engine/L19-projected-neq-is-any — cd repro/logic-engine/L19-projected-neq-is-any && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''The instance has caps [#search, #banned]; `require .caps.id != "banned"` should fail with "no capability may be 'banned'".'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "T",
+      "id": "one",
+      "caps": [
+        { "id": "search" },
+        { "id": "banned" }
+      ]
+    }
+  ]
+}
+EXIT=0
+
+(Adding `require not .caps.id == "banned"` to the same block DOES fire: "abstract: items/one.ab: T logic: no capability may be 'banned' (not ==)" — showing the two spellings disagree.)'''
+spec_ref = '''6.5, 6.8, 7.2, 10.5'''
+status = '''ready'''
+note_1_0 = ''''.caps.id' crosses the list field 'caps' without an index, so it can project several values. '!=' requires each operand to resolve to at most one value, which makes this a static E519 in P3, independent of any instance (SPEC 6.5). The supported spelling of the intent is 'require not .caps.id contains "banned"'.'''

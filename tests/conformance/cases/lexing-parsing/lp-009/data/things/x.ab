@@ -1,0 +1,3 @@
+Thing :: @id.x
+    template: TotallyDifferent
+    name: Widget

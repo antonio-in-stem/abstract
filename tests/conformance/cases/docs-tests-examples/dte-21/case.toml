@@ -1,0 +1,20 @@
+id = '''DTE-21'''
+area = '''docs-tests-examples'''
+title = '''NEW-FEATURES.md contradicts itself about v0.1 compatibility'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/derive-undeclared-field/'''
+command = '''cd .../repro/docs-tests-examples/derive-undeclared-field && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''One consistent compatibility statement.'''
+actual_0_2_0 = '''Line 126 claims unchanged compilation with exactly one intentional difference; lines 281-291 enumerate three changes, one of which rejects previously-working files. The repro shows a v0.1-era logic block failing: `abstract: items/atlas.ab: Unknown field 'shipping_class' at Product.`'''
+spec_ref = '''6.4, 7.2 (P3), 10.5 (E505)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+Same tree and same outcome as DTE-02: two E505 in P3, one for "derive .shipping_class" and one
+for "derive? .release_wave", in logic-statement order. Under 1.0 the compatibility question the
+audit found contradictory is answered by Appendix A, which lists every rejecting change; a
+0.2.0 logic block that derives an undeclared field is one of them.
+'''

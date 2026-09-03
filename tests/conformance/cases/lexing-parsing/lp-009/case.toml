@@ -1,0 +1,20 @@
+id = '''LP-009'''
+area = '''lexing-parsing'''
+title = '''The `template` field of the emitted object can be forged from the instance body'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/lexing-parsing/bug-32-template-field-forged/'''
+command = '''`cd repro/lexing-parsing/bug-32-template-field-forged && abstract compile . JSON`'''
+expected_kind = '''error'''
+expected_note = '''Either `template` is reserved and an explicit assignment to it is a compile error, or the header value is authoritative and re-applied after assignments.'''
+actual_0_2_0 = '''source:
+```
+Thing :: @id.x
+    template: TotallyDifferent
+    name: Widget
+```
+output: `{ "template": "TotallyDifferent", "id": "x", "name": "Widget" }` — validated as `Thing`, emitted as `TotallyDifferent`. Exit 0.'''
+spec_ref = '''4.11, 5.4, 8.2, 10.4 (E410)'''
+status = '''ready'''
+spec_note = '''"template" is an envelope key written by the compiler from the instance header; a statement whose leading path segment is "template" or "id" is E410 (5.4, 4.11). It can never be forged from a body.'''

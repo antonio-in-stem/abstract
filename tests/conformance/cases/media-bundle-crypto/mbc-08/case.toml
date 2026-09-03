@@ -1,0 +1,20 @@
+id = '''mbc-08'''
+area = '''media-bundle-crypto'''
+title = '''AbstractKeys.fromHex accepts a bare 64-hex string while the Rust CLI treats the same string as a passphrase (silent cross-tool key mismatch)'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/media-bundle-crypto/case03-hex-key-prefix-parity/'''
+command = '''bundle data --key <64hex>
+AbstractBundle.load(b, AbstractKeys.fromHex(<64hex>))'''
+expected_kind = '''undecided'''
+expected_note = '''The two sides should agree on when a 64-hex string means raw bytes vs passphrase.'''
+actual_0_2_0 = '''Rust CLI hashes bare 64-hex as passphrase; Java fromHex uses it as raw bytes; keys diverge and the bundle won't open cross-tool.'''
+spec_ref = '''9.9, Appendix D.2 (item 10)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case: key derivation is optional tooling. Appendix D.2 item 10 is
+the binding requirement - key derivation must follow the same rule as the compiler, a bare
+64-character hexadecimal string is a passphrase, and only the "hex:" prefix selects raw key
+bytes. Verify as a cross-tool tooling test. The data/ tree is a valid 1.0 project.
+'''

@@ -1,0 +1,6 @@
+schema Doc {
+    id: text(1..40)
+    title: text @optional
+    data: text @optional
+    after: text @optional
+}

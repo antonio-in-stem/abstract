@@ -1,0 +1,21 @@
+id = '''DTE-29'''
+area = '''docs-tests-examples'''
+title = '''An empty or wrongly-pointed project directory compiles, lints and bundles as a success'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/docs-tests-examples/empty-project/'''
+command = '''cd .../repro/docs-tests-examples/empty-project && abstract lint data && abstract templates data && abstract compile data JSON && abstract bundle data --plain --out empty.abx'''
+expected_kind = '''undecided'''
+expected_note = '''A warning or a non-zero exit: 'no .ab/.abt files found under data'.'''
+actual_0_2_0 = '''`abstract lint data` → `abstract: ok` exit 0; `abstract templates data` → no output, exit 0; `abstract compile data JSON` → `{"data": []}` exit 0; `abstract bundle data --plain --out empty.abx` → `abstract: wrote empty.abx (39 bytes, 0 item(s), plain)` exit 0.'''
+spec_ref = '''2.4, 9.2, 10.1 (E103), A.1 (A33)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+lint data         -> same E103
+templates data    -> same E103
+data/ exists and is empty. Discovery that collects zero source files is E103: an empty
+directory is never a valid empty project (2.4, A.1 A33). Note the case depends on the empty
+data/ directory surviving transport; if data/ is absent the invocation is E806 instead.
+'''

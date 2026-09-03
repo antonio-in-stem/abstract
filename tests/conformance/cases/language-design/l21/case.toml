@@ -1,0 +1,24 @@
+id = '''L21'''
+area = '''language-design'''
+title = '''Diagnostics lose position and blame the wrong file: logic errors carry no line or array index, and a logic-derived unknown field is reported against the .ab'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/language-design/case23/ (also references: repro/language-design/case18b/)'''
+command = '''derive .undeclared_field = oops'''
+expected_kind = '''undecided'''
+expected_note = '''"objects/e.ab: templates/E.abt:12: E logic: an item is invalid (items[1], name = \"bad\")" and "templates/E.abt:9: logic E derives '.undeclared_field', which schema E does not declare." Plus a `--max-errors` mode that reports all instance-level failures in one run.'''
+actual_0_2_0 = '''Logic failures name only the instance file and the author's string; loop failures give no index; derive mistakes are attributed to the instance; only the first project-wide error is ever shown.'''
+spec_ref = '''6.9, 6.12, 9.3, 9.8, 10.2 (E210), 10.4 (E409), 10.5 (E505)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)       -> expected-error.txt
+compile data JSON (cwd = l21/case18b)     -> case18b/expected-error.txt (three diagnostics)
+Kept as a rejection case for an unrelated reason: a loop variable is always spelled with a
+leading "$" (6.9, GRAMMAR for_statement), so "for item in .items" is E210 in P1 and the P3
+checks the case is about are never reached. Written as "for $item in .items", the block would
+raise E505 for "derive .undeclared_field" in P3, and every logic diagnostic would carry the
+.abt position, a note naming the instance and the version, and inside a loop the index and
+item (6.12, 9.8). case18b is the --max-errors half: the default of 20 reports all three
+instances in one run (9.3).
+'''

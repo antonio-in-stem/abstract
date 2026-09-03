@@ -1,0 +1,6 @@
+schema Thing {
+    id: text(1..40)
+    name: text(1..40) @optional
+    tags[]: text(1..40) @optional
+    note: text(1..200) @optional
+}

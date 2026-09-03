@@ -1,0 +1,8 @@
+schema Page {
+    name: text(1..40)
+    langs[]: enum(en_us, es_es, es_mx) @optional
+    copy[] {
+        key: enum(en_us, es_es, es_mx) @tag
+        value: text(1..60)
+    }
+}

@@ -1,0 +1,17 @@
+schemma W {
+    id: text(1..40)
+    name: text
+}
+
+overlay v2 {
+    supports: 3.1
+}
+
+migrate W 1 -> 2 {
+    rename .old -> .new
+}
+
+logic Ghost {
+    require .nothing exists
+        else throw "this logic block targets a schema that does not exist"
+}

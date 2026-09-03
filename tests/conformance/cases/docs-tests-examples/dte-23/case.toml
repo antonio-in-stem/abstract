@@ -1,0 +1,25 @@
+id = '''DTE-23'''
+area = '''docs-tests-examples'''
+title = '''Multi-path braces only support a single-segment prefix: `a.b.{c, d}` builds a field literally named `a.b`'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/multipath-nested-prefix/'''
+command = '''cd .../repro/docs-tests-examples/multipath-nested-prefix && abstract compile data JSON
+deep.inner.{c, d}: filled'''
+expected_kind = '''error'''
+expected_note = '''`deep.inner.c` and `deep.inner.d` both set to `filled` (or a parse error stating that only a single-segment prefix is supported).'''
+actual_0_2_0 = '''exit 1 — `abstract: items/x.ab: Unknown field 'deep.inner' at T. Declared fields: id, deep, template, id.` The control (`inner.{c, d}: filled` with a one-level prefix) compiles to `{"inner": {"c": "filled", "d": "filled"}}`.'''
+spec_ref = '''4.4.1, 4.10, 5.4, 7.2 (P3), 10.3 (E313), A.1 (A20)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)   -> expected-error.txt
+compile data JSON (cwd = dte-23/ctl)  -> ctl/expected-error.txt
+Kept as a rejection case for an unrelated reason: both schemas default two text(1..20) fields to
+the empty string, and a default is validated against its own type at schema time (4.10), so
+the zero-scalar-value default violates the 1..20 range and is E313 in P3, before either
+instance is read. P3 walks fields in declaration order, so each tree yields two E313, for "c"
+then "d". The construct the case is about is legal in 1.0 - a multi-path prefix may be
+dotted (5.4, A.1 A20) - so "deep.inner.{c, d}: filled" assigns deep.inner.c and deep.inner.d.
+A positive case for a dotted multi-path prefix needs a schema whose defaults are valid.
+'''

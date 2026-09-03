@@ -1,0 +1,14 @@
+id = '''ADV2-06'''
+area = '''adversarial-2'''
+title = '''`schema` at statement position in a .ab file reports E316 "Invalid field name" instead of E210'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+expected_kind = '''error'''
+spec_ref = '''2.1, 10.2, 10.4'''
+expected_note = '''SPEC 2.1: "Encountering `schema`, `logic` or `versions` at statement position in a `.ab` file, or an `instance_header` in a `.abt` file, is E210." The `schema Other {` line here sits at statement position, after an instance header, so the diagnostic is E210 ("Unexpected {found} here; expected {expected}."). The mirror direction is implemented correctly: an instance header inside a .abt is E210.'''
+actual_1_0 = '''exit 1 with
+  data/items/x.ab:3:1: error[E316]: Invalid field name 'schema Other {'.
+`logic Other {` behaves identically. The identifier is wrong and the message is doubly wrong: E316 is the schema-side "Invalid field name" identifier (SPEC 10.3), and the {text} it substitutes is a whole line including the block brace, which is not a field name and is not what any author wrote as one.'''
+status = '''ready'''
+note_1_0 = '''A .ab body line with no ':' falls through to the field-name path, so any non-statement line inside an instance body is reported as an invalid field name. The three keywords SPEC 2.1 names are the case the spec pins to E210.'''

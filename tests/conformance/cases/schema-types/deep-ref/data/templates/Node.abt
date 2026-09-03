@@ -1,0 +1,4 @@
+schema Node {
+    id: text(1..40) @optional
+    child: $(Node) @optional
+}

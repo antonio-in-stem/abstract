@@ -1,0 +1,4 @@
+schema Thing {
+    name: text(1..40)
+    tags [1..2]: text @optional
+}

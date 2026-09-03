@@ -1,0 +1,22 @@
+id = '''DTE-15'''
+area = '''docs-tests-examples'''
+title = '''VS Code extension lints a single .ab file by default, producing false 'Unknown template' errors on every project `abstract init` creates'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/docs-tests-examples/vscode-lint-single-file/'''
+command = '''cd .../repro/docs-tests-examples/vscode-lint-single-file && abstract lint data/items/a.ab
+abstract lint data'''
+expected_kind = '''undecided'''
+expected_note = '''`abstract: ok` in both cases, or the extension resolving the enclosing project.'''
+actual_0_2_0 = '''`abstract lint data/items/a.ab` → exit 1, `abstract: a.ab:1: Unknown template 'T'. Add a schema named 'T' in a .abt file, ...` — surfaced in the editor as a red squiggle on a perfectly valid file. `abstract lint data` → `abstract: ok`.'''
+spec_ref = '''2.4, 2.5, 9.2, 11.2, Appendix D.3 (item 13)'''
+status = '''ready'''
+expect = "ok"
+expectation_1_0 = '''
+lint data/items/a.ab -> exit 0, empty stdout, stderr "abstract: ok"
+lint data            -> exit 0, empty stdout, stderr "abstract: ok"
+Single-file mode discovers the whole project (2.5), so linting one .ab file inside a project
+can no longer produce a false "Unknown template". Both invocations are lint-only cases in the
+sense of 11.2: exit 0 with no out.* file. The editor-side half is Appendix D.3 item 13.
+'''

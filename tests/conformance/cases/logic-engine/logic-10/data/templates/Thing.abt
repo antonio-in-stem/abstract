@@ -1,0 +1,11 @@
+schema Thing {
+    id: text(1..40)
+    tags[]: text(1..20)
+    marker: text(1..20)
+}
+
+logic Thing {
+    for t in .tags {
+        require .marker != "t" else throw "marker must not be the literal text t"
+    }
+}

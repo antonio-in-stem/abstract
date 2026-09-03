@@ -1,0 +1,4 @@
+Doc :: @id.one
+    title: First
+    data: payload
+    after: tail

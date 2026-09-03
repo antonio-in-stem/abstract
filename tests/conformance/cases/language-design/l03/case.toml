@@ -1,0 +1,24 @@
+id = '''L03'''
+area = '''language-design'''
+title = '''`data:` is an undeclared reserved word that silently truncates the rest of an .ab file — for a round-trip that does not work'''
+severity = '''critical'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case1/ (also references: repro/language-design/case25/, repro/language-design/case26/)'''
+command = '''data: payload
+after: tail'''
+expected_kind = '''document'''
+expected_note = '''Either `data` is a normal field name (preferred), or it is a documented reserved word that produces an error when used as a field. Truncating the file with exit 0 is never acceptable.'''
+actual_0_2_0 = '''Silent truncation of the remainder of the file, including subsequent instances; no diagnostic; exit 0. The RAW re-parse it enables yields an empty project.'''
+spec_ref = '''5.1, 5.4, 8.2, 10.4 (E403, E409), A.1 (A1, A6)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)          -> expected.json
+compile data JSON (cwd = l03/case25)         -> case25/expected-error.txt
+compile data JSON (cwd = l03/case26)         -> case26/expected-error.txt
+"data" is an ordinary field name in 1.0 (A.1 A1), so the primary instance keeps title, data
+and after. case25 shows the other half: the lang -> lang_values shim is gone (A.1 A6), so
+"lang_values" is simply an undeclared field and is E409. case26 is the RAW re-parse the audit
+mentions: RAW is a review format that no Abstract tool reads back (8.6), and as an .ab file
+its first statement precedes any instance header, which is E403 (5.1).
+'''

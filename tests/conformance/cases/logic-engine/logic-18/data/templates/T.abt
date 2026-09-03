@@ -1,0 +1,13 @@
+schema T {
+    id: text(1..40)
+    kind: enum(basic, pro)
+    shipping_class: text(1..40)
+}
+
+logic T {
+    if .kind == "pro" {
+        derive .shipping_class = "express"
+    } else {
+        derive .shipping_class = "standard"
+    }
+}

@@ -1,0 +1,24 @@
+id = '''DTE-24'''
+area = '''docs-tests-examples'''
+title = '''A project directory named raw/json/yml/yaml/true/false cannot be passed as an input path'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/cli-name-collision/'''
+command = '''cd .../repro/docs-tests-examples/cli-name-collision && abstract compile raw JSON
+abstract lint raw
+abstract compile ./raw JSON'''
+expected_kind = '''undecided'''
+expected_note = '''The first positional argument that is not the format token is the input path, regardless of its spelling.'''
+actual_0_2_0 = '''`abstract compile raw JSON` → exit 1 `abstract: missing input path`; `abstract lint raw` → exit 1 same message; `abstract compile ./raw JSON` → exit 0 with correct output.'''
+spec_ref = '''2.3, 2.4, 9.2'''
+status = '''ready'''
+expectation_1_0 = '''
+compile raw JSON   -> expected.json
+lint raw           -> exit 0, empty stdout, stderr "abstract: ok"
+compile ./raw JSON -> expected.json
+9.2 fixes the rule: the last positional is the FORMAT only when at least one other positional
+is present and it matches a format keyword, so in "compile raw JSON" the input path is "raw"
+whatever it is called. "raw" contains no data/ child, so the project root and the discovery
+root are both "raw" (2.3 step 3 finds nothing, step 4 falls through).
+'''

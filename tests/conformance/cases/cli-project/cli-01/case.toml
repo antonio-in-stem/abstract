@@ -1,0 +1,17 @@
+id = '''cli-01'''
+area = '''cli-project'''
+title = '''Single-file compile cannot find templates outside the file's own directory - the layout `abstract init` generates fails'''
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-init-direct/ (also references: repro/cli-project/case-overlap-roots/)'''
+command = '''../../project/target/release/abstract.exe init case-init-direct
+../../project/target/release/abstract.exe case-init-direct/data/items/starter_sword.ab JSON
+compile'''
+expected_kind = '''document'''
+expected_note = '''Compiling one instance of a scaffolded project resolves its schema (walk up to the project root, or at least to the parent-of-data root that project_dir_for_root already computes), or fails with a message that says the schema was not found IN THE SEARCHED ROOT and names that root.'''
+actual_0_2_0 = '''abstract: starter_sword.ab:3: Unknown template 'Item'. Add a schema named 'Item' in a .abt file, or change this instance header to an existing schema.  (exit 1). `abstract compile case-init-direct JSON` on the same project succeeds.'''
+spec_ref = '''2.3, 2.5, 6.4, 7.3, 8.3, 9.2'''
+status = '''ready'''
+command_1_0 = '''compile data/items/starter_sword.ab JSON'''
+expected_1_0 = '''Single-file mode discovers the whole project and emits only the named file (SPEC 2.5): the project root is found by walking up to the nearest data directory (SPEC 2.3), so data/templates/Item.abt resolves. rarity comes from the header tag, price, tradable, stats.power and stats.agility from the authored value and the defaults, and release_wave from derive? .release_wave = 1, which is legal because the field declares no default (SPEC 6.4). NOTE ON THE SCAFFOLD: pack.ab sits beside data/ rather than inside it, so it is outside the discovery root and is never read; a 1.0 abstract init must place every source under data/, because SPEC 9.2 requires compile and lint on a fresh scaffold to succeed.'''

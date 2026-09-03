@@ -1,0 +1,4 @@
+Item :: @id.x
+    name: N
+schema Other {
+}

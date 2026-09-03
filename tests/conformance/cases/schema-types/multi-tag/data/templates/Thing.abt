@@ -1,0 +1,7 @@
+schema Thing {
+    id: text(1..40)
+    caps[] {
+        k: enum(a,b) @tag
+        o: enum(x,y) @tag
+    }
+}

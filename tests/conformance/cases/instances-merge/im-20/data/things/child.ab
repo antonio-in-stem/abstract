@@ -1,0 +1,5 @@
+&base.*
+Thing :: @id.child
+name: Child
+tags: [c]
+caps: [#export]

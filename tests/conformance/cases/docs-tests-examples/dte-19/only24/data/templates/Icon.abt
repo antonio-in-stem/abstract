@@ -1,0 +1,4 @@
+schema Icon {
+    id: text(1..40)
+    art: image(png 16x16)
+}

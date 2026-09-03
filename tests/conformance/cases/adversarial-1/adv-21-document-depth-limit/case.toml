@@ -1,0 +1,16 @@
+id = '''ADV-21'''
+area = '''adversarial-1'''
+title = '''An instance 62 levels deep compiles: the depth limit counts the instance object as level 1 and the envelope not at all'''
+severity = '''minor'''
+kind = '''spec-gap'''
+verdict = '''confirmed'''
+status = '''ready'''
+expect = '''ok'''
+expected_kind = '''ok'''
+expected_files = '''none; the case pins exit 0'''
+spec_ref = '''3.7, 7.2, 7.3, 9.8'''
+expected_note = '''SPEC 3.7 now says what the depth row counts: the resolved value tree of one instance, from the instance object as level 1, with every object and every list one level down adding one. A scalar leaf adds nothing, and the envelope - the top-level object, the `data` array, the `overlays` array - adds nothing, because SPEC 8.1 fixes it and no source can nest it.
+
+This instance nests 61 `$(Node)` values under a 62-segment path, so it stands at level 62 and compiles. The three readings the case recorded gave 61, 64 and 65; the ruling is the middle one expressed from the instance rather than from the document, which is what makes the depth row and the group row of SPEC 3.7's own table agree on the same structure. Under the old implementation this project failed, at the output stage, with an E209 that carried no file, line or column.'''
+spec_note = '''SPEC 3.7 also names the single site of the check: validation (SPEC 7.3 steps 3 and 7), positioned at the statement that reaches the limit or at the instance header. The output stage performs no depth check of its own, so the positionless `abstract: error[E209]` this case recorded can no longer be produced. The over-limit half of the boundary is `adv-21b-instance-depth-over-limit`.'''
+actual_1_0 = '''exit 0; the instance emits 61 nested `child` objects with `"leaf": "bottom"` at the bottom.'''

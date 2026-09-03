@@ -1,0 +1,22 @@
+id = '''DTE-04'''
+area = '''docs-tests-examples'''
+title = '''`exists` decides filesystem-check vs truthiness from the VALUE's shape, not the field's declared type — contradicting both language docs'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/exists-value-shape/'''
+command = '''label: text(1..60)
+if .label exists { derive .ok = true }
+cd .../repro/docs-tests-examples/exists-value-shape && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''`label` is a `text(...)` field, so per the docs `exists` is a plain presence/non-empty test: all four instances get `ok: true`.'''
+actual_0_2_0 = '''exit 0 with: label='Just Some Text' -> ok=true; label='report.pdf' -> ok=false; label='example.com' -> ok=false; label='1.21.5' -> ok=false. Four identically-typed, identically-populated fields give two different answers based purely on whether the text contains a dot.'''
+spec_ref = '''5.10, 6.7, 6.11, 7.3 (step 5), 8.3'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+"exists" is presence only and never inspects the value's shape or the filesystem (6.7), so
+all four instances derive ok = true. "1.21.5" is not a float literal (3.5) and on a text
+field is the string "1.21.5" (5.10). Instances are ordered by (template, id): domain,
+dotted, plain, version (2.7).
+'''

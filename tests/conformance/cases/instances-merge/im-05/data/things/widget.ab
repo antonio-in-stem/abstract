@@ -1,0 +1,4 @@
+Thing :: @id.widget
+name: Widget
+owner: Ana
+owner.team.lead: Bob

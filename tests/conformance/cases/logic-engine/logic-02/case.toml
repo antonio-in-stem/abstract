@@ -1,0 +1,28 @@
+id = '''LOGIC-02'''
+area = '''logic-engine'''
+title = '''A logic block whose schema name does not match exactly is silently ignored — every rule in it disappears'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/logic-engine/L03-logic-unknown-schema-silent/'''
+command = '''repro/logic-engine/L03-logic-unknown-schema-silent — cd repro/logic-engine/L03-logic-unknown-schema-silent && abstract compile data JSON  (then: ... abstract.exe lint data)'''
+expected_kind = '''undecided'''
+expected_note = '''A compile/lint error such as "logic block 'Thnig' does not match any schema (did you mean 'Thing'?)" for each of the three blocks; and the `logic thing` block should either bind to `schema Thing` or be reported.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "one",
+      "status": "disabled"
+    }
+  ]
+}
+EXIT=0
+=== lint ===
+abstract: ok
+EXIT=0
+
+(The .abt declares `logic thing`, `logic Thnig` and `logic Widget`; all three contain `require .status == "active"` and one contains `derive .label = ...`. None ran. For contrast an instance header `thing :: @id.two` fails loudly: "Unknown template 'thing'".)'''
+spec_ref = '''3.4, 6.1, 7.2, 10.5'''
+status = '''ready'''
+note_1_0 = '''Schema names are compared exactly (SPEC 3.4), so 'logic thing' does not bind to 'schema Thing'. All three blocks name an undeclared schema and each is E501, reported in source order (thing, Thnig, Widget); 'Thnig' and 'thing' carry the suggestion 'Thing' under SPEC 9.8. Because P3 stops at E501 for a block, the 'require false' inside 'logic Widget' is never reached and no E513 is reported.'''

@@ -1,0 +1,22 @@
+id = '''OC-24'''
+area = '''output-canon'''
+title = '''Numeric literal typing flips at the i64 boundary: 9223372036854775807 is rejected by a text field, 9223372036854775808 is accepted'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc29-number-inference/'''
+command = '''small: text(1..40)'''
+expected_kind = '''error'''
+expected_note = '''A consistent rule that does not depend on i64 range: either all digit-strings are numbers (and overflow is an error) or the text field accepts them all.'''
+actual_0_2_0 = '''007                        => Type mismatch at T.small: expected text, but received a int value. Wrap the value in quotes to keep it as text.
+9223372036854775807        => Type mismatch ... received a int value (same error)
+9223372036854775808        => "9223372036854775808"     <-- accepted as text
+99999999999999999999999999 => "99999999999999999999999999"
+1.5                        => Type mismatch ... received a float value
+1.2.3                      => "1.2.3"
++5                         => Type mismatch ... received a int value
+0x1F                       => "0x1F"
+1e5                        => "1e5"'''
+spec_ref = '''3.5, 5.10, 8.4'''
+status = '''ready'''
+note_1_0 = '''The parser infers no types: an unquoted value is interpreted by the declared type of the field it is assigned to (SPEC 5.10), so on a text field the bare lexeme '1e5' is the string '1e5' and there is no i64 boundary to flip at. Every variant the case lists is text on this field, with one exception fixed by SPEC 3.5: an integer literal that does not fit in a signed 64-bit integer is E211 wherever it appears, including in a value position whose type would be decided later, and E211 takes precedence over E412 and E413.'''

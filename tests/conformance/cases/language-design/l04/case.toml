@@ -1,0 +1,21 @@
+id = '''L04'''
+area = '''language-design'''
+title = '''`&clone` lines bind forward to the *next* instance header and are silently discarded when there is none'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case4/'''
+command = '''&base.*'''
+expected_kind = '''undecided'''
+expected_note = '''Either (a) error on any `&clone` that is not immediately followed by an instance header, and error on leftover pending clones at EOF; or (b) better, move the clone into the header where it cannot float: `Thing :: &base, @id.after, @status.draft`, with `&base.stats` for partial clones.'''
+actual_0_2_0 = '''Misplaced clones are silently ignored (exit 0) or silently retargeted to the following instance. No diagnostic exists for either case.'''
+spec_ref = '''5.1, 5.7, 10.4 (E403, E404), A.1 (A3)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt (four diagnostics, in discovery order 2.4)
+1.0 fixes the clone position (A.1 A3, 5.7): clone statements appear immediately after the
+header and before any body statement. after.ab and inside.ab and mid.ab put "&base.*" after a
+body statement, which is E404; before.ab puts it before the first header in the file, which is
+E403. Nothing floats forward to the next instance and nothing is silently discarded. The four
+files are diagnosed in project-root-relative path order: after, before, inside, mid.
+'''

@@ -1,0 +1,19 @@
+id = '''DTE-06'''
+area = '''docs-tests-examples'''
+title = '''VS Code extension builds a shell command string and runs it with cp.exec — command injection from a workspace path or workspace setting'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/docs-tests-examples/vscode-exec-injection/'''
+command = '''cd .../repro/docs-tests-examples/vscode-exec-injection && node simulate.js'''
+expected_kind = '''undecided'''
+expected_note = '''The path is passed as a single argv element; a path containing shell metacharacters is treated as a (possibly nonexistent) path, never as a command.'''
+actual_0_2_0 = '''Constructed command: `"abstract" lint "...\vscode-exec-injection\proj" & echo INJECTED-COMMAND-RAN & rem "` — stdout contains both `abstract: ok` and `INJECTED-COMMAND-RAN`, i.e. the injected command executed.'''
+spec_ref = '''9.9, Appendix D.3 (item 12)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case: simulate.js reproduces the editor extension, which 9.9
+places outside the language. Appendix D.3 item 12 is the binding requirement - the compiler
+is invoked with an argument vector and no workspace-controlled string is interpolated into a
+shell command line. Verify as a tooling test on the extension source.
+'''

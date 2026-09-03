@@ -1,0 +1,8 @@
+schema Owner {
+    team: text(1..80)
+}
+
+schema Thing {
+    id: text(1..80)
+    owner: $(Owner)
+}

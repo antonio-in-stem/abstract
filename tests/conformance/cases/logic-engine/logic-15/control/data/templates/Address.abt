@@ -1,0 +1,9 @@
+schema Address {
+    city: text(1..40)
+    country: text(1..40) @optional
+}
+
+logic Address {
+    require .city == "Lisbon" else throw "Address logic: city must be Lisbon"
+    derive .country = "Portugal"
+}

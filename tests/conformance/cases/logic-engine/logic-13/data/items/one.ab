@@ -1,0 +1,3 @@
+Gear :: @id.one
+    slots.head: manual
+    slots.chest: manual

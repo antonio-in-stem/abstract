@@ -1,0 +1,4 @@
+Thing :: @id.inside
+    name: Inside
+    &base.*
+    color: blue

@@ -1,0 +1,132 @@
+schema Thing {
+    name: text(1..40)
+    g0 @optional {
+        g1 @optional {
+            g2 @optional {
+                g3 @optional {
+                    g4 @optional {
+                        g5 @optional {
+                            g6 @optional {
+                                g7 @optional {
+                                    g8 @optional {
+                                        g9 @optional {
+                                            g10 @optional {
+                                                g11 @optional {
+                                                    g12 @optional {
+                                                        g13 @optional {
+                                                            g14 @optional {
+                                                                g15 @optional {
+                                                                    g16 @optional {
+                                                                        g17 @optional {
+                                                                            g18 @optional {
+                                                                                g19 @optional {
+                                                                                    g20 @optional {
+                                                                                        g21 @optional {
+                                                                                            g22 @optional {
+                                                                                                g23 @optional {
+                                                                                                    g24 @optional {
+                                                                                                        g25 @optional {
+                                                                                                            g26 @optional {
+                                                                                                                g27 @optional {
+                                                                                                                    g28 @optional {
+                                                                                                                        g29 @optional {
+                                                                                                                            g30 @optional {
+                                                                                                                                g31 @optional {
+                                                                                                                                    g32 @optional {
+                                                                                                                                        g33 @optional {
+                                                                                                                                            g34 @optional {
+                                                                                                                                                g35 @optional {
+                                                                                                                                                    g36 @optional {
+                                                                                                                                                        g37 @optional {
+                                                                                                                                                            g38 @optional {
+                                                                                                                                                                g39 @optional {
+                                                                                                                                                                    g40 @optional {
+                                                                                                                                                                        g41 @optional {
+                                                                                                                                                                            g42 @optional {
+                                                                                                                                                                                g43 @optional {
+                                                                                                                                                                                    g44 @optional {
+                                                                                                                                                                                        g45 @optional {
+                                                                                                                                                                                            g46 @optional {
+                                                                                                                                                                                                g47 @optional {
+                                                                                                                                                                                                    g48 @optional {
+                                                                                                                                                                                                        g49 @optional {
+                                                                                                                                                                                                            g50 @optional {
+                                                                                                                                                                                                                g51 @optional {
+                                                                                                                                                                                                                    g52 @optional {
+                                                                                                                                                                                                                        g53 @optional {
+                                                                                                                                                                                                                            g54 @optional {
+                                                                                                                                                                                                                                g55 @optional {
+                                                                                                                                                                                                                                    g56 @optional {
+                                                                                                                                                                                                                                        g57 @optional {
+                                                                                                                                                                                                                                            g58 @optional {
+                                                                                                                                                                                                                                                g59 @optional {
+                                                                                                                                                                                                                                                    g60 @optional {
+                                                                                                                                                                                                                                                        g61 @optional {
+                                                                                                                                                                                                                                                            g62 @optional {
+                                                                                                                                                                                                                                                                g63 @optional {
+                                                                                                                                                                                                                                                                    leaf: text @optional
+                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                }
+                                                                                                                                                                                                            }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                    }
+                                                                                                                                                                                                }
+                                                                                                                                                                                            }
+                                                                                                                                                                                        }
+                                                                                                                                                                                    }
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

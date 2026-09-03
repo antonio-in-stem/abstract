@@ -1,0 +1,4 @@
+Pack :: @id.dotted
+    owner.team: Knowledge
+    owner.contact: "k@example.com"
+    slots.{one, two}: shared

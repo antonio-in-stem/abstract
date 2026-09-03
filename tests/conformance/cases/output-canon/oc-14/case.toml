@@ -1,0 +1,22 @@
+id = '''OC-14'''
+area = '''output-canon'''
+title = "`--out` with no value silently disables the write; `--out YML` swallows the format token and writes JSON to a file named 'YML'"
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/output-canon/oc15-cli-format/ (also references: repro/output-canon/oc14-outpath/)'''
+command = '''abstract.exe compile . JSON --out
+--out one.json --out two.json
+--out nope/deep/out.json'''
+expected_kind = '''undecided'''
+expected_note = '''`--out` with no value: 'error: --out requires a file path' (exit 1). `--out YML`: either treat YML as the output filename only if it is not also the only format token, or at least warn; a missing parent directory should produce 'abstract: failed to write nope/deep/out.json: <reason>'.'''
+actual_0_2_0 = '''`compile ./raw YML --out`  -> exit=0, no file created, nothing on stderr.
+`compile ./raw --out YML`  -> `abstract: wrote YML (json)`; the file named YML contains JSON, not YAML.
+`compile . JSON --out one.json --out two.json` -> only one.json written, no diagnostic.
+`compile . JSON --out nope/deep/out.json` -> `abstract: El sistema no puede encontrar la ruta especificada. (os error 3)` (no path context, localized OS text only).'''
+spec_ref = '''9.1, 9.3, 9.4, 9.6, 10.8'''
+status = '''ready'''
+expected_files = '''expected-error.txt'''
+command_1_0 = '''(cwd = raw) compile . JSON --out'''
+
+note_1_0 = '''Case command in 1.0: 'compile . JSON --out'. '--out' with no following value is E803 and exit 2 (SPEC 9.3), never a silently disabled write. The other invocations the case records: 'compile . JSON --out one.json --out two.json' is E811 (a flag given twice); 'compile . JSON --out nope/deep/out.json' is E810 and exit 3, since the parent directory MUST exist and the message names the path and the reason (SPEC 9.4); 'compile ./raw --out YML' is accepted and writes JSON to a file named YML, because the destination is used exactly as written and a sole positional is always an input path (SPEC 9.4, 9.2). The pinned invocation is the first of those. It depends on argv and on a working directory, both of which `command_1_0` supplies: the `(cwd = raw)` note selects the raw/ project, because the case directory has no data/ of its own and a compile of it would collect both sibling projects, raw/ and oc14-outpath/, and report E301 for their two 'schema T' declarations. The other three invocations are covered by tests/cli_tests.rs, which can vary argv freely; this file pins the one that gave the silent no-op.'''

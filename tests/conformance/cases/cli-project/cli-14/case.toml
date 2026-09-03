@@ -1,0 +1,17 @@
+id = '''cli-14'''
+area = '''cli-project'''
+title = '''Requesting a file with no instances silently emits the entire directory instead'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/cli-project/case-scope/'''
+command = '''../../project/target/release/abstract.exe compile case-scope/data/a.ab JSON
+... compile case-scope/data/empty.ab JSON
+... compile case-scope/data/Item.abt JSON'''
+expected_kind = '''document'''
+expected_note = '''Asking for a specific file yields that file's instances (possibly zero) - never a wider set.'''
+actual_0_2_0 = '''empty.ab and Item.abt both produce the full directory output ('id': 'a', 'id': 'b'), exit 0.'''
+spec_ref = '''2.5, 8.1, 9.2, 10.8'''
+status = '''ready'''
+command_1_0 = '''compile data/empty.ab JSON   (also: compile data/a.ab JSON, which emits only a; compile data/Item.abt JSON, which is E806)'''
+expected_1_0 = '''Naming a file selects that file and never a wider set (SPEC 2.5), so a file that declares no instances yields an empty data array, which SPEC 8.1 states is reachable exactly here. The other instances are still parsed and validated, they are simply not emitted. Naming a template file is E806, because a template declares no instances and so can never select output. data/notes.txt is not a source and is never read.'''

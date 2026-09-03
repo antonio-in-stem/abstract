@@ -1,0 +1,5 @@
+schema Thing {
+    id: text(1..40)
+    a: text(-5..-1) @optional
+    b: float(0.5)
+}

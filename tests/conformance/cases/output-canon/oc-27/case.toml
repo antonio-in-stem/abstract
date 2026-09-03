@@ -1,0 +1,16 @@
+id = '''OC-27'''
+area = '''output-canon'''
+title = '''Output-format tests are substring assertions only: no parser validation, no JSON/YAML equivalence, no key-safety, empty-project or empty-object coverage'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''test-gap'''
+source_repro = '''repro/output-canon/oc20-yaml-keys/ (also references: repro/output-canon/oc12-empty-object/)'''
+command = '''cargo test'''
+expected_kind = '''undecided'''
+expected_note = '''At least one test that parses to_json_string and to_yaml_string with real parsers and asserts structural equality, plus golden-text tests pinning the exact RAW/JSON/YAML document (including the empty-project case).'''
+actual_0_2_0 = '''cargo test: 49 tests pass. tests/compiler_tests.rs:363-365 is the entire YAML output contract:
+    assert!(yaml.contains("data:\n  - template: \"Thing\""));
+    assert!(yaml.contains("label: \"Hello\""));'''
+spec_ref = '''8.4, 8.5, 11.2, 11.3'''
+status = '''ready'''
+note_1_0 = '''Same project as OC-01, kept as the coverage case: SPEC 11.2 makes comparison byte for byte after normalising CRLF and the abstract.compiler string only, and SPEC 11.3 requires the runner to parse out.json as JSON and out.yml as YAML, to check cross-format equivalence after coercing every mapping key to a string, and to cover all three formats for one project with nested groups, lists of groups, floats, booleans, unicode text and an empty list. The sibling project oc12-empty-object/ is a rejection case: 'caps(): ()' is E416 (SPEC 5.5).'''

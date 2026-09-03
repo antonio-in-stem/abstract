@@ -1,0 +1,31 @@
+id = '''L01'''
+area = '''language-design'''
+title = '''A typo in a `logic <Name>` block silently disables every rule in it (exit 0, no diagnostic)'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case21/'''
+command = '''cat repro/language-design/case21/data/objects/g.ab  # Guard :: @id.g, @status.active   (no contact)
+./project/target/release/abstract.exe compile repro/language-design/case21/data JSON
+OUTPUT (exit 0):
+{
+"data": [
+{ "template": "Guard", "id": "g", "status": "active" }
+]
+}
+Then: sed -i 's/logic Gaurd/logic Guard/' repro/language-design/case21/data/templates/G.abt
+./project/target/release/abstract.exe compile repro/language-design/case21/data JSON
+OUTPUT (exit 1): abstract: objects/g.ab: Guard logic: Active guards need a contact.'''
+expected_kind = '''error'''
+expected_note = '''`logic Gaurd { ... }` should be a hard compile error: "Unknown schema 'Gaurd' in logic block at templates/G.abt:6. Did you mean 'Guard'? Declared schemas: Guard." A logic block that binds to nothing is always an authoring mistake.'''
+actual_0_2_0 = '''The block is stored under the key "Gaurd", never looked up, never reported. The instance compiles and the `require` never runs. Exit code 0.'''
+spec_ref = '''6.1, 6.12, 7.2 (P3), 10.5 (E501, E515)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+The staged tree is the CONTROL of the audit case: templates/G.abt spells "logic Guard"
+correctly, so the block binds, the require runs and the missing contact fails compilation with
+E515 (6.12), naming the author's message, the instance and the version being compiled.
+The defect the case is about needs the one-token variant "logic Gaurd", which under 1.0 is
+E501 in P3 with a suggestion (6.1, 7.2); a logic block that binds to nothing is never silent.
+'''

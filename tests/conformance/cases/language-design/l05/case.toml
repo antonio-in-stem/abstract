@@ -1,0 +1,30 @@
+id = '''L05'''
+area = '''language-design'''
+title = '''Version overlays are unexpressible today: there is no way to REMOVE a key, and clone-based variants produce separate top-level ids with no version metadata — concrete syntax proposal with two alternatives'''
+severity = '''design'''
+verdict = '''partial'''
+kind = '''missing-feature'''
+source_repro = '''repro/language-design/case15/ (also references: repro/language-design/case19/, repro/language-design/case24/, repro/language-design/case16/)'''
+command = '''&base.*
+legacy_flag:
+-field
+-legacy_flag
+touch overlays/v2/assets/textures/shulker_v2.png'''
+expected_kind = '''undecided'''
+expected_note = '''One project should carry N versions of the same instance under one id, with keys added/removed/changed per version, for both .ab data and assets, and the compiled output should let a consumer pick a version deterministically.'''
+actual_0_2_0 = '''No unset operator; variants require distinct ids; overlays/<v>/x.ab with a matching id is a duplicate-id error; compiled JSON has no version axis; the Java runtime would silently keep only the last of any same-id pair.'''
+spec_ref = '''4.12, 5.1, 5.4, 5.14, 7.4, 7.5, 10.2 (E210), 10.4 (E403, E439)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)     -> expected-error.txt
+compile data JSON (cwd = l05/case16)    -> case16/expected-error.txt
+compile data JSON (cwd = l05/case19)    -> case19/expected-error.txt
+compile case24 JSON                     -> case24/expected.json
+The feature this design case asks for exists in 1.0 - versions 4.12, instance windows 5.14,
+per-instance overlay reduction 7.5 - but none of the staged trees spells it, so each is kept
+as its own outcome. The primary and case16 trees put a clone before the first header (E403,
+5.1); the primary additionally has an empty right-hand side, which is E210 (5.4). case19's
+"O@2 :: ..." is a top-level "::" whose left side is not a schema name, which is the dedicated
+E439. case24 compiles the base tree only: 2.3 makes the discovery root the data directory, so
+overlays/v2/ is outside the project and its second "schema Sticker" is never read.
+'''

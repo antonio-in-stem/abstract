@@ -1,0 +1,27 @@
+id = '''LOGIC-06'''
+area = '''logic-engine'''
+title = ''''exists' means 'truthy', so an authored false / 0 / "" is reported as missing and the standard fill-in idiom silently overwrites it'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L07-exists-false-zero-empty/'''
+command = '''repro/logic-engine/L07-exists-false-zero-empty — cd repro/logic-engine/L07-exists-false-zero-empty && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''The instance authors featured: false, count: 0, note: "", so all three `if not .x exists` guards should be false and the output should preserve false / 0 / "".'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "one",
+      "featured": true,
+      "count": 99,
+      "note": "filled-in"
+    }
+  ]
+}
+EXIT=0
+
+(A direct `require .featured exists else throw "..."` on the same instance also fails: "abstract: items/one.ab: Thing logic: A: featured is present in the .ab file but exists says no", EXIT=1.)'''
+spec_ref = '''6.7, 6.3, 8.4'''
+status = '''ready'''
+note_1_0 = ''''exists' is presence, never truthiness (SPEC 6.7): false, 0 and the empty string are present values, and only an absent field or a single empty list is false. All three 'if not .x exists' guards are therefore false, no derive executes, and the authored values survive.'''

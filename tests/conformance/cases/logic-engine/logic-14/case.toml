@@ -1,0 +1,30 @@
+id = '''LOGIC-14'''
+area = '''logic-engine'''
+title = '''derive values cannot read another field, index a path, or call length() — such right-hand sides are written into the data as literal text'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/logic-engine/L12-derive-value-path-is-literal/'''
+command = '''repro/logic-engine/L12-derive-value-path-is-literal — cd repro/logic-engine/L12-derive-value-path-is-literal && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''copy_of_team and copy_of_team2 should be "Knowledge Systems"; len_of_tags should be 2 — or all three should be compile errors.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "one",
+      "owner": { "team": "Knowledge Systems" },
+      "tags": [ "alpha", "beta" ],
+      "copy_of_team": ".owner.team",
+      "copy_of_team2": "$owner.team",
+      "copy_of_id": "one",
+      "len_of_tags": "length(.tags)"
+    }
+  ]
+}
+EXIT=0
+
+(Only `$id` — a top-level scalar — resolved. With `.len_of_tags` declared int the same source instead fails with the misleading "Type mismatch at T.name_len: expected int, but 'length(.name)' is not a valid integer.")'''
+spec_ref = '''6.4, 6.9, 10.5'''
+status = '''ready'''
+note_1_0 = ''''derive .copy_of_team = .owner.team' is legal in 1.0 and copies the nested value (SPEC 6.4: a logic_path right-hand side contributes its resolved value and keeps its type). 'derive .copy_of_team2 = $owner.team' is rejected: the right-hand side is read as a logic_path because its first token is a loop variable (SPEC 6.4), and no enclosing for binds '$owner', so it is E510. Because P3 fails, P4 never runs; had it run, 'derive .len_of_tags = length(.tags)' would be E412, since length() yields a number and len_of_tags is declared text (SPEC 6.4, 6.10).'''

@@ -1,0 +1,24 @@
+id = '''mbc-01'''
+area = '''media-bundle-crypto'''
+title = '''file()/image() values escape the asset root via `..` and absolute paths (filesystem read + existence oracle from authored data)'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/media-bundle-crypto/case05-path-traversal/'''
+command = '''../../project/target/release/abstract.exe compile data JSON
+doc: ../secret.txt
+pic: ../private/hidden.png'''
+expected_kind = '''error'''
+expected_note = '''Asset paths should be confined to the project's assets/ tree; `..` traversal and absolute paths that escape the project should be rejected, or at minimum documented as a trust boundary.'''
+actual_0_2_0 = '''Compilation SUCCEEDS reading files outside assets/: output shows both `doc` and `pic` accepted; the image outside assets/ is probed. Absolute existing files also pass; absolute missing files yield 'File not found ... resolved to C:\Windows\does-not-exist-xyz.ini', a working existence oracle.'''
+spec_ref = '''5.9, 9.5, 10.4 (E424), A.1 (A24)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+An asset value must be relative, must carry no drive or UNC prefix and no leading separator,
+and must contain no ".." segment (5.9, A.1 A24). "C:" is a drive prefix, so the value is E424
+before anything is opened. The resolved path can therefore never leave <project root>/assets,
+which removes both the traversal read and the existence oracle. E424 also carries the note
+that states where assets live, and diagnostics print the resolved path project-relative.
+private/hidden.png is unreferenced and is never read.
+'''

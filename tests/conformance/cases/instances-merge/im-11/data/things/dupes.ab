@@ -1,0 +1,3 @@
+Thing :: @id.dupes
+name: Dupes
+flags: [hat_*, hat_red, hat_*]

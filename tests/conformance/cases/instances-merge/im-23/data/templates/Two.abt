@@ -1,0 +1,8 @@
+schema Alpha {
+    name: text(1..40)
+    secret: text(1..40)
+}
+
+schema Beta {
+    name: text(1..40)
+}

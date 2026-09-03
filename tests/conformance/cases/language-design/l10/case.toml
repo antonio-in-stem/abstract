@@ -1,0 +1,27 @@
+id = '''L10'''
+area = '''language-design'''
+title = '''Duplicate field assignments in one instance body silently last-win, while duplicate schema fields, schema names and instance ids are all hard errors'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case3/'''
+command = '''cat repro/language-design/case3/data/objects/h3.ab
+#   Head :: @id.h3
+#       note: first
+#       note: second
+#       owner.team: core
+./project/target/release/abstract.exe compile repro/language-design/case3/data JSON
+OUTPUT (exit 0), for h3: { "template":"Head","id":"h3","owner":{"team":"core"},"note":"second","featured":false }
+(For contrast, a duplicate field in the .abt is rejected: src/lib.rs:735 'duplicate field ... in schema block'.)'''
+expected_kind = '''undecided'''
+expected_note = '''"Duplicate assignment to 'note' at objects/h3.ab:3 (first assigned at line 2). Remove one." — matching the strictness the language already applies to schemas and ids. A header tag and a body assignment for the same field should likewise be a conflict, not a silent override.'''
+actual_0_2_0 = '''Last assignment silently wins, exit 0. Header-vs-body conflict also silently resolves to the body (case3/h2.ab: `@note.from_header` + `note: from_body` -> "from_body").'''
+spec_ref = '''5.2, 5.4, 10.4 (E429), A.1 (A13)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt (two diagnostics: h2 then h3)
+Same tree as L09. Duplicate assignment to one path is E429 with a note at the first site, and
+a header tag competing with a body statement is the same error (5.2, 5.4, A.1 A13). Silent
+last-wins is gone; two statements for one path are legal only with disjoint version
+applicability sets (5.13).
+'''

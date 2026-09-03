@@ -1,0 +1,26 @@
+id = '''LP-011'''
+area = '''lexing-parsing'''
+title = '''`${a}_${b}` in a file path is silently corrupted by brace-pattern expansion'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-36-braced-var-in-path/'''
+command = '''`cd repro/lexing-parsing/bug-36-braced-var-in-path && abstract compile . JSON --skip-assets`'''
+expected_kind = '''document'''
+expected_note = '''`icon2: ./art/${id}_${name}.png` with id=hero, name=red should compile to `./art/hero_red.png`, matching the single-variable case.'''
+actual_0_2_0 = '''source:
+```
+Thing :: @id.hero
+    name: red
+    icon: ./art/${id}.png
+    icon2: ./art/${id}_${name}.png
+```
+output:
+```
+"icon": "./art/hero.png",
+"icon2": "./art/hero}_${name.png"
+```
+Exit 0, no warning.'''
+spec_ref = '''5.8, 5.10, 5.11, 7.3 steps 1-2'''
+status = '''ready'''
+spec_note = '''5.8 states that interpolation runs before brace expansion and that "${name}" is consumed by interpolation and is therefore never a brace group. These fields are "text", so brace expansion does not apply to them at all (5.8, last bullets). Variables are the instance's root scalar fields plus "id" (5.11).'''

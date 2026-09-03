@@ -1,0 +1,4 @@
+T :: @id.a
+    owner.team: Core
+    owner.region: eu
+    caps(name, level): (search, 3), (export, 7)

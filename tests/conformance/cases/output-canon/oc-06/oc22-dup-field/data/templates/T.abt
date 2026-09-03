@@ -1,0 +1,6 @@
+schema T {
+    id: text(1..80)
+    my-field: text(1..80)
+    my_field: int(0..10)
+    MY_FIELD: bool @optional
+}

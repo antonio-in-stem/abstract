@@ -1,0 +1,3 @@
+T :: @id.a
+    my-field: hello
+    my_field: 5

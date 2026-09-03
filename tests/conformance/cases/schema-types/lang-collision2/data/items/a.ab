@@ -1,0 +1,3 @@
+Thing :: @id.a
+    lang: "this is a long value"
+    lang_values: abc
