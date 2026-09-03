@@ -6,14 +6,15 @@
 
     <groupId>com.abstractlang</groupId>
     <artifactId>abstract-runtime</artifactId>
-    <version>0.2.0</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>Abstract Runtime</name>
     <description>
-        Zero-dependency Java runtime for Abstract: opens sealed .abx bundles
-        (ChaCha20-Poly1305, RFC 8439) and exposes compiled instances through a
-        typed API. Runs on Java 8 and newer.
+        Zero-dependency Java runtime for Abstract 1.0: opens sealed .abx
+        bundles (ChaCha20-Poly1305, RFC 8439), reads the compiled document
+        envelope, resolves any version of it through its overlays, and exposes
+        compiled instances through a typed API. Runs on Java 8 and newer.
     </description>
 
     <properties>
@@ -26,7 +27,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.2</version>
+            <version>5.14.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

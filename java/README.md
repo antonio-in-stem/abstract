@@ -1,7 +1,11 @@
 # Abstract Runtime for Java
 
-Zero-dependency Java library that loads Abstract data into any JVM
+Zero-dependency Java library that loads Abstract 1.0 data into any JVM
 application, including Minecraft plugins. Works on **Java 8 and newer**.
+
+It reads the compiled document envelope of SPEC 8.1 - `abstract`, `data` and
+`overlays` - and gives you any version of the project through
+`AbstractData.forVersion(int)`.
 
 Two ways to ship data:
 
@@ -12,6 +16,13 @@ Two ways to ship data:
    threat model.
 2. **Plain JSON.** `abstract compile` output can be parsed directly with
    `AbstractData.fromJson(...)` when secrecy is not a concern.
+
+Both give you an `AbstractData`, and both refuse malformed input with
+`AbstractDataException` rather than a JVM error. The JSON reader is strict on
+purpose: it enforces a nesting-depth limit of 64, rejects a leading `+`, a
+leading zero, duplicate object keys, lone surrogates and unescaped control
+characters, and reports a malformed `\u` escape as
+`AbstractDataException` rather than `NumberFormatException`.
 
 ## Build the bundle (CLI side)
 
@@ -71,6 +82,36 @@ Typed access summary:
 Collection access: `data.all()`, `data.get(id)`, `data.require(id)`,
 `data.byTemplate(name)`, `data.size()`, iteration.
 
+## Versions
+
+A 1.0 project declares a range of versions, and one compiled document carries
+all of them: `data` holds the objects of the **maximum** version, and
+`overlays` holds every earlier version that differs from it (SPEC 7.5).
+
+```java
+AbstractData data = AbstractBundle.loadResource(Plugin.class, "/data.abx", key);
+
+System.out.println(data.minVersion() + ".." + data.maxVersion());  // e.g. 1..3
+AbstractData forV2 = data.forVersion(2);
+```
+
+`forVersion(int)` applies **every** overlay whose range contains the version -
+there may be none, one or several - replacing or adding objects by `id` and
+then deleting the ids the overlay lists as `removed`. Two consequences are
+worth knowing before you write your own reader:
+
+- more than one overlay can cover one version, so stopping at the first match
+  reads the wrong document;
+- an id can appear in an overlay and in no base document at all, when an
+  instance's window ends before the maximum version.
+
+The result is ordered by `(template, id)` like the base, and carries no
+overlays of its own. A version outside `minVersion()..maxVersion()` is an
+`AbstractDataException`.
+
+`forVersion` returns another `AbstractData`, indexed the same way, so every
+collection accessor above works on it unchanged.
+
 ## Key handling
 
 Never keep the passphrase or the final key as a single constant. Generate
@@ -104,7 +145,7 @@ mvn install          # from this directory
 <dependency>
     <groupId>com.abstractlang</groupId>
     <artifactId>abstract-runtime</artifactId>
-    <version>0.2.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -112,7 +153,7 @@ mvn install          # from this directory
 
 ```groovy
 repositories { mavenLocal() }
-dependencies { implementation 'com.abstractlang:abstract-runtime:0.2.0' }
+dependencies { implementation 'com.abstractlang:abstract-runtime:1.0.0' }
 ```
 
 ## Verifying without Maven
@@ -121,13 +162,36 @@ dependencies { implementation 'com.abstractlang:abstract-runtime:0.2.0' }
 vectors and optionally opens a real bundle:
 
 ```bash
-javac -d out $(find src -name '*.java')
+javac -d out $(find src/main src/selftest -name '*.java')
 java -cp out com.abstractlang.runtime.Selftest my-bundle.abx "my passphrase"
 ```
 
-Expected output:
+The bundle path and passphrase are optional; without them the checker runs
+only the vectors and unit checks. Expected output:
 
 ```
 selftest: all RFC 8439 vectors and unit checks passed
 selftest: opened bundle with N instance(s)
 ```
+
+The checker covers the RFC 8439 vectors, the key-material rules, the strict
+JSON reader, the version overlays, and the container rules below. The same
+ground is covered by JUnit in `src/test`, which needs the JUnit 5 jars and so
+needs Maven or another runner.
+
+## Plain and sealed containers
+
+- A container that declares itself **unencrypted** opens with no key. Passing
+  `--key` (or a non-null key to `openPayload`) against one is refused: a key
+  is never silently discarded.
+- A container whose **encryption flag has been cleared** never opens, with or
+  without a key. With a key it is refused as a downgrade; without one it fails
+  a keyless checksum that a genuine plain container carries in the twelve
+  header bytes where a sealed container carries its nonce. The refusal does
+  not depend on what the caller passes.
+- Key material follows the compiler's rule exactly: only a `hex:` prefix
+  selects raw key bytes, and everything else - including a bare 64-character
+  hexadecimal string - is a passphrase. `AbstractKeys.fromKeyMaterial(String)`
+  implements that rule; `fromHex` and `fromPassphrase` are the explicit forms,
+  and both refuse `null` and non-hexadecimal digits with
+  `AbstractDataException`.

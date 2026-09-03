@@ -15,3 +15,5 @@ __pycache__/
 Thumbs.db
 .local-references/
 /site/qa-*.png
+java/out/
+*.vsix

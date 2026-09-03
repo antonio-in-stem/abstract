@@ -13,9 +13,14 @@ written to be honest: read the threat model before relying on it.
   authenticated. Editing the ciphertext, the header flags, or the declared
   length makes loading fail with a clear error instead of producing corrupted
   data.
-- **Downgrade resistance.** A loader that passes a key refuses plain
-  (unencrypted) bundles, so an attacker cannot strip the encryption flag and
-  substitute their own plaintext bundle.
+- **Downgrade resistance, whatever the caller does.** Stripping the encryption
+  flag does not produce a bundle that opens. A loader holding a key refuses a
+  bundle that claims to be plain, and a loader with no key finds that the
+  twelve header bytes which hold an AEAD nonce in a sealed bundle do not match
+  the keyless checksum a genuine plain bundle carries there. Neither refusal
+  depends on how the caller was written, which is the property that matters:
+  a rule enforced only when the caller passes a key is a rule an attacker gets
+  to opt out of.
 - **Format stability.** The implementation is verified against the official
   RFC 8439 and FIPS 180-4 test vectors on both the Rust (encoder) and Java
   (decoder) sides.
@@ -83,12 +88,50 @@ server.
 ## Cipher and format details
 
 - Cipher: ChaCha20-Poly1305 AEAD, 32-byte key, 12-byte nonce, 16-byte tag.
-- Key derivation: `SHA-256(passphrase)`, or exact bytes via `hex:<64 digits>`.
-- Nonce: derived per seal from the payload digest, key, wall clock, and a
-  process counter; identical data re-bundled still produces new ciphertext.
+- Key derivation: `SHA-256(passphrase)`. Only a `hex:` prefix selects raw key
+  bytes; a bare 64-character hexadecimal string is a passphrase and is hashed,
+  on the compiler side and in `AbstractKeys.fromKeyMaterial` alike.
+- Container layout: magic `ABX1`, a flags byte, a payload-format byte, twelve
+  bytes, a 4-byte little-endian payload length, then the payload. The twelve
+  bytes hold the AEAD nonce in a sealed container and the plain checksum in an
+  unencrypted one.
 - Associated data: the full 22-byte header, binding magic, flags, format,
   nonce, and length.
 - Tag comparison uses `MessageDigest.isEqual` (constant-time).
+
+### Nonce construction
+
+Each seal derives its nonce as the first twelve bytes of
+
+```
+SHA-256( SHA-256(payload) || key || clock || counter )
+```
+
+where `clock` is the wall clock in nanoseconds since the Unix epoch as sixteen
+little-endian bytes (sixteen zero bytes if the clock is before the epoch) and
+`counter` is a process-local 64-bit counter as eight little-endian bytes.
+
+The counter starts at zero and **is reset by exactly one event: the start of a
+new process.** It is never reset while the process runs, it is shared by every
+thread in that process, and it is not persisted. So two seals in one process
+always differ, even when the clock does not advance; across processes the
+counters repeat and uniqueness rests on the clock and on the payload and key
+digests being mixed in. Re-bundling identical data with the same key therefore
+still produces fresh ciphertext.
+
+### Plain checksum
+
+An unencrypted container carries, in the twelve bytes a sealed container uses
+for its nonce, the first twelve bytes of `SHA-256(header || payload)` computed
+with those same twelve bytes zeroed.
+
+This is an integrity check and **not** an authentication tag: anyone can
+recompute it, so it proves nothing about who wrote the container. What it does
+prove is that the container was *written as* a plain container, which is why
+clearing a sealed container's encryption flag is detectable with no key in
+hand. Do not read a passing checksum as evidence of provenance; a plain
+container offers no confidentiality and no authenticity, which is why it is
+for debugging and not for shipping.
 
 ## Reporting
 

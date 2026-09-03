@@ -36,17 +36,70 @@ public final class AbstractKeys {
         }
     }
 
-    /** Parses a 64-hex-digit key (with or without the {@code hex:} prefix). */
+    /**
+     * Derives a key from CLI key material, by exactly the rule the compiler
+     * uses (SPEC Appendix D.2 item 10): only the {@code hex:} prefix selects
+     * raw key bytes, and everything else — including a bare 64-character
+     * hexadecimal string — is a passphrase and is hashed.
+     *
+     * <p>This is the method to use when the key material comes from a config
+     * file or a command line, so that a given {@code --key} value means the
+     * same thing on both sides of the bundle.
+     */
+    public static byte[] fromKeyMaterial(String material) {
+        if (material == null) {
+            throw new AbstractDataException("bundle keys must not be null");
+        }
+        if (material.startsWith("hex:")) {
+            return fromHex(material);
+        }
+        return fromPassphrase(material);
+    }
+
+    /**
+     * Parses a 64-hex-digit key (with or without the {@code hex:} prefix).
+     *
+     * <p>{@code null} and any non-hexadecimal digit surface as
+     * {@link AbstractDataException}, never as {@code NullPointerException} or
+     * {@code NumberFormatException} (SPEC Appendix D.2 item 9), so a caller
+     * handing user input to this method catches one exception type, not three.
+     *
+     * <p>To honour the compiler's own rule that a bare hexadecimal string is a
+     * passphrase, use {@link #fromKeyMaterial(String)} instead.
+     */
     public static byte[] fromHex(String hex) {
+        if (hex == null) {
+            throw new AbstractDataException("hex keys must not be null");
+        }
         String digits = hex.startsWith("hex:") ? hex.substring(4) : hex;
         if (digits.length() != 64) {
-            throw new AbstractDataException("hex keys must contain exactly 64 hexadecimal digits");
+            throw new AbstractDataException("hex keys must contain exactly 64 hexadecimal digits;"
+                    + " this one has " + digits.length());
         }
         byte[] key = new byte[32];
         for (int i = 0; i < 32; i++) {
-            key[i] = (byte) Integer.parseInt(digits.substring(i * 2, i * 2 + 2), 16);
+            int high = hexValue(digits.charAt(i * 2));
+            int low = hexValue(digits.charAt(i * 2 + 1));
+            if (high < 0 || low < 0) {
+                throw new AbstractDataException("hex keys must contain exactly 64 hexadecimal"
+                        + " digits; '" + digits.substring(i * 2, i * 2 + 2) + "' is not one");
+            }
+            key[i] = (byte) ((high << 4) | low);
         }
         return key;
+    }
+
+    private static int hexValue(char digit) {
+        if (digit >= '0' && digit <= '9') {
+            return digit - '0';
+        }
+        if (digit >= 'a' && digit <= 'f') {
+            return digit - 'a' + 10;
+        }
+        if (digit >= 'A' && digit <= 'F') {
+            return digit - 'A' + 10;
+        }
+        return -1;
     }
 
     /**

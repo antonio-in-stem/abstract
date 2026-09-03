@@ -5,10 +5,13 @@
   "patterns": [
     { "include": "#comments" },
     { "include": "#strings" },
+    { "include": "#versionsDeclaration" },
     { "include": "#schemaBlock" },
     { "include": "#logicBlock" },
     { "include": "#instanceHeader" },
     { "include": "#cloneReference" },
+    { "include": "#bodyBlock" },
+    { "include": "#versionAnnotations" },
     { "include": "#decorators" },
     { "include": "#tags" },
     { "include": "#interpolationVariables" },
@@ -42,23 +45,38 @@
         }
       ]
     },
+    "versionsDeclaration": {
+      "patterns": [
+        {
+          "match": "^\\s*(versions)\\s+(\\d+)\\s*(\\.\\.)\\s*(\\d+)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.declaration.versions.abstract" },
+            "2": { "name": "constant.numeric.integer.abstract" },
+            "3": { "name": "keyword.operator.range.abstract" },
+            "4": { "name": "constant.numeric.integer.abstract" }
+          }
+        }
+      ]
+    },
     "schemaBlock": {
       "name": "meta.block.schema.abstract",
-      "begin": "\\b(schema)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(\\{)",
+      "begin": "\\b(schema)\\s+([A-Za-z][A-Za-z0-9_]*)\\s*(\\{)",
       "beginCaptures": {
         "1": { "name": "keyword.declaration.schema.abstract" },
         "2": { "name": "entity.name.type.schema.abstract" },
         "3": { "name": "punctuation.section.block.begin.abstract" }
       },
-      "end": "\\}",
+      "end": "^\\s*(\\})",
       "endCaptures": {
-        "0": { "name": "punctuation.section.block.end.abstract" }
+        "1": { "name": "punctuation.section.block.end.abstract" }
       },
       "patterns": [
         { "include": "#comments" },
         { "include": "#strings" },
+        { "include": "#groupField" },
         { "include": "#schemaTypes" },
         { "include": "#schemaReferences" },
+        { "include": "#versionAnnotations" },
         { "include": "#schemaDecorators" },
         { "include": "#schemaFieldDeclarations" },
         { "include": "#tags" },
@@ -69,18 +87,69 @@
         { "include": "#operators" }
       ]
     },
-    "logicBlock": {
-      "name": "meta.block.logic.abstract",
-      "begin": "\\b(logic)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(\\{)",
+    "groupField": {
+      "comment": "A group or list group nests a field list inside braces, to the depth SPEC 3.7 allows.",
+      "name": "meta.block.group.abstract",
+      "begin": "^\\s*([A-Za-z_][A-Za-z0-9_]*)((?:\\[[^\\]]*\\])?)((?:\\s+@[A-Za-z_][A-Za-z0-9_]*(?:\\([^)]*\\))?)*)\\s*(\\{)",
       "beginCaptures": {
-        "1": { "name": "keyword.declaration.logic.abstract" },
-        "2": { "name": "entity.name.type.logic.abstract" },
-        "3": { "name": "punctuation.section.block.begin.abstract" }
+        "1": { "name": "variable.other.field.schema.abstract" },
+        "2": { "name": "meta.cardinality.abstract", "patterns": [{ "include": "#cardinality" }] },
+        "3": { "patterns": [{ "include": "#versionAnnotations" }, { "include": "#schemaDecorators" }] },
+        "4": { "name": "punctuation.section.block.begin.abstract" }
       },
       "end": "\\}",
       "endCaptures": {
         "0": { "name": "punctuation.section.block.end.abstract" }
       },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#groupField" },
+        { "include": "#schemaTypes" },
+        { "include": "#schemaReferences" },
+        { "include": "#versionAnnotations" },
+        { "include": "#schemaDecorators" },
+        { "include": "#schemaFieldDeclarations" },
+        { "include": "#tags" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#operators" }
+      ]
+    },
+    "logicBlock": {
+      "name": "meta.block.logic.abstract",
+      "begin": "\\b(logic)\\s+([A-Za-z][A-Za-z0-9_]*)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.logic.abstract" },
+        "2": { "name": "entity.name.type.logic.abstract" },
+        "3": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "^\\s*(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#logicNestedBlock" },
+        { "include": "#logicBody" }
+      ]
+    },
+    "logicNestedBlock": {
+      "comment": "if / else if / else / for bodies nest inside a logic block.",
+      "name": "meta.block.logic.nested.abstract",
+      "begin": "(\\{)\\s*$",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#logicNestedBlock" },
+        { "include": "#logicBody" }
+      ]
+    },
+    "logicBody": {
       "patterns": [
         { "include": "#comments" },
         { "include": "#strings" },
@@ -98,7 +167,7 @@
       "patterns": [
         {
           "name": "meta.instance.header.abstract",
-          "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*(::)",
+          "match": "^\\s*([A-Za-z][A-Za-z0-9_]*)\\s*(::)",
           "captures": {
             "1": { "name": "entity.name.type.instance.abstract" },
             "2": { "name": "keyword.operator.declaration.abstract" }
@@ -106,13 +175,40 @@
         }
       ]
     },
+    "bodyBlock": {
+      "comment": "An instance body block is sugar for dotted paths: owner { team: X }.",
+      "name": "meta.block.body.abstract",
+      "begin": "^\\s*([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\s*(\\{)\\s*$",
+      "beginCaptures": {
+        "1": { "name": "variable.other.field.instance.abstract" },
+        "2": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "^\\s*(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#bodyBlock" },
+        { "include": "#versionAnnotations" },
+        { "include": "#tags" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#operators" }
+      ]
+    },
     "schemaTypes": {
       "patterns": [
         {
+          "comment": "The seven type keywords that take arguments (SPEC 4.4).",
           "name": "support.type.primitive.schema.abstract",
-          "match": "\\b(text|int|float|enum|file|image)\\b(?=\\s*\\()"
+          "match": "\\b(text|int|float|enum|file|image|ref)\\b(?=\\s*\\()"
         },
         {
+          "comment": "The four that may also stand bare after ':'.",
           "name": "support.type.primitive.bare.schema.abstract",
           "match": "(?<=:)\\s*\\b(text|int|float|bool)\\b(?!\\s*\\()"
         }
@@ -121,8 +217,9 @@
     "schemaReferences": {
       "patterns": [
         {
+          "comment": "$(Schema): a nested object validated against another schema.",
           "name": "support.type.reference.schema.abstract",
-          "match": "\\$\\([A-Za-z_][A-Za-z0-9_]*\\)"
+          "match": "\\$\\([A-Za-z][A-Za-z0-9_]*\\)"
         }
       ]
     },
@@ -134,11 +231,43 @@
         }
       ]
     },
+    "versionAnnotations": {
+      "patterns": [
+        {
+          "comment": "@since(n) and @removed(n) on a field, a statement or an instance header.",
+          "match": "(@(?:since|removed))\\s*(\\()\\s*(\\d+)\\s*(\\))",
+          "captures": {
+            "1": { "name": "storage.modifier.version.abstract" },
+            "2": { "name": "punctuation.section.abstract" },
+            "3": { "name": "constant.numeric.integer.abstract" },
+            "4": { "name": "punctuation.section.abstract" }
+          }
+        }
+      ]
+    },
+    "cardinality": {
+      "patterns": [
+        {
+          "comment": "List cardinality: [], [1..], [2..4].",
+          "match": "(\\[)\\s*(\\d+)?\\s*(\\.\\.)?\\s*(\\d+)?\\s*(\\])",
+          "captures": {
+            "1": { "name": "punctuation.section.abstract" },
+            "2": { "name": "constant.numeric.integer.abstract" },
+            "3": { "name": "keyword.operator.range.abstract" },
+            "4": { "name": "constant.numeric.integer.abstract" },
+            "5": { "name": "punctuation.section.abstract" }
+          }
+        }
+      ]
+    },
     "schemaFieldDeclarations": {
       "patterns": [
         {
-          "name": "variable.other.field.schema.abstract",
-          "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)(?:\\[\\])?(?=\\s*[:{])"
+          "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)((?:\\[[^\\]]*\\])?)(?=\\s*[:{@])",
+          "captures": {
+            "1": { "name": "variable.other.field.schema.abstract" },
+            "2": { "patterns": [{ "include": "#cardinality" }] }
+          }
         },
         {
           "name": "constant.numeric.field.schema.abstract",
@@ -156,6 +285,11 @@
     },
     "logicOperators": {
       "patterns": [
+        {
+          "comment": "`version` is the one built-in value of the logic language (SPEC 6.6).",
+          "name": "variable.language.version.abstract",
+          "match": "(?<![.$\\w])version\\b(?!\\s*:)"
+        },
         {
           "name": "keyword.operator.logical.logic.abstract",
           "match": "\\b(contains|exists|length|and|or)\\b|&&|\\|\\||==|!=|>=|<=|>|<|!(?=[(.\\w])"
@@ -193,8 +327,12 @@
     "interpolationVariables": {
       "patterns": [
         {
+          "name": "constant.character.escape.interpolation.abstract",
+          "match": "\\$\\$"
+        },
+        {
           "name": "variable.other.interpolation.abstract",
-          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+          "match": "\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}|\\$[A-Za-z_][A-Za-z0-9_]*"
         }
       ]
     },
@@ -219,6 +357,11 @@
         {
           "name": "constant.numeric.range.abstract",
           "match": "\\b\\d+(?:\\.\\d+)?\\.\\.\\d+(?:\\.\\d+)?\\b"
+        },
+        {
+          "comment": "An image size token: 128x128, 1024x*.",
+          "name": "constant.numeric.size.abstract",
+          "match": "\\b(?:\\d+|\\*)x(?:\\d+|\\*)(?![\\w.])"
         },
         {
           "name": "constant.numeric.float.abstract",
