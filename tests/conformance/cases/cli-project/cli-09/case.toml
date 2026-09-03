@@ -1,0 +1,17 @@
+id = '''cli-09'''
+area = '''cli-project'''
+title = '''A UTF-8 BOM silently deletes a schema from a .abt, and produces a self-contradictory error in a .ab'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-bom/ (also references: repro/cli-project/case-bom-ab/)'''
+command = '''../../project/target/release/abstract.exe templates case-bom/data
+../../project/target/release/abstract.exe compile case-bom/data JSON
+../../project/target/release/abstract.exe compile case-bom-ab/data JSON'''
+expected_kind = '''document'''
+expected_note = '''A leading BOM is stripped on read (or reported as 'file starts with a UTF-8 BOM; save as UTF-8 without BOM').'''
+actual_0_2_0 = '''`templates case-bom/data` prints NOTHING and exits 0 (the only schema vanished). Compile: `abstract: items/a.ab:1: statement '\u{feff}Item :: @id.a' appears before any instance header (expected 'Template :: ...' first)` - the quoted line is the header.'''
+spec_ref = '''2.2, 8.1, 8.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variant: compile case-bom-ab/data JSON; also templates data, which prints Item)'''
+expected_1_0 = '''A UTF-8 BOM at offset 0 is removed before lexing and has no other effect (SPEC 2.2), so a BOM on the template file, on the instance file, or on both compiles to the same bytes. A BOM anywhere else is an ordinary character and is E210 outside a quoted string.'''

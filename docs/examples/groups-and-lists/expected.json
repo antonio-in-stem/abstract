@@ -1,0 +1,35 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Product",
+      "id": "atlas",
+      "title": "Atlas Search",
+      "owner": {
+        "team": "Knowledge Systems"
+      },
+      "tags": [
+        "core",
+        "public"
+      ],
+      "capabilities": [
+        {
+          "id": "search",
+          "availability": "stable"
+        },
+        {
+          "id": "export",
+          "availability": "alpha"
+        }
+      ]
+    }
+  ],
+  "overlays": []
+}

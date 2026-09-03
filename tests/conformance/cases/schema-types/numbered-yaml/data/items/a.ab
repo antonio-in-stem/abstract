@@ -1,0 +1,3 @@
+Thing :: @id.a
+    slots.1: alpha
+    slots.2: beta

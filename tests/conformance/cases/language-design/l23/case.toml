@@ -1,0 +1,27 @@
+id = '''L23'''
+area = '''language-design'''
+title = '''Comments are stripped at tokenization and can never reach the output, so the compiled artifact loses all authored intent'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''missing-feature'''
+source_repro = '''repro/language-design/case22/'''
+command = '''cat repro/language-design/case22/data/objects/a1.ab
+#   // This comment documents the instance and is lost forever.
+#   A :: @id.a1
+#       name: Atlas   // trailing note also lost
+#       pairs: []
+./project/target/release/abstract.exe compile repro/language-design/case22/data JSON
+OUTPUT: { "data": [ { "template":"A","id":"a1","name":"Atlas","pairs":[] } ] }
+-> no trace of either comment in JSON, YAML or RAW.'''
+expected_kind = '''undecided'''
+expected_note = '''At minimum, an opt-in doc-comment form (`///`) attached to the following schema field or instance and emitted into the compiled document (or into the `abstract` metadata block from L07), so tooling and consumers can surface it.'''
+actual_0_2_0 = '''All comments are discarded before parsing; there is no doc-comment form.'''
+spec_ref = '''1.2 (P1), 3.2, 8.1, Not doing (no doc comments)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+1.0 confirms the behaviour rather than changing it: comments run to the end of the physical
+line, are never inside a quoted string, and never appear in compiled output (3.2). Doc
+comments in output are explicitly out of scope for 1.0 (1.2 P1). What the compiled document
+does gain is the abstract envelope object (8.1), which carries the document's own metadata.
+'''

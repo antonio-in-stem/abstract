@@ -1,0 +1,4 @@
+schema Other {
+    id: text(1..40)
+    name: text(1..80)
+}

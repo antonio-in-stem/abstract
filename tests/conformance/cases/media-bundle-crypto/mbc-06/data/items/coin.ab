@@ -1,0 +1,3 @@
+Item :: @id.coin
+    name: Golden Coin
+    secret_price: 4242

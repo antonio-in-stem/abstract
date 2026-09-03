@@ -1,0 +1,4 @@
+Thing :: @id.bracketed
+name: Bracketed
+caps: [#s*]
+flags: [hat_*]

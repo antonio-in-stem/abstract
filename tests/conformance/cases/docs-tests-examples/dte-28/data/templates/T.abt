@@ -1,0 +1,12 @@
+schema T {
+    id: text(1..40)
+    label: text(1..40)
+    blocked: bool = false
+}
+
+logic T {
+    // intent: only the exact string "banned-user" is blocked
+    if .label == "banned-user" {
+        derive .blocked = true
+    }
+}

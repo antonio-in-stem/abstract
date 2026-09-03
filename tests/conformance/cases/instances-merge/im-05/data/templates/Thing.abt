@@ -1,0 +1,4 @@
+schema Thing {
+    name: text(1..40)
+    owner: text(1..40) @optional
+}

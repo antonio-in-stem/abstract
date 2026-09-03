@@ -1,0 +1,15 @@
+schema Product {
+    id: text(1..40)
+    state: enum(draft, active, retired)
+    contact: text(1..80) @optional
+}
+
+logic Product {
+    // The schema field was renamed from `status` to `state`, but this rule
+    // still says `.status`. No error is reported; the guard silently stops
+    // firing and the `require` inside it is never evaluated.
+    if .status == "active" {
+        require .contact exists
+            else throw "Active products need a contact."
+    }
+}

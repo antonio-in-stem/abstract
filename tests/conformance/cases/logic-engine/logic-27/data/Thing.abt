@@ -1,0 +1,8 @@
+schema Thing {
+    id: text(1..40)
+    known: text(1..40) @optional
+}
+
+logic Thing {
+    derive .totally_unknown_field = surprise
+}

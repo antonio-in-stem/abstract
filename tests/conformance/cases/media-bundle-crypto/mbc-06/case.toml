@@ -1,0 +1,23 @@
+id = '''mbc-06'''
+area = '''media-bundle-crypto'''
+title = "`--key` swallows a following flag token as its value: `bundle data --key --out x.abx` silently seals with passphrase '--out'"
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''design-flaw'''
+source_repro = '''repro/media-bundle-crypto/case02-key-swallows-next-flag/'''
+command = '''abstract.exe bundle data --key --out out.abx
+unbundle out.abx --key "--out"'''
+expected_kind = '''undecided'''
+expected_note = '''Reject a flag-looking value after --key (or require --key=VALUE), so a missing passphrase errors instead of silently using '--out'.'''
+actual_0_2_0 = '''Bundle sealed with passphrase '--out'; exit 0; opens with --key "--out".'''
+spec_ref = '''2.4, 9.3, 9.9, Appendix D.1 (item 2)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+The compiler half is a genuine conformance point: discovery collects a file only when its
+extension is .ab or .abt (2.4), so data/abstract.abx is not a source and the project compiles
+to the single Item instance. The flag half is optional tooling: 9.3 states the general rule
+that a flag value must not begin with "-", and Appendix D.1 item 2 binds bundle to it, so
+"bundle data --key --out x.abx" is a usage error, never a container sealed with the passphrase
+"--out". Verify that half as a tooling test.
+'''

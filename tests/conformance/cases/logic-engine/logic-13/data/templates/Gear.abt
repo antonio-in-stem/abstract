@@ -1,0 +1,14 @@
+schema Gear {
+    id: text(1..40)
+    slots {
+        head: text(1..20) @optional
+        chest: text(1..20) @optional
+    }
+}
+
+logic Gear {
+    for $slot in [head, chest] {
+        require .slots.$slot == "manual" else throw "read side works: .slots.$slot is not manual"
+        derive .slots.$slot = "auto"
+    }
+}

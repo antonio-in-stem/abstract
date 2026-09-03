@@ -1,0 +1,4 @@
+Thing :: @id.base
+name: Base
+tags: [a, b]
+caps: [#search, #sync(availability: beta)]

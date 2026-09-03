@@ -1,0 +1,4 @@
+schema Doc {
+    id: text(1..40)
+    manual: file(txt, ini)
+}

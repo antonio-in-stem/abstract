@@ -1,0 +1,16 @@
+id = '''LP-014'''
+area = '''lexing-parsing'''
+title = '''`$` interpolation result depends on the declaration order of fields, so two logically identical instances compile differently'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-10-interp-order-dependent/'''
+command = '''`cd repro/lexing-parsing/bug-10-interp-order-dependent && abstract compile . JSON`'''
+expected_kind = '''undecided'''
+expected_note = '''Both instances produce the same `tags` value; whichever semantics is chosen (one-pass, so `start $note end`; or fixpoint, so `start hello end`) it must not depend on line order.'''
+actual_0_2_0 = '''a_name_first.ab (`name: $note` then `note: hello`) -> `"tags": [ "start hello end" ]`.
+b_note_first.ab (`note: hello` then `name: $note`) -> `"tags": [ "start $note end" ]`.
+Identical field sets, identical values, different output. Exit 0 for both.'''
+spec_ref = '''5.11, 7.3 steps 1-2, 2.7, 7.6'''
+status = '''ready'''
+spec_note = '''The variable table is built after every statement of the instance has been applied (5.11, 7.3 step 2), so declaration order cannot matter and the two files compile to the same object modulo the id. A variable's text is the authored lexeme, and substituted content is never rescanned, so $name inserts the literal text "$note" and that "$" is neither E425 nor E426 (5.11).'''

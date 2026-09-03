@@ -1,0 +1,19 @@
+id = '''LP-007'''
+area = '''lexing-parsing'''
+title = '''Panic (process abort) on a multi-path left side whose `}` precedes its `.{`'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-03-panic-multipath-reversed/'''
+command = '''`cd repro/lexing-parsing/bug-03-panic-multipath-reversed && abstract compile . JSON`'''
+expected_kind = '''undecided'''
+expected_note = '''`CompileError::at(path, line, "invalid multi path 'a}.{b' (missing '}')")` — the error this function already emits for the other malformed shapes — exit code 1.'''
+actual_0_2_0 = '''source: `Thing :: @id.x` / `    a}.{b: v`
+```
+thread 'main' (45212) panicked at src\lib.rs:1782:50:
+begin > end (4 > 1) when slicing `a}.{b`
+```
+exit code 101.'''
+spec_ref = '''3.3, 3.6, 5.4, 10.2 (E205)'''
+status = '''ready'''
+spec_note = '''"}" is not an identifier character (3.3), so the left side lexes as the identifier "a" followed by a "}" token with no open block brace: E205 (3.6). A multi-path key list is written "prefix.{a, b}" with the "{" after the "." and the "}" after it (5.4); the reversed spelling can never be one.'''

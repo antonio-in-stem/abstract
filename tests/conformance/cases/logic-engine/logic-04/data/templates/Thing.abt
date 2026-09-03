@@ -1,0 +1,10 @@
+schema Thing {
+    id: text(1..40)
+    status: enum(active, disabled)
+}
+
+logic Thing {
+    require .status = "active" else throw "A: status must be active (single =)"
+    require not(.status == "disabled") else throw "B: not(...) written without a space"
+    require .status equals "active" else throw "C: unknown operator word"
+}

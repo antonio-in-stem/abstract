@@ -1,0 +1,5 @@
+Product :: @id.atlas, @status.active
+    title: Atlas Search
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com
+    capabilities: [#search, #sync(availability: beta)]

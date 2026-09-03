@@ -1,0 +1,12 @@
+schema Doc {
+    id: text(1..40)
+    body: text(1..200)
+    banned: text(1..200) @optional
+}
+
+logic Doc {
+    require not .body contains "forbidden" else throw "body must not mention the forbidden word"
+    if .body contains "hello" {
+        derive .banned = "greeting-detected"
+    }
+}

@@ -1,0 +1,10 @@
+schema Guard {
+    id: text(1..40)
+    status: enum(draft, active)
+    contact: text @optional
+}
+
+logic Guard {
+    require .contact exists
+        else throw "Active guards need a contact."
+}

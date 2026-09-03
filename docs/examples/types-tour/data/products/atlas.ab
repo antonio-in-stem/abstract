@@ -1,0 +1,10 @@
+Product :: @id.atlas, @status.Active
+    title: Atlas Search
+    replicas: 3
+    price: 19.5
+    featured: true
+    manual: docs/atlas.txt
+    icon: ./icons/atlas.png
+    pack: core
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com

@@ -1,0 +1,4 @@
+schema My-Thing {
+    id: text(1..40)
+    name: text(1..60) @optional
+}

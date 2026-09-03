@@ -1,0 +1,17 @@
+id = '''proj-root'''
+area = '''schema-types'''
+title = '''The documented direct form `abstract obj.ab Template.abt JSON` resolves assets against the .ab file's own directory, so file()/image() checks spuriously fail'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/proj-root/'''
+command = '''...\abstract.exe compile repro/schema-types/proj-root/data JSON        -> OK
+  ...\abstract.exe compile repro/schema-types/proj-root JSON             -> OK
+  ...\abstract.exe repro/schema-types/proj-root/data/items/a.ab repro/schema-types/proj-root/data/templates/Thing.abt JSON'''
+expected_kind = '''document'''
+expected_note = '''The direct form finds the same project root (walk up until a directory containing assets/ or data/ is found) and validates identically.'''
+actual_0_2_0 = '''abstract: a.ab: File not found at Thing.icon: 'tex/a.png' resolved to '\\?\repro\schema-types\proj-root\data\items\assets\tex\a.png'. The schema declares file(...), so the file must exist.'''
+spec_ref = '''2.3, 2.5, 5.9, 7.6, 8.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (must produce identical bytes for: compile . JSON  and  compile data/items/a.ab JSON)'''
+expected_1_0 = '''The three-argument direct form is removed in 1.0 (Appendix A53). All three surviving spellings resolve the same project root by the upward walk of SPEC 2.3, so tex/a.png resolves under the project root assets directory in every one of them and the bytes are identical (SPEC 7.6). The compiled value is the authored path text, not the resolved path.'''

@@ -1,0 +1,24 @@
+id = '''L20'''
+area = '''language-design'''
+title = '''Unicode schema names are accepted by .abt and listed by `abstract templates`, but no .ab file can ever reference them — and the failure message is about something else entirely'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/language-design/case9b/ (also references: repro/language-design/case19/)'''
+command = '''Ítem :: @id.u
+O@2 :: @id.shulker_x, @rarity.mythic'''
+expected_kind = '''undecided'''
+expected_note = '''Either accept unicode schema names on both sides, or reject them at the .abt with "schema names must be ASCII letters, digits and underscore". Either way, a line containing a top-level `::` whose left side is not a valid template name should say so.'''
+actual_0_2_0 = '''The .abt accepts it, `templates` lists it, the .ab can never use it, and the error blames file structure.'''
+spec_ref = '''3.4, 3.3, 5.1, 10.2 (E206, E208), 10.4 (E439)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)      -> expected-error.txt (two diagnostics)
+compile data JSON (cwd = l20/case19)     -> case19/expected-error.txt
+Both halves are settled. Schema names are ASCII only and are matched exactly, so a non-ASCII
+name is E208 at its declaration and can never be listed by "templates" (3.4); the staged tree
+uses ASCII schema names and non-ASCII FIELD names, which are E206 in both files (3.3). And a
+logical line whose left side is not a valid schema name but which carries a top-level "::" now
+has its own diagnostic, E439, which names the offending text - case19's "O@2 :: ..." - instead
+of a message about file structure.
+'''

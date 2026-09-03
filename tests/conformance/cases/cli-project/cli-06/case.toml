@@ -1,0 +1,17 @@
+id = '''cli-06'''
+area = '''cli-project'''
+title = '''`--out=<file>` (equals form) is silently ignored: nothing is written, exit 0'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-flags/'''
+command = '''../../project/target/release/abstract.exe compile case-flags/data JSON --out=case-flags/out1.json
+ls case-flags/out1.json
+... --out case-flags/out2.json'''
+expected_kind = '''document'''
+expected_note = '''Either `--out=x.json` works, or the CLI errors with 'unknown option --out=x.json'.'''
+actual_0_2_0 = '''exit 0, 'abstract: wrote ...' is never printed, case-flags/out1.json does not exist. The space form prints 'abstract: wrote case-flags/out2.json (json)' and creates the file.'''
+spec_ref = '''9.3, 9.4, 9.7, 11.2'''
+status = '''ready'''
+command_1_0 = '''compile data JSON --out=out1.json   (must behave identically to: compile data JSON --out out1.json)'''
+expected_1_0 = '''Both spellings of --out are supported (SPEC 9.3). expected.json holds the bytes written to out1.json, which are exactly the bytes that would have gone to stdout; with --out nothing at all is written to stdout and one informational line naming the path and the format goes to stderr (SPEC 9.4, 9.7). out1.json is neither a source file nor inside the data directory, so it is not refused. --out= with an empty value would be E803.'''

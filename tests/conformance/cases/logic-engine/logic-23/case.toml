@@ -1,0 +1,17 @@
+id = '''LOGIC-23'''
+area = '''logic-engine'''
+title = ''''==' is case-insensitive for scalars but case-sensitive for arrays (structural fallback)'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L23-array-eq-case-sensitive/'''
+command = '''repro/logic-engine/L23-array-eq-case-sensitive — cd repro/logic-engine/L23-array-eq-case-sensitive && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''tags [Alpha] vs other [alpha] should compare the same way scalar_a "Alpha" vs scalar_b "alpha" does — both equal, or both unequal.'''
+actual_0_2_0 = '''abstract: items/one.ab: T logic: ARRAYS differ (case-sensitive compare failed)
+EXIT=1
+
+(The scalar require on the preceding line passed, so "Alpha" == "alpha" as scalars but ["Alpha"] != ["alpha"] as arrays.)'''
+spec_ref = '''6.8, 7.2, 10.5'''
+status = '''ready'''
+note_1_0 = ''''==' compares two scalars; comparing a list or an object is E513, checked statically in P3 from the declared types (SPEC 6.8, 7.2). Because P3 fails, P4 never runs, so the scalar require on the previous line is not evaluated - it would fail too, since string comparison is exact and 'Alpha' != 'alpha' (SPEC 6.8).'''

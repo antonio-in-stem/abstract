@@ -1,0 +1,21 @@
+id = '''DTE-25'''
+area = '''docs-tests-examples'''
+title = '''`--plain` and the JSON output-format default are absent from all four markdown docs and README'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/cli-name-collision/'''
+command = '''cd .../repro/docs-tests-examples/cli-name-collision && abstract compile ./raw
+abstract --help'''
+expected_kind = '''undecided'''
+expected_note = '''Both behaviours documented in the markdown docs and README CLI sections.'''
+actual_0_2_0 = '''`abstract compile ./raw` → exit 0 printing JSON, with no format token supplied. `abstract --help` lists `[JSON|YML|RAW]` as optional and lists `--plain`, but grepping docs/*.md and README.md for `--plain` returns nothing.'''
+spec_ref = '''9.2, 9.3, 9.9'''
+status = '''ready'''
+expectation_1_0 = '''
+compile ./raw -> expected.json   (FORMAT is optional; absent means JSON, 9.2)
+--help        -> usage on stdout, exit 0 (text not fixed by the spec)
+The JSON default is normative in 9.2, and 9.3 lists the complete flag set, so the documented
+surface and the implemented surface are the same document. --plain belongs to the optional
+bundle tooling (9.9) and is outside the language.
+'''

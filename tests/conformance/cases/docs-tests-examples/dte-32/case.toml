@@ -1,0 +1,22 @@
+id = '''DTE-32'''
+area = '''docs-tests-examples'''
+title = '''Undocumented single-tuple multi-assignment `(a, b): (1, 2)` accepts duplicate column names and silently keeps the last value'''
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''design-flaw'''
+source_repro = '''repro/docs-tests-examples/tuple-shorthand/'''
+command = '''cd .../repro/docs-tests-examples/tuple-shorthand && abstract compile data JSON
+(a, b): (1, 2)
+(a, a): (1, 2)'''
+expected_kind = '''error'''
+expected_note = '''Either documented-and-validated (duplicate columns rejected the way duplicate schema fields are at src/lib.rs, and arity checked), or a parse error pointing the author at the documented forms.'''
+actual_0_2_0 = '''`(a, b): (1, 2)` → exit 0, `{"a": 1, "b": 2}`. `(a, a): (1, 2)` → exit 0, `{"a": 2, "b": 0}` — the value `1` is silently discarded with no duplicate-key diagnostic.'''
+spec_ref = '''5.5, 10.2 (E210), 10.4 (E416, E417), A.1 (A66)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+The bare tuple multi-assignment is removed in 1.0 (A.1 A66): a tuple array requires a field
+path before the "(" (5.5, GRAMMAR tuple_array_assignment), so a statement whose first token is
+"(" is E210 in P1. Written in the supported form, a repeated column is E417 and a row whose
+arity does not match the column list is E416, so neither defect can be silent.
+'''

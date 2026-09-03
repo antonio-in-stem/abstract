@@ -1,0 +1,13 @@
+schema T {
+    id: text(1..40)
+    name: text(1..40)
+    tags[]: text(1..20)
+    seen[]: text(1..20) @optional
+}
+
+logic T {
+    // intent: collect every tag into .seen
+    for t in .tags {
+        derive .seen = t
+    }
+}

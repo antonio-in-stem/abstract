@@ -1,0 +1,4 @@
+// This comment documents the instance and is lost forever.
+A :: @id.a1
+    name: Atlas   // trailing note also lost
+    pairs: []

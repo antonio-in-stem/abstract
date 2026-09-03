@@ -1,0 +1,20 @@
+id = '''LP-015'''
+area = '''lexing-parsing'''
+title = '''`$` interpolation has no word boundary, so literal text that merely starts with a field name is rewritten'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-28-interp-no-word-boundary/'''
+command = '''`cd repro/lexing-parsing/bug-28-interp-no-word-boundary && abstract compile . JSON`'''
+expected_kind = '''undecided'''
+expected_note = '''`$name_large` refers to a variable named `name_large`; since none exists, it should be left literal (matching the behaviour for any other unknown `$word`). `$names` likewise.'''
+actual_0_2_0 = '''source:
+```
+Thing :: @id.x
+    name: hero
+    note: file is $name_large.png and $names
+```
+output: `"note": "file is hero_large.png and heros"`. Exit 0.'''
+spec_ref = '''5.11, 10.4 (E425)'''
+status = '''ready'''
+spec_note = '''"$name" consumes the maximal following run of identifier characters (5.11), so the value names the variables "name_large" and "names", neither of which exists: E425, reported at the first one. "${name}_large" is the spelling that means "name" followed by "_large". A second E425 for "$names" is permitted but not mandated, because both references live in one statement (7.1, 11.1).'''

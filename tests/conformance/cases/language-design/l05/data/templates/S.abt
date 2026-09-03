@@ -1,0 +1,7 @@
+schema S {
+    id: text(1..40)
+    name: text(1..40)
+    legacy_flag: text @optional
+    new_field: text @optional
+    tags[]: text @optional
+}

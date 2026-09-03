@@ -1,0 +1,8 @@
+schema Thing {
+    name: text(1..40)
+    caps[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+    flags[]: enum(hat_red, hat_blue) @optional
+}

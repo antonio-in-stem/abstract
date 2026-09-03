@@ -1,0 +1,6 @@
+versions 1..3
+
+schema Item {
+    name: text(1..40)
+    glow: bool @since(2) @optional
+}

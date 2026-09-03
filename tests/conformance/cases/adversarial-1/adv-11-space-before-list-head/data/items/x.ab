@@ -1,0 +1,3 @@
+Thing :: @id.x
+    name: Alpha
+    tags: [a, b]

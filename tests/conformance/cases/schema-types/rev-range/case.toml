@@ -1,0 +1,18 @@
+id = '''rev-range'''
+area = '''schema-types'''
+title = '''Unsatisfiable type constraints are accepted with no schema-authoring error: int(10..5), text(-5..-1), image(png 0x0)'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/schema-types/rev-range/ (also references: repro/schema-types/neg-len/)'''
+command = '''...\abstract.exe compile repro/schema-types/rev-range/data JSON
+  ...\abstract.exe lint repro/schema-types/rev-range/data
+  ...\abstract.exe compile repro/schema-types/neg-len/data JSON'''
+expected_kind = '''error'''
+expected_note = '''Parse-time error at the schema line, e.g. "invalid range '10..5' (minimum is greater than maximum)" and "text lengths cannot be negative".'''
+actual_0_2_0 = '''rev-range compile/lint: abstract: items/a.ab: Range mismatch at Thing.n: received value 7, expected one of: 10..5.
+neg-len: abstract: items/a.ab: Range mismatch at Thing.a: received length 2, expected one of: -5..-1.'''
+spec_ref = '''4.5, 10.3'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variant: compile neg-len/data JSON; identical outcome for lint)'''
+expected_1_0 = '''A reversed range is rejected at the schema, not deferred to an instance: int(10..5) is E305 (SPEC 4.5). In the variant, text(-5..-1) is E318 rather than E305, because its bounds are ordered but a text range must have both bounds at least 0 (SPEC 4.5); float(0.5) is a valid exact-value range and raises nothing. lint reports the same defects, because P3 does not depend on any instance (SPEC 7.2).'''

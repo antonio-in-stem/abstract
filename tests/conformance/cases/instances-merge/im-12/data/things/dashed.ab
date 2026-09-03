@@ -1,0 +1,4 @@
+Page :: @id.dashed
+name: Dashed
+langs: ES-*
+copy(key, value): (ES-*, Hola)

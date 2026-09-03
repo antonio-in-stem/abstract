@@ -1,0 +1,20 @@
+id = '''OC-02'''
+area = '''output-canon'''
+title = '''Stack overflow (hard crash, no diagnostic) from a deeply nested dotted assignment path'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc33-deep-recursion/'''
+command = '''cd repro/output-canon/oc33-deep-recursion
+python -c "n=1000; open('data/items/a.ab','w',newline='\n').write('T :: @id.a\n    root.'+'.'.join(['child']*n)+'.k: deep\n')"
+abstract compile . JSON
+(the same script with n=500 succeeds; n=1000/2000/5000/20000 all crash)'''
+expected_kind = '''undecided'''
+expected_note = '''Either a CompileError such as 'assignment path too deep (max N segments)' with the file and line, or successful compilation. A malformed/hostile input file must never abort the process.'''
+actual_0_2_0 = '''depth=500  -> exit 0, 514616 bytes of JSON
+depth=1000 -> exit 127, stderr: `thread 'main' (19316) has overflowed its stack`
+depth=2000 -> exit 127, same
+depth=20000 -> exit 127, same'''
+spec_ref = '''3.7, 5.4, 10.2'''
+status = '''ready'''
+note_1_0 = '''The assignment path has 1002 segments and the limit is 64 (SPEC 3.7), so the statement is E209 naming the subject and the limit. No input may abort, panic or crash the compiler (SPEC 3.7).'''

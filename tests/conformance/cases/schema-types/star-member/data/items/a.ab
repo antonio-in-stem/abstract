@@ -1,0 +1,2 @@
+Thing :: @id.a
+    tags: ["a*"]

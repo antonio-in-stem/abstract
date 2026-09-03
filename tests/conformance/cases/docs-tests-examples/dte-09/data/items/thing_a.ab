@@ -1,0 +1,3 @@
+Thing :: @id.thing_a
+    lang: from_lang
+    lang_values: from_lang_values

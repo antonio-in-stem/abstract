@@ -1,0 +1,22 @@
+id = '''DTE-18'''
+area = '''docs-tests-examples'''
+title = '''Three doc surfaces claim PNG validation reads 26 header bytes; the probe accepts a 24-byte file'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/png-24-bytes/'''
+command = '''cd .../repro/docs-tests-examples/png-24-bytes/only24 && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''Per the docs, a 24-byte PNG would be too short to validate.'''
+actual_0_2_0 = '''exit 0 — the 24-byte file validates against `image(png 16x16)` and is emitted normally.'''
+spec_ref = '''4.4.7, 4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)        -> expected-error.txt
+compile data JSON (cwd = dte-18/only24)    -> only24/expected.json
+4.4.7.1 fixes the PNG requirement at 24 bytes: signature at 0, IHDR at 12, big-endian u32
+width at 16 and height at 20. tiny24.png is exactly 24 bytes and decodes as 16x16, so it is
+valid for image(png 16x16). tiny23.png matches the signature but is shorter than the
+requirement, which is E422 with "note: file is truncated." - never an unrecognised signature.
+The 26-byte figure in the 0.2.0 docs was BMP's gate.
+'''

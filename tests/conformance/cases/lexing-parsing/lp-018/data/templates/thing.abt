@@ -1,0 +1,7 @@
+schema Thing {
+    id: text(1..40)
+    lang[] {
+        key: enum(en_us, es_es) @tag
+        value: text(1..40)
+    }
+}

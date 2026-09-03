@@ -17,3 +17,14 @@ schema Product {
     }
 }
 
+logic Product {
+    // 'capabilities' is a required list, which an empty list satisfies;
+    // 'exists' is false for an empty list, so this rule is not the schema's
+    // (SPEC 6.7).
+    require .capabilities exists
+        else throw "A product declares at least one capability."
+
+    if .status == "retired" {
+        derive .tier = free
+    }
+}

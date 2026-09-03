@@ -1,0 +1,9 @@
+schema T {
+    id: text(1..40)
+    icon: text(1..80)
+    n: int(0..10) @optional
+}
+
+logic T {
+    derive? .n = 5
+}

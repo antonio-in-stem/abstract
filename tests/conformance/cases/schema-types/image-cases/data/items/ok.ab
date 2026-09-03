@@ -1,0 +1,3 @@
+Thing :: @id.ok
+    a: tex/a.png
+    b: tex/wide.png

@@ -1,0 +1,2 @@
+Product :: @id.atlas, @status.active, @release_year.2026, @featured
+    price: 19.5

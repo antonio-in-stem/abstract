@@ -1,0 +1,4 @@
+Policy :: @id.sealed_policy
+    level: sealed
+    reviewers: [platform, security]
+    notes: "Requires two sign-offs before release."

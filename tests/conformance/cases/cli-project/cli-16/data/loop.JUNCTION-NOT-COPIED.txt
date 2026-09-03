@@ -1,0 +1,6 @@
+This path was an NTFS junction/reparse point in the original repro:
+  repro\cli-project\case-junction-cycle\data\loop
+It was intentionally NOT copied (junctions can be self-referential or
+escape the project tree, and a plain recursive copy cannot preserve that
+safely). Recreate the junction manually before running this case; see the
+finding's expected_note/actual_0_2_0 in case.toml for the intended target.

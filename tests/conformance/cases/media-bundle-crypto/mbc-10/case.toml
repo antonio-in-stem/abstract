@@ -1,0 +1,22 @@
+id = '''mbc-10'''
+area = '''media-bundle-crypto'''
+title = '''Truncated file with a valid format magic is reported as 'unrecognized image signature', indistinguishable from a non-image'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/media-bundle-crypto/case09-media-truncation-vp8l/'''
+command = '''repro/media-bundle-crypto/case09-media-truncation-vp8l : a 10-byte file with the valid 8-byte PNG signature (no IHDR) probed as thumb -> 'Invalid image ...: unrecognized image signature', not a PNG truncation message.'''
+expected_kind = '''undecided'''
+expected_note = '''A message distinguishing 'looks like a truncated PNG' from 'not an image'.'''
+actual_0_2_0 = '''Generic 'unrecognized image signature' for a file that clearly starts with the PNG magic.'''
+spec_ref = '''4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+4.4.7.1 makes the two conditions distinguishable and mutually exclusive: a file that matches a
+signature but is shorter than that format's byte requirement is E422 with "note: file is
+truncated.", and a file that matches no signature is E422 naming the first bytes found; a short
+file is never reported as an unrecognised signature and an unrecognised file is never reported
+as truncated. assets/trunc.png is 10 bytes with a valid PNG signature, so it is the truncated
+form. assets/padded.webp is valid VP8L 640x360 and passes.
+'''

@@ -1,0 +1,17 @@
+id = '''OC-23'''
+area = '''output-canon'''
+title = '''Directory symlink/junction cycles are traversed without cycle detection and surface as a bogus 'Duplicate schema' error'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc25-junction-loop/'''
+command = '''cd repro/output-canon/oc25-junction-loop
+cmd //c "mklink /J data\loop data"
+abstract compile . JSON
+cmd //c "rmdir data\loop"'''
+expected_kind = '''document'''
+expected_note = '''The cycle is detected and skipped (or reported as 'directory cycle detected at data/loop'), and the project compiles.'''
+actual_0_2_0 = '''abstract: data/loop/loop/loop/... (63 repetitions) .../templates/T.abt: Duplicate schema 'T'. It is already defined in 'data/loop/loop/... (63 repetitions) .../templates/T.abt'; schema names must be unique across the project.  (exit 1)'''
+spec_ref = '''2.4, 8.4'''
+status = '''ready'''
+note_1_0 = '''The junction data/loop -> data has been recreated with mklink /J, so the case is runnable. Symbolic links and directory junctions MUST be resolved and the walker MUST keep a set of canonical directory paths already visited and skip a directory whose canonical path is in it (SPEC 2.4), so the cycle terminates, T.abt is collected once, and the project compiles instead of producing a bogus duplicate-schema error. make-loop.cmd recreates the junction if the corpus is copied without it.'''

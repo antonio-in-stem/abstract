@@ -1,0 +1,5 @@
+Product :: @id.atlas
+    price: 19.5
+    featured: true
+    tags: [core, public]
+    capabilities: [#search]

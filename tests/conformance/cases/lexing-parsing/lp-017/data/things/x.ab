@@ -1,0 +1,3 @@
+Thing :: @id.x
+    note: Mirror at //cdn.example.com/logo.png
+    icon: //cdn.example.com/logo.png

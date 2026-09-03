@@ -1,0 +1,13 @@
+schema Product {
+    title: text(1..60)
+    owner {
+        team: text(1..50)
+        contact: text(1..80) @optional
+    }
+    tags[1..3]: enum(core, public, internal)
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+    notes[]: text @optional
+}

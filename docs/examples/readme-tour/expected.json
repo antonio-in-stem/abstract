@@ -1,0 +1,73 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  "data": [
+    {
+      "template": "Pack",
+      "id": "core",
+      "title": "Core"
+    },
+    {
+      "template": "Product",
+      "id": "atlas",
+      "title": "Atlas Search",
+      "status": "active",
+      "price": 19.5,
+      "icon": "./textures/atlas.png",
+      "pack": "core",
+      "glow": false,
+      "owner": {
+        "team": "Knowledge Systems"
+      },
+      "capabilities": [
+        {
+          "id": "search",
+          "availability": "stable"
+        },
+        {
+          "id": "export",
+          "availability": "alpha"
+        }
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "versions": {
+        "min": 1,
+        "max": 1
+      },
+      "data": [
+        {
+          "template": "Product",
+          "id": "atlas",
+          "title": "Atlas Search",
+          "status": "active",
+          "price": 19.5,
+          "icon": "./textures/atlas.png",
+          "pack": "core",
+          "owner": {
+            "team": "Knowledge Systems"
+          },
+          "capabilities": [
+            {
+              "id": "search",
+              "availability": "stable"
+            },
+            {
+              "id": "export",
+              "availability": "alpha"
+            }
+          ]
+        }
+      ],
+      "removed": []
+    }
+  ]
+}

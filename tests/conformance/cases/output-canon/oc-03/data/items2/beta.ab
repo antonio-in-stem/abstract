@@ -1,0 +1,3 @@
+T2 :: @id.beta
+    label: hello
+    label.sub: boom

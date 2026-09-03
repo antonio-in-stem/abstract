@@ -1,0 +1,22 @@
+id = '''OC-16'''
+area = '''output-canon'''
+title = '''The emitted `id` is neither guaranteed to be a string nor unique: an int-typed id coerces, so @id.007 and @id.7 both emit id: 7'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc24-id-int/'''
+command = '''id: int(0..100)
+T :: @id.7
+T :: @id.007'''
+expected_kind = '''error'''
+expected_note = '''Either the schema is rejected ('id must be text'), or the uniqueness check is applied to the emitted id and reports a duplicate.'''
+actual_0_2_0 = '''{
+  "data": [
+    { "template": "T", "id": 7, "label": "hi again" },
+    { "template": "T", "id": 7, "label": "hi" }
+  ]
+}
+exit 0.'''
+spec_ref = '''4.11, 5.3, 10.3'''
+status = '''ready'''
+note_1_0 = '''A schema MAY declare 'id' only as 'id: text' or 'id: text(a..b)'; anything else, including another type, is E314 (SPEC 4.11), so 'id: int(0..100)' is rejected at P3. The emitted id is therefore always the normalised header id as a string (SPEC 8.2), '007' and '7' stay two distinct ids, and no coercion can defeat the project-wide uniqueness check (SPEC 5.3).'''

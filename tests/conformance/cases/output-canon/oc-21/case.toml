@@ -1,0 +1,17 @@
+id = '''OC-21'''
+area = '''output-canon'''
+title = '''A schema field written as `caps[]: { ... }` silently becomes a field literally named 'caps[]:' that no instance can ever satisfy'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/output-canon/oc7-schema-typo/'''
+command = '''caps[]: {
+caps[] {
+Unknown field 'caps' at T. Declared fields: id, owner, caps[]:, template, id.'''
+expected_kind = '''undecided'''
+expected_note = '''data/templates/T.abt:3: invalid field name 'caps[]:' (did you mean `caps[] { ... }`?)'''
+actual_0_2_0 = '''abstract: data/items/a.ab: Missing required field T.caps[]:. Add 'caps[]:: ...' to the instance, provide it as a header tag when appropriate, or mark the schema field @optional / give it a default in the .abt file.
+(exit 1 for both lint and compile; the blamed file is the instance, not the template)'''
+spec_ref = '''4.3, 4.7, 10.3'''
+status = '''ready'''
+note_1_0 = ''''caps[]: { ... }' puts a block brace where a type expression is required. A group field is written 'caps[] { ... }' with no colon (SPEC 4.3, 4.7), so the ':' form is E304, whose catalogue entry names this exact spelling (SPEC 10.3). The error is reported at the template, with a position, not as a missing-field error against an instance.'''

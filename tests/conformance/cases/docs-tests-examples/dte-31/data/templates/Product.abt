@@ -1,0 +1,5 @@
+schema Product {
+    id: text(1..40)
+    status: enum(draft, active)
+    price: float(0..9999) = 0.0
+}

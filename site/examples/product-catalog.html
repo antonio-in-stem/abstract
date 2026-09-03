@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Product Catalog Example - Abstract</title>
+    <title>Product catalog - Abstract</title>
+    <meta name="description" content="A catalog schema with owners, defaults, a keyed capability list, and variants written by cloning.">
     <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -11,7 +12,7 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="topbar">
-    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
     <nav class="nav" aria-label="Primary navigation">
         <a href="../learn/index.html">Learn</a>
         <a href="../docs/index.html">Docs</a>
@@ -25,44 +26,111 @@
     <section class="doc-hero">
         <p class="eyebrow">Example</p>
         <h1>Product catalog.</h1>
-        <p class="lede">A useful first schema because it has scalar fields, defaults, a nested owner object, list fields, and tagged capability objects.</p>
+        <p class="lede">Three products, one schema, and the two clone forms: a full clone with an override, and a partial clone of one subtree.</p>
     </section>
-    <section class="section">
-        <div class="split">
-            <div class="terminal">
-                <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Examples</span>
+            <nav>
+                <a href="index.html">All examples</a>
+                <a href="product-catalog.html" aria-current="page">Product catalog</a>
+                <a href="release-policy.html">Release policy</a>
+                <a href="sticker-pack.html">Sticker pack</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+<p>Project: <code>docs/examples/clones</code>. It shows the shape most catalogs end up with &mdash; a required title, a defaulted status, a required owner group and a keyed capability list &mdash; and how a variant is written by cloning rather than by copy-paste.</p>
+<h2><code>data/templates/Product.abt</code></h2>
 <pre><code>schema Product {
-    id: text(1..40)
-    name: text(1..80)
-    status: enum(draft, active, retired)
-    tier: enum(free, standard, premium)
-    release_year: int(2000..2100)
-    tags[]: enum(core, experimental, internal, public, ai_ready) @optional
-
+    title: text(1..60)
+    status: enum(draft, active, retired) = draft
     owner {
         team: text(1..50)
         contact: text(1..80)
     }
-
     capabilities[] {
-        id: enum(search, sync, export, audit, automation, analytics) @tag
+        id: enum(search, sync, export) @tag
         availability: enum(alpha, beta, stable) = stable
     }
 }</code></pre>
-            </div>
-            <div class="terminal">
-                <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-<pre><code>Product :: @id.atlas, @status.active, @tier.premium, @release_year.2026
-    name: Atlas Search
-    tags: [core, public, ai_ready]
+<h2><code>data/products/atlas.ab</code></h2>
+<pre><code>Product :: @id.atlas, @status.active
+    title: Atlas Search
     owner.team: Knowledge Systems
     owner.contact: systems@example.com
-    capabilities: [#search, #sync(availability: beta), #analytics]</code></pre>
-            </div>
-        </div>
-    </section>
+    capabilities: [#search, #sync(availability: beta)]</code></pre>
+<h2><code>data/products/beacon.ab</code></h2>
+<pre><code>Product :: @id.beacon
+&amp;atlas.*
+    title: Beacon Export</code></pre>
+<p>A full clone, then one override. <code>beacon</code> inherits atlas&rsquo;s status, owner and capabilities; <code>template</code> and <code>id</code> are never cloned.</p>
+<h2><code>data/products/probe.ab</code></h2>
+<pre><code>Product :: @id.probe
+&amp;atlas.owner
+    title: Probe
+    capabilities: []</code></pre>
+<p>A partial clone copies just the <code>owner</code> subtree. <code>status</code> is absent, so its default <code>draft</code> is filled, and <code>capabilities</code> is required, so it is given explicitly as an empty list &mdash; a present value, not an absence.</p>
+<h2>Compiled</h2>
+<pre><code>{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Product",
+      "id": "atlas",
+      "title": "Atlas Search",
+      "status": "active",
+      "owner": {
+        "team": "Knowledge Systems",
+        "contact": "systems@example.com"
+      },
+      "capabilities": [
+        { "id": "search", "availability": "stable" },
+        { "id": "sync", "availability": "beta" }
+      ]
+    },
+    {
+      "template": "Product",
+      "id": "beacon",
+      "title": "Beacon Export",
+      "status": "active",
+      "owner": {
+        "team": "Knowledge Systems",
+        "contact": "systems@example.com"
+      },
+      "capabilities": [
+        { "id": "search", "availability": "stable" },
+        { "id": "sync", "availability": "beta" }
+      ]
+    },
+    {
+      "template": "Product",
+      "id": "probe",
+      "title": "Probe",
+      "status": "draft",
+      "owner": {
+        "team": "Knowledge Systems",
+        "contact": "systems@example.com"
+      },
+      "capabilities": []
+    }
+  ],
+  "overlays": []
+}</code></pre>
+<p>The arrays are shown compactly here to keep the page readable; the stored expectation in <code>docs/examples/clones/expected.json</code> is the byte-exact form, with one member per line.</p>
+<h2>What to take from it</h2>
+<ul class="mini-list"><li>Objects are ordered by <code>(template, id)</code>, so <code>atlas</code>, <code>beacon</code>, <code>probe</code> &mdash; not file order.</li><li>Keys follow the schema&rsquo;s declaration order, not the order the assignments were written.</li><li>A default fills in before logic runs; an absent optional field would simply be missing.</li><li>A clone copies the source&rsquo;s <em>authored</em> data, so it never picks up values that only a default or a <code>derive</code> would have supplied.</li></ul>
+        </article>
+    </div>
 </main>
-<footer class="footer"><p>See the full walkthrough in <a href="../learn/first-project.html">First project</a>.</p></footer>
+
+<footer class="footer"><p>Source: <code>docs/examples/clones</code> in the repository.</p></footer>
 <script src="../assets/site.js"></script>
 </body>
 </html>

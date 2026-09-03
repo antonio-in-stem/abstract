@@ -1,0 +1,9 @@
+schema Page {
+    title: text(1..60)
+    flags[]: enum(hat_small, hat_large, boot_small)
+    images[]: image(png 16x16)
+    copy[] {
+        key: enum(en_us, es_es, es_mx) @tag
+        value: text(1..80)
+    }
+}

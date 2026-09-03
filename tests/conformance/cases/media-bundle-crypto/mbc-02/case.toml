@@ -1,0 +1,22 @@
+id = '''mbc-02'''
+area = '''media-bundle-crypto'''
+title = '''Documented 'downgrade resistance' is only enforced when the caller passes a key; opening a flag-flipped bundle with no key silently returns raw ciphertext'''
+severity = '''design'''
+verdict = '''partial'''
+kind = '''security'''
+source_repro = '''repro/media-bundle-crypto/case04-downgrade-nokey/'''
+command = '''bundle data --key s3cret
+unbundle flagflipped.abx
+AbstractBundle.openPayload(ff, null)'''
+expected_kind = '''undecided'''
+expected_note = '''Either the format self-describes so a cleared flag is always detectable, or SECURITY.md states plainly that downgrade protection exists only when a key is supplied.'''
+actual_0_2_0 = '''Rust unbundle prints garbage (exit 0); Java openPayload(null) returns raw ciphertext bytes (no exception). With a key BOTH correctly refuse ('refusing the downgrade').'''
+spec_ref = '''9.9, Appendix D.1 (item 3), Appendix D.2 (item 11)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case: bundle containers and the Java runtime are optional tooling
+that 9.9 leaves undefined. The binding requirements are Appendix D.1 item 3 - opening a
+container whose encryption flag has been cleared must fail whether or not the caller supplied a
+key, and the refusal must not depend on caller behaviour - and D.2 item 11 for the runtime.
+Verify as tooling tests. The data/ tree is a valid 1.0 project (one Item instance, id coin).
+'''

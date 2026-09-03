@@ -1,0 +1,4 @@
+schema Tex {
+    id: text(1..40)
+    art: image(webp 200x100)
+}

@@ -1,0 +1,4 @@
+schema T {
+    id: text(1..80)
+    small: text(1..40)
+}

@@ -1,0 +1,20 @@
+id = '''DTE-30'''
+area = '''docs-tests-examples'''
+title = '''VS Code grammar and extension are 0.1-era: schema/logic scopes end at the first nested `}`, float/bool/image/not are unhighlighted, completions omit every 0.2 keyword'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/vscode-grammar-stale/'''
+command = '''cd .../repro/docs-tests-examples/vscode-grammar-stale && node check.js'''
+expected_kind = '''undecided'''
+expected_note = '''Every 0.2 schema type and logic keyword tokenised; schema/logic scopes span the whole block including nested groups; no dead rules.'''
+actual_0_2_0 = '''extension.js schema types matched: text, int, enum, file — MISSED: float, image. logic keywords matched: if, require, else, throw, derive — `not` present in source but absent from the regex; `derive?` matched as `derive` only. completion list missing: float, bool, image, derive, derive?, if, else, require, throw, for, not. schemaBlock.end = "\\}" so the nested `stats { ... }` group's closing brace at line 9 terminates the schema scope. Dead rule: {"name":"constant.language.default.abstract","match":"\\b(default)\\b"}.'''
+spec_ref = '''6.4, 7.2 (P3), 9.9, 10.5 (E505), Appendix D.3 (item 14)'''
+status = '''ready'''
+expectation_1_0 = '''
+lint data (or compile data JSON) -> expected-error.txt
+The project declares no instances, and P3 still checks every schema and logic block (7.2), so
+"derive? .wave = 1" against a field schema Item does not declare is E505 before any instance is
+read. The editor-grammar half of this case (check.js) is Appendix D.3 item 14 and is verified
+as a tooling test, not as a compiler golden; check.js also reads a path outside the corpus.
+'''

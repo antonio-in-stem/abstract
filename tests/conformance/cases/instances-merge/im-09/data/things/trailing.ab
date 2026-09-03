@@ -1,0 +1,4 @@
+Thing :: @id.trailing
+tags: alpha, beta,
+name: Widget
+note: hello

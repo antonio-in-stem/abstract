@@ -1,0 +1,22 @@
+id = '''LP-012'''
+area = '''lexing-parsing'''
+title = '''A brace pattern with more than one `{...}` group silently produces corrupt paths instead of a cross product or an error'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-07-multi-brace-group/'''
+command = '''`cd repro/lexing-parsing/bug-07-multi-brace-group && abstract compile . JSON`'''
+expected_kind = '''error'''
+expected_note = '''Either the cross product (4 paths: red/small, red/large, blue/small, blue/large) or a compile error "brace patterns support a single {...} group".'''
+actual_0_2_0 = '''source: `tags: ./art/{red,blue}/icon/{small,large}.png`
+output:
+```
+"tags": [
+  "./art/red.png",
+  "./art/blue}/icon/{small,large.png"
+]
+```
+Exit 0.'''
+spec_ref = '''3.5 (bare text), 5.5, 5.8, 5.10, 4.6'''
+status = '''ready'''
+spec_note = '''Brace patterns exist only in values of file/image LIST fields (5.8); "tags" is text[], so "{" and "}" are ordinary characters and nothing is expanded. The commas sit at bracket depth 1 inside the balanced groups, so they do not separate list items (GRAMMAR bare_text), and the single value is coerced to a one-element list (5.10). The cartesian-product rule of 5.8 is exercised by a file/image case.'''

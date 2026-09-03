@@ -1,0 +1,4 @@
+schema Loc {
+    id: text(1..40)
+    lang: text @optional
+}

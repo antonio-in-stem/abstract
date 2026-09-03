@@ -1,0 +1,22 @@
+id = '''DTE-22'''
+area = '''docs-tests-examples'''
+title = '''A misspelled `$variable` is silently left as literal text instead of being reported'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/interp-unknown-var/'''
+command = '''cd .../repro/docs-tests-examples/interp-unknown-var && abstract compile data JSON --skip-assets
+icon: ./textures/$nme.png
+nme'''
+expected_kind = '''undecided'''
+expected_note = '''`Unknown interpolation variable '$nme' at T.icon; did you mean '$name'?` (or, if pass-through is intended, a documented rule saying so).'''
+actual_0_2_0 = '''exit 0 with `"icon": "./textures/$nme.png"` — the placeholder ships verbatim.'''
+spec_ref = '''5.11, 7.3 (step 2), 10.4 (E425), A.1 (A18)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON --skip-assets -> expected-error.txt
+An unknown interpolation variable is E425 and never survives into output (5.11, A.1 A18).
+The variable table is built in 7.3 step 2 from the instance root scalar fields (id and icon
+here), so "$nme" resolves to nothing. Interpolation runs before type checks, so E425 is the
+first diagnostic; the logic block never runs.
+'''

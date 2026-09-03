@@ -1,0 +1,23 @@
+id = '''yaml-key'''
+area = '''schema-types'''
+title = '''YML output is not valid YAML when a schema field name starts with a YAML indicator character — the compiler emits it with exit 0'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/yaml-key/'''
+command = '''abstract compile repro/schema-types/yaml-key/data YML
+Then: python -c "import yaml; yaml.safe_load(open('.../yaml-key/out.yml'))"'''
+expected_kind = '''error'''
+expected_note = '''Either reject such field names at parse time, or quote keys so the YAML stays loadable.'''
+actual_0_2_0 = '''exit 0, YML output:
+data:
+  - template: "Thing"
+    id: "a"
+    [a]: "zz"
+    *b: "yy"
+    &c: "xx"
+PyYAML: yaml.composer.ComposerError: found undefined alias 'b'  (line 5, column 5)'''
+spec_ref = '''3.3, 4.3, 4.13, 8.5, 10.3'''
+status = '''ready'''
+command_1_0 = '''compile data YML   (identical outcome for compile data JSON and for lint data)'''
+expected_1_0 = '''A field name is an identifier built from A-Z a-z 0-9 underscore and hyphen (SPEC 3.3), so none of the three declarations in templates/Thing.abt is a field name: E316 (SPEC 4.13). Lines 3, 4 and 5 are each invalid; how many an implementation reports after the first depends on parse recovery, which the spec does not fix. The defect is closed twice over, because SPEC 8.5 also quotes every mapping key unconditionally, so no field name could ever start a YAML indicator.'''

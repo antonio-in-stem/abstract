@@ -1,0 +1,5 @@
+schema U {
+    id: text(1..40)
+    name: text @optional
+    kind: enum(alpha, beta) @optional
+}

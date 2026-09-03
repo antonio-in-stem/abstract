@@ -1,0 +1,93 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 3
+    }
+  },
+  "data": [
+    {
+      "template": "Item",
+      "id": "beacon",
+      "name": "Beacon",
+      "icon": "textures/item.png",
+      "glow": true
+    },
+    {
+      "template": "Item",
+      "id": "ember",
+      "name": "Ember",
+      "icon": "textures/item.png",
+      "glow": false
+    },
+    {
+      "template": "Item",
+      "id": "torch",
+      "name": "Torch",
+      "icon": "textures/item.png",
+      "glow": false
+    }
+  ],
+  "overlays": [
+    {
+      "versions": {
+        "min": 1,
+        "max": 1
+      },
+      "data": [
+        {
+          "template": "Item",
+          "id": "ember",
+          "name": "Ember",
+          "icon": "textures/item.png",
+          "legacy_tint": 40,
+          "tier": 3
+        }
+      ],
+      "removed": []
+    },
+    {
+      "versions": {
+        "min": 1,
+        "max": 2
+      },
+      "data": [
+        {
+          "template": "Item",
+          "id": "lantern",
+          "name": "Lantern",
+          "icon": "textures/item.png",
+          "legacy_tint": 10
+        },
+        {
+          "template": "Item",
+          "id": "torch",
+          "name": "Torch",
+          "icon": "textures/item.png",
+          "legacy_tint": 200
+        }
+      ],
+      "removed": [
+        "beacon"
+      ]
+    },
+    {
+      "versions": {
+        "min": 2,
+        "max": 2
+      },
+      "data": [
+        {
+          "template": "Item",
+          "id": "ember",
+          "name": "Ember",
+          "icon": "textures/item.png",
+          "legacy_tint": 40
+        }
+      ],
+      "removed": []
+    }
+  ]
+}

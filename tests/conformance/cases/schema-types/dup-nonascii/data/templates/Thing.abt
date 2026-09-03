@@ -1,0 +1,5 @@
+schema Thing {
+    id: text(1..40)
+    CAFÉ: text(1..40)
+    café: text(1..40)
+}

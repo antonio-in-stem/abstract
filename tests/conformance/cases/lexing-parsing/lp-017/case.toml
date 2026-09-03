@@ -1,0 +1,25 @@
+id = '''LP-017'''
+area = '''lexing-parsing'''
+title = '''A protocol-relative URL or any value containing ` //` is silently truncated as a comment'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-20-protocol-relative-comment/'''
+command = '''`cd repro/lexing-parsing/bug-20-protocol-relative-comment && abstract compile . JSON`'''
+expected_kind = '''undecided'''
+expected_note = '''Some way to write a value containing `//` without quoting it, or at minimum a warning/error when comment stripping empties a value. `icon: //cdn.example.com/logo.png` should not become the empty string.'''
+actual_0_2_0 = '''source:
+```
+Thing :: @id.x
+    note: Mirror at //cdn.example.com/logo.png
+    icon: //cdn.example.com/logo.png
+```
+output:
+```
+"note": "Mirror at",
+"icon": ""
+```
+Exit 0.'''
+spec_ref = '''3.2, 5.4, 10.2 (E210)'''
+status = '''ready'''
+spec_note = '''3.2: "//" preceded by a space starts a comment, so the value of "icon" is emptied by comment stripping, which is E210 and never an empty assignment. The "note" statement on the previous line is legal and compiles to the string "Mirror at"; a value that must keep " //" is quoted (3.2). Only the E210 is reported, because P1 fails.'''

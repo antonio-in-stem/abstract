@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Schemas - Abstract</title>
+    <meta name="description" content="How to declare Abstract schemas: fields, modifiers, defaults, groups, keyed lists, numbered keys and reserved names.">
     <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -11,7 +12,7 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="topbar">
-    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
     <nav class="nav" aria-label="Primary navigation">
         <a href="../learn/index.html">Learn</a>
         <a href="index.html" aria-current="page">Docs</a>
@@ -24,8 +25,8 @@
 <main id="main">
     <section class="doc-hero">
         <p class="eyebrow">Schema authoring</p>
-        <h1>Put the rules where authors can see them.</h1>
-        <p class="lede">Schemas are the contract. They should be strict enough to catch mistakes and plain enough that a teammate can read them without a compiler course.</p>
+        <h1>Describe the shape once.</h1>
+        <p class="lede">A schema declares what valid data looks like &mdash; and, because the declared order of fields is the output key order, what it looks like on the way out.</p>
     </section>
     <div class="doc-shell">
         <aside class="sidebar">
@@ -36,91 +37,111 @@
                 <a href="schemas.html" aria-current="page">Schemas</a>
                 <a href="instances.html">Instances</a>
                 <a href="logic.html">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
                 <a href="cli.html">CLI</a>
                 <a href="raw.html">Compiled data</a>
                 <a href="java.html">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
-            <h2>Schema declaration</h2>
+<h2>Shape of a declaration</h2>
+<pre><code>schema &lt;Name&gt; {
+    &lt;name&gt;[ "[" [cardinality] "]" ] : &lt;type&gt; [modifiers] [= default]
+
+    &lt;name&gt;[ "[" [cardinality] "]" ] [modifiers] {
+        &lt;fields&gt;
+    }
+}</code></pre>
+<p>A schema name starts with an ASCII letter and continues with letters, digits and <code>_</code>. Names are compared <strong>exactly</strong> and must be unique across the whole project (E301). Field names are identifiers and are normalised, so two fields in one block that differ only in case or in <code>-</code> versus <code>_</code> are E302.</p>
+<div class="callout"><p>The declared order of fields is the key order of the compiled output. A schema is a layout as well as a contract.</p></div>
+<h2>Modifiers</h2>
+<table class="table"><thead><tr><th>Modifier</th><th>Meaning</th></tr></thead><tbody><tr><td><code>[]</code></td><td>The field is a list. Optionally carries a cardinality: <code>[1..]</code>, <code>[2..4]</code>.</td></tr><tr><td><code>@optional</code></td><td>The field may be absent, and is then omitted from the output.</td></tr><tr><td><code>@tag</code></td><td>Inside a group: the field that receives <code>#value</code> shorthand.</td></tr><tr><td><code>@since(n)</code> / <code>@removed(n)</code></td><td>The field exists only in some versions.</td></tr><tr><td><code>= value</code></td><td>A default, filled before logic runs.</td></tr></tbody></table>
+<p>Each modifier may appear at most once per field (E303), and every modifier comes after the type and <strong>before</strong> the <code>=</code>:</p>
+<pre><code>glow: bool @since(2) = false      // correct
+glow: bool = false @since(2)      // E303</code></pre>
+<h2>Required, optional, defaulted</h2>
+<table class="table"><thead><tr><th>Declaration</th><th>When absent</th></tr></thead><tbody><tr><td><code>title: text(1..60)</code></td><td>E411 &mdash; required</td></tr><tr><td><code>tier: enum(free, plus) = free</code></td><td>filled with <code>free</code> before logic runs</td></tr><tr><td><code>slot_count: int(1..9) @optional</code></td><td>omitted from the output</td></tr><tr><td><code>notes[]: text @optional</code></td><td>omitted &mdash; <strong>not</strong> <code>[]</code></td></tr></tbody></table>
+<p>A field must not carry both <code>@optional</code> and a default (E320): the default would make it always present. A default is validated against its own type at schema-validation time (E313), not lazily when some instance happens to omit the field, and it is interpolated at the moment it is filled in, against that instance&rsquo;s variables.</p>
+<h2>Lists and cardinality</h2>
+<table class="table"><thead><tr><th>Head</th><th>Meaning</th></tr></thead><tbody><tr><td><code>tags[]</code></td><td>any number of elements, including none</td></tr><tr><td><code>tags[2..]</code></td><td>at least 2</td></tr><tr><td><code>tags[2..4]</code></td><td>between 2 and 4</td></tr><tr><td><code>tags[3]</code>, <code>tags[..4]</code>, <code>tags[4..2]</code></td><td>E323</td></tr><tr><td><code>tags[][]</code></td><td>E315 &mdash; nested lists do not exist</td></tr></tbody></table>
+<p>A value whose element count falls outside the cardinality is E445. Cardinality constrains a value, never presence: an absent optional list is omitted and is not E445. A required list with no cardinality is satisfied by an explicit <code>tags: []</code>.</p>
+<h2>Groups and list groups</h2>
+<p>This is <code>docs/examples/groups-and-lists</code>.</p>
 <pre><code>schema Product {
-    id: text(1..40)
-    name: text(1..80)
+    title: text(1..60)
+    owner {
+        team: text(1..50)
+        contact: text(1..80) @optional
+    }
+    tags[1..3]: enum(core, public, internal)
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+    notes[]: text @optional
 }</code></pre>
-            <p>The schema name is emitted as <code>template</code> in RAW. Field order in the schema also controls field order in the output, which keeps diffs and reviews stable.</p>
-
-            <h2>Supported types</h2>
-            <table class="table">
-                <thead><tr><th>Type</th><th>Use it for</th><th>Example</th></tr></thead>
-                <tbody>
-                    <tr><td><code>text</code></td><td>Strings with character length limits.</td><td><code>name: text(1..80)</code></td></tr>
-                    <tr><td><code>int</code></td><td>Whole numbers with allowed ranges or exact values.</td><td><code>replicas: int(1, 3..8)</code></td></tr>
-                    <tr><td><code>float</code></td><td>Decimal numbers, emitted as real JSON numbers.</td><td><code>price: float(0..9999)</code></td></tr>
-                    <tr><td><code>bool</code></td><td>True/false, emitted as real JSON booleans.</td><td><code>tradable: bool = true</code></td></tr>
-                    <tr><td><code>enum</code></td><td>A closed vocabulary that normalizes to lowercase snake case.</td><td><code>status: enum(draft, active)</code></td></tr>
-                    <tr><td><code>file</code></td><td>Paths with approved extensions and existence checks.</td><td><code>doc: file(pdf, md)</code></td></tr>
-                    <tr><td><code>image</code></td><td>Images validated by their real header bytes: format, dimensions, extension-content mismatches.</td><td><code>icon: image(png 128x128)</code></td></tr>
-                    <tr><td><code>$(Name)</code></td><td>A nested object validated by another schema.</td><td><code>owner: $(Owner)</code></td></tr>
-                </tbody>
-            </table>
-            <p>The <a href="types.html">type reference</a> covers each in depth, including the image probing rules. Constraint parentheses are optional: <code>weight: float</code> accepts any decimal.</p>
-
-            <h2>Ranges</h2>
-            <p><code>text</code> ranges count characters. <code>int</code> and <code>float</code> ranges validate the numeric value. A range can be exact or inclusive, and several alternatives can be listed.</p>
-<pre><code>short_code: text(2, 4..8)
-version_support: int(1..3)
-opacity: float(0..1)</code></pre>
-
-            <h2>Defaults and optional fields</h2>
-            <p>Defaults are inserted when a field is missing. Optional fields may be omitted. Optional list fields compile to an empty array when missing, which makes downstream consumers simpler.</p>
-<pre><code>status: enum(draft, active, retired) = draft
-notes: text(1..160) @optional
-tags[]: enum(core, public, internal) @optional</code></pre>
-
-            <h2>Lists</h2>
-            <p>Add <code>[]</code> to the field name. Scalar lists accept arrays of values. Group lists accept arrays of objects or tagged shorthand objects.</p>
-<pre><code>tags[]: enum(core, public, internal)
-
-capabilities[] {
-    id: enum(search, sync, export) @tag
-    availability: enum(alpha, beta, stable) = stable
+<pre><code>Product :: @id.atlas
+    title: Atlas Search
+    owner {
+        team: Knowledge Systems
+    }
+    tags: core, public
+    capabilities: [#search, #export(availability: alpha)]</code></pre>
+<pre><code>{
+  "template": "Product",
+  "id": "atlas",
+  "title": "Atlas Search",
+  "owner": { "team": "Knowledge Systems" },
+  "tags": ["core", "public"],
+  "capabilities": [
+    { "id": "search", "availability": "stable" },
+    { "id": "export", "availability": "alpha" }
+  ]
 }</code></pre>
-
-            <h2>Groups</h2>
-            <p>A group is an inline object. Groups are best when the nested fields only make sense inside the parent schema.</p>
-<pre><code>owner {
-    team: text(1..50)
-    contact: text(1..80)
-}</code></pre>
-
-            <h2>References</h2>
-            <p>Use <code>$(OtherSchema)</code> when a nested shape deserves its own name and may be reused in several schemas.</p>
-<pre><code>schema Address {
-    line: text(1..120)
-    country: text(2..80)
+<p>Both <code>owner.contact</code> and <code>notes</code> are optional and absent, so neither key appears. A group is <em>present</em> when something wrote a value at or under it; an absent optional group is omitted entirely and its children&rsquo;s defaults are not filled, while an absent required group is E411.</p>
+<h2>Keyed lists: <code>@tag</code></h2>
+<p><code>@tag</code> marks the one field of a group that receives <code>#value</code> shorthand in instances.</p>
+<table class="table"><thead><tr><th>Rule</th><th>Error when broken</th></tr></thead><tbody><tr><td>must be on a field inside a group or list group, never at root</td><td>E311</td></tr><tr><td>at most one per group</td><td>E310</td></tr><tr><td>non-list <code>text</code>, <code>int</code>, <code>bool</code> or <code>enum</code> only</td><td>E322</td></tr><tr><td>may carry a default <em>or</em> <code>@optional</code>, not both</td><td>E320</td></tr></tbody></table>
+<p>The tagged field need not be called <code>id</code>. With <code>key: enum(en_us, es_es) @tag</code>, the shorthand <code>#es_es</code> fills <code>key</code> and nothing named <code>id</code> ever appears. A list whose element group declares <code>@tag</code> is a <strong>keyed list</strong>: two elements sharing a key are E444, and clone merging folds such lists by key instead of replacing them.</p>
+<h2>Numbered keys</h2>
+<p>A field name may be all digits. This is <code>docs/examples/numbered-keys</code>.</p>
+<pre><code>schema Slot {
+    mode: enum(fixed, free) = free
+    capacity: int(0..64) @optional
 }
 
-schema Office {
-    id: text(1..40)
-    address: $(Address)
+schema Pack {
+    title: text(1..40)
+    slots {
+        1: $(Slot)
+        2: $(Slot) @optional
+        3: $(Slot) @optional
+    }
 }</code></pre>
-
-            <h2>Tags</h2>
-            <p>A field marked <code>@tag</code> can be filled with <code>#value</code> shorthand inside instance lists. The tag field is usually <code>id</code>, but it does not have to be.</p>
-<pre><code>steps[] {
-    mode: enum(generate, custom, inherit) @tag
-    weight: int(1..100) = 1
+<pre><code>Pack :: @id.winter
+    title: Winter
+    slots.1.mode: fixed
+    slots.1.capacity: 16
+    slots.2.capacity: 8</code></pre>
+<pre><code>"slots": {
+  "1": { "mode": "fixed", "capacity": 16 },
+  "2": { "mode": "free", "capacity": 8 }
 }</code></pre>
-
-            <h2>Strictness guarantees</h2>
-            <p>Schemas are contracts, and the compiler enforces them in both directions: instances may not assign fields the schema does not declare (typos fail with a "did you mean" suggestion), a schema may not declare the same field twice, and two schemas may not share a name anywhere in the project.</p>
-
-            <div class="callout"><p>Good schemas are not maximal schemas. Start with the rules that catch real mistakes. Add more only when the data starts asking for them.</p></div>
+<p>A numbered key is an ordinary field name, not an array index: there is no index syntax in an assignment or clone path. In JSON and YAML it is a string key, so no consumer mistakes it for a number. Slot 2 is present because something was written under it, so its <code>mode</code> default was filled; slot 3 is absent and optional, so it is omitted.</p>
+<h2>The two reserved names</h2>
+<table class="table"><thead><tr><th>Declaration</th><th>Verdict</th></tr></thead><tbody><tr><td><code>template: text</code></td><td>E314 &mdash; always</td></tr><tr><td><code>id: text</code></td><td>valid: unconstrained</td></tr><tr><td><code>id: text(3..24)</code></td><td>valid: constrains the instance id</td></tr><tr><td><code>id: int</code>, <code>id[]: text</code>, <code>id: text @optional</code>, <code>id: text = x</code></td><td>E314</td></tr></tbody></table>
+<p>Every schema has an implicit <code>id: text(1..64)</code>. Declaring it explicitly never changes what the id <em>is</em> and never changes the output &mdash; the id is emitted once, as the second key &mdash; it only constrains and documents it. Inside a group, both names are ordinary field names, because a nested object carries no envelope.</p>
+<h2>Recursion</h2>
+<p>A schema may refer to itself through <code>$(Schema)</code>, provided every cycle passes through an <code>@optional</code> field or a list field. A cycle in which every edge is a required, non-list <code>$(Schema)</code> field is E321: no finite object satisfies it. Legal recursive structures are bounded at compile time by the document depth limit of 64 (E209).</p>
+<h2>Schema errors at a glance</h2>
+<table class="table"><thead><tr><th>Error</th><th>Condition</th></tr></thead><tbody><tr><td>E301</td><td>duplicate schema name in the project</td></tr><tr><td>E302</td><td>duplicate field name in one block, annotations notwithstanding</td></tr><tr><td>E303</td><td>unknown or repeated modifier</td></tr><tr><td>E304</td><td>unknown type keyword, or whitespace before <code>(</code></td></tr><tr><td>E305</td><td>malformed, open-ended, non-finite or reversed range</td></tr><tr><td>E306</td><td>empty enum, or duplicate member</td></tr><tr><td>E307 / E308</td><td>unsupported image format / malformed <code>WIDTHxHEIGHT</code></td></tr><tr><td>E309</td><td>unknown schema in <code>$(...)</code> or <code>ref(...)</code></td></tr><tr><td>E310 / E311 / E322</td><td><code>@tag</code> placement and type rules</td></tr><tr><td>E312 / E313 / E320</td><td>default on a group / invalid default / <code>@optional</code> with a default</td></tr><tr><td>E314</td><td><code>template</code> declared, or a bad <code>id</code> declaration</td></tr><tr><td>E315 / E323</td><td><code>name[][]</code> / malformed cardinality</td></tr><tr><td>E317 / E318 / E319</td><td>parameterised type with no arguments / unsatisfiable constraint / duplicate extension</td></tr><tr><td>E321</td><td>recursive schema with no terminating case</td></tr></tbody></table>
         </article>
     </div>
 </main>
-<footer class="footer"><p>After the schema feels right, move to <a href="instances.html">instance authoring</a>.</p></footer>
+
+<footer class="footer"><p>The normative text is <code>docs/SPEC.md</code>; these pages explain it.</p></footer>
 <script src="../assets/site.js"></script>
 </body>
 </html>

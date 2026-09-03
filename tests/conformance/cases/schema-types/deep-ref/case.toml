@@ -1,0 +1,17 @@
+id = '''deep-ref'''
+area = '''schema-types'''
+title = '''Deeply nested $(Ref) instance data blows the stack in the validator: process abort, no diagnostic'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/deep-ref/'''
+command = '''abstract compile repro/schema-types/deep-ref/data JSON'''
+expected_kind = '''error'''
+expected_note = '''A CompileError such as "value nesting too deep" naming the instance file, exit 1.'''
+actual_0_2_0 = '''exit=127
+
+thread 'main' (44768) has overflowed its stack'''
+spec_ref = '''3.7, 4.11, 7.1, 10.2'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''An assignment path may hold at most 64 segments (SPEC 3.7); the ~1000-segment path in items/a.ab is E209 in P1. Because a phase runs only if every earlier phase succeeded (SPEC 7.1), P3 is not reached, so the E314 that templates/Node.abt would raise (id declared with a modifier, SPEC 4.11) does not appear in this run. The recursion in Node is legal: the cycle passes through an @optional field (SPEC 7.2, R3-9).'''

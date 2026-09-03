@@ -1,0 +1,4 @@
+schema Node {
+    leaf: text @optional
+    child: $(Node) @optional
+}

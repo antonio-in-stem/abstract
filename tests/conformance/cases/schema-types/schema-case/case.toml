@@ -1,0 +1,17 @@
+id = '''schema-case'''
+area = '''schema-types'''
+title = '''Schema names and $(Ref) targets are case-sensitive while every other identifier is case-insensitive; `Thing` and `thing` coexist as different schemas'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/schema-types/schema-case/ (also references: repro/schema-types/empty-ref/)'''
+command = '''...\abstract.exe compile repro/schema-types/schema-case/data JSON
+Related: repro/schema-types/empty-ref/ — `child: $() @optional` compiles until an instance touches it.'''
+expected_kind = '''document'''
+expected_note = '''Either case-insensitive schema names (consistent with everything else) or a duplicate-schema error; and an unknown $(Ref) reported at the .abt line with a suggestion.'''
+actual_0_2_0 = '''schema-case, exit 0: two records, one with "template": "Thing" and one with "template": "thing".
+empty-ref: abstract: items/a.ab: unknown schema reference ''   (no file line, no suggestion)'''
+spec_ref = '''2.6, 2.7, 3.4, 4.4.9, 8.3'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variant: compile empty-ref/data JSON)'''
+expected_1_0 = '''Schema names are compared exactly and every other identifier is normalised; SPEC 2.6 states this as a deliberate rule, so Thing and thing are two schemas and both compile. Output order is by (template, id) comparing Unicode scalar values, and capital T sorts before lower-case t (SPEC 2.7). Variant empty-ref: nested_schema_type requires a schema_name between the parentheses, and the empty text is a malformed schema name, which is E208 (SPEC 3.4) reported at the type in the template file, not lazily at first use. See SPEC-ISSUES-schema-types.md item 1: the spec enumerates enum(), file(), image() and ref() as E317 and does not name the empty  case explicitly.'''

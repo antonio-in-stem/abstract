@@ -1,0 +1,20 @@
+id = '''LP-016'''
+area = '''lexing-parsing'''
+title = '''A numeric `@id` makes the instance register under its file stem, producing a bogus "Duplicate instance id" error that names an id nobody wrote'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-21-numeric-id-collision/'''
+command = '''`cd repro/lexing-parsing/bug-21-numeric-id-collision && abstract compile . JSON`'''
+expected_kind = '''document'''
+expected_note = '''Two instances with ids 11 and 22 compile successfully (or, if numeric ids are unsupported, an error that says so and names `11`/`22`).'''
+actual_0_2_0 = '''source (single file x.ab):
+```
+Thing :: @id.11, @name.First
+Thing :: @id.22, @name.Second
+```
+schema: `id: int(1..999)`
+output: `abstract: data/things/x.ab:2: Duplicate instance id 'x'. It is already declared in 'data/things/x.ab' (line 1); every instance needs a unique id.` — neither instance declares an id of `x`. Exit 1.'''
+spec_ref = '''4.11, 7.2 (P3), 10.3 (E314)'''
+status = '''ready'''
+spec_note = '''0.2.0-only source: 1.0 rejects it for a reason unrelated to the original finding. A schema may declare "id" only as "id: text" or "id: text(a..b)" with no modifier and no default; anything else is E314 (4.11), so "id: int(1..999)" fails in P3 before any instance is compiled. The numeric ids "11" and "22" are themselves legal (3.3, 5.3) and never reach the file-stem fallback.'''

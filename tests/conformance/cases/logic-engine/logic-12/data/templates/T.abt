@@ -1,0 +1,11 @@
+schema T {
+    id: text(1..40)
+    caps[] {
+        id: enum(search, sync, banned) @tag
+    }
+}
+
+logic T {
+    // intent: reject any instance that has a 'banned' capability
+    require .caps.id != "banned" else throw "no capability may be 'banned'"
+}

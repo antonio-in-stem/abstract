@@ -1,0 +1,3 @@
+schema Label {
+    caption: text(1..40)
+}

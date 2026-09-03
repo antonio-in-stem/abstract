@@ -1,0 +1,38 @@
+id = '''L06'''
+area = '''language-design'''
+title = '''No schema versioning or migration path: `--allow-unknown` is the only tool and it is project-wide, silent, and injects unvalidated fields into the output — concrete syntax proposal with two alternatives'''
+severity = '''design'''
+verdict = '''partial'''
+kind = '''missing-feature'''
+source_repro = '''repro/language-design/case17/ (also references: repro/language-design/case18b/)'''
+command = '''# case17/data/objects/old.ab has a removed field (retired_field) and a typo (rarty)
+./project/target/release/abstract.exe compile repro/language-design/case17/data JSON
+OUTPUT: abstract: objects/old.ab: Unknown field 'retired_field' at V. Declared fields: id, rarity, name, template, id.
+./project/target/release/abstract.exe compile repro/language-design/case17/data JSON --allow-unknown
+OUTPUT (exit 0):
+{ "data": [ { "template":"V","id":"old","rarity":"epic","name":"still fine",
+"retired_field":"was removed from the schema in v2",
+"rarty":"typo that should be caught" } ] }
+-> the typo is now shipped data.
+# real-world evidence of the change that needs migrating (read-only):
+cd "<private corpus>"
+abstract compile example/data JSON --skip-assets
+OUTPUT: abstract: dragons_den/golden_dragon.ab: Unknown field 'applicable' at Sticker. Declared fields: id, rarity, origin, glue_type, applies_to, tooltip_style, variant_count, flags, item_pool, lang_values, slots, template, id.
+# and the compiler is fail-fast: 3 broken files, 1 error reported
+./project/target/release/abstract.exe compile repro/language-design/case18b/data JSON
+OUTPUT: abstract: objects/e1.ab: Unknown field 'bad1' at V. ...   (e2.ab and e3.ab never mentioned)'''
+expected_kind = '''undecided'''
+expected_note = '''Old .ab files should keep compiling after a schema change, with the compiler applying declared migrations, and typos should still be rejected.'''
+actual_0_2_0 = '''Any schema change breaks every old instance; the only remedy is a global flag that also disables typo detection and emits unvalidated fields; migrating a 41-file corpus is one compile-fix cycle per file because the compiler stops at the first error.'''
+spec_ref = '''4.12, 5.12, 9.3 (--max-errors), 10.4 (E409), A.1, A.3 (A52)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)      -> expected-error.txt   (two diagnostics)
+compile data JSON (cwd = l06/case18b)    -> case18b/expected-error.txt (three diagnostics)
+--allow-unknown is removed and there is no lenient mode (5.12, A.3 A52), so a retired field
+and a typo are both E409 and neither can be shipped as data. The migration answer 1.0 gives is
+@removed(n) with a versions range (4.12): a field kept declared with a window keeps old
+instances compiling while typos stay rejected. case18b is the other half of the complaint:
+--max-errors defaults to 20, so all three broken instances are reported in one run, in
+discovery order, instead of one compile-fix cycle per file.
+'''

@@ -1,0 +1,4 @@
+Product :: @id.probe
+&atlas.owner
+    title: Probe
+    capabilities: []

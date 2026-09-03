@@ -1,0 +1,19 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Thing",
+      "id": "thing_a",
+      "lang": "from_lang",
+      "lang_values": "from_lang_values"
+    }
+  ],
+  "overlays": []
+}

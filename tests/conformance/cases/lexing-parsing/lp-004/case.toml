@@ -1,0 +1,21 @@
+id = '''LP-004'''
+area = '''lexing-parsing'''
+title = '''An unbalanced bracket silently absorbs the entire rest of the file into one string value'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/lexing-parsing/bug-11-unclosed-bracket-eats/'''
+command = '''`cd repro/lexing-parsing/bug-11-unclosed-bracket-eats && abstract compile . JSON` (and `... lint .`)'''
+expected_kind = '''error'''
+expected_note = '''A compile error such as "unterminated '[' opened at line 2" pointing at the opening bracket — the same treatment already given to unterminated string literals (src/lib.rs:1449-1456).'''
+actual_0_2_0 = '''source:
+```
+Thing :: @id.x
+    tags: [a, b
+    name: Widget
+    note: keep
+```
+output: `"tags": [ "[a, b name: Widget note: keep" ]` — the `name` and `note` fields are gone and the list has one garbage element. Exit 0. `abstract lint .` -> `abstract: ok`.'''
+spec_ref = '''3.6, 5.5, 10.2 (E203)'''
+status = '''ready'''
+spec_note = '''While the value-bracket stack is non-empty a line terminator produces no NL (3.6), so the "[" opened on line 2 swallows the remaining physical lines and the file ends with the stack non-empty: E203, reported at the opening bracket. E203 wins on position over any later diagnostic in the same phase (11.1).'''

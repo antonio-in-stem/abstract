@@ -1,0 +1,5 @@
+Thing :: @id.widget
+name: Widget
+data: payload-one
+tier: 7
+note: this line is never parsed

@@ -1,0 +1,5 @@
+schema T {
+    id: text(1..40)
+    a: int(0..100)
+    b: int(0..100)
+}

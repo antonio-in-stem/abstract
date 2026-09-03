@@ -1,0 +1,3 @@
+schema Item {
+    id: text(1..40)
+}

@@ -1,0 +1,45 @@
+id = '''OC-11'''
+area = '''output-canon'''
+title = '''RAW output's indentation is internally inconsistent and contradicts the documented example: the opening brace sits at column 0'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/output-canon/oc4-raw-doc-shape/ (also references: repro/output-canon/oc5-raw-empty/)'''
+command = '''cd repro/output-canon/oc4-raw-doc-shape
+abstract compile . RAW
+cd ../oc5-raw-empty
+abstract compile . RAW'''
+expected_kind = '''undecided'''
+expected_note = '''docs/raw-data.md:45-54:
+data: [
+    {
+        template: "Product",
+        id: "atlas",
+        status: "active",
+        price: 19.5
+    }
+]'''
+actual_0_2_0 = '''data: [
+{
+        template: "Product",
+        id: "atlas",
+        status: "active",
+        price: 19.5,
+        featured: true,
+        tags: ["core", "public"]
+    }
+]
+and with two items (oc5-raw-empty):
+data: [
+{
+        template: "T",
+        id: "a"
+    },
+{
+        template: "T",
+        id: "b"
+    }
+]'''
+spec_ref = '''8.6, 8.7'''
+status = '''ready'''
+note_1_0 = '''RAW is fully specified in 1.0 (SPEC 8.6): four-space indentation, the envelope rendered without its outer braces, every object multi-line with its '{' on the owning key's line and its '}' at the object's own indentation, and an all-scalar array inline. The sibling project oc5-raw-empty/ renders the same envelope with two instance objects in 'data', each multi-line and separated by a ',' at end of line.'''

@@ -1,0 +1,2007 @@
+schema T {
+    id: text(1..40)
+}
+
+logic T {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+if .id == "one" {
+    derive .id = "one"
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}

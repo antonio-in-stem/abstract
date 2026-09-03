@@ -1,0 +1,3 @@
+schema T {
+    name: text(1..40)
+}

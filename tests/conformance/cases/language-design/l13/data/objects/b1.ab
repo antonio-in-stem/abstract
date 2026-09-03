@@ -1,0 +1,4 @@
+Brace :: @id.b1
+    images: ./assets/{hero,thumb}.png
+    label: greet {name}.now
+    slots.{one, two}: shared

@@ -1,0 +1,17 @@
+id = '''ADV2-10'''
+area = '''adversarial-2'''
+title = '''Interpolating a loop variable bound to a group object is E522, not a silent drop'''
+severity = '''minor'''
+kind = '''ruling'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''6.4, 6.9, 6.13, 10.5'''
+expected_note = '''`for $c in .caps` iterates a list of groups, so `$c` is bound to an object. Interpolation inserts text, so `derive .label = cap-$c` has nothing to insert. SPEC 6.9 makes that E522: the name is bound, it simply holds no text.
+
+The three neighbouring readings are all wrong and the ruling excludes each. It is not E425: nothing is misspelled, and the reference must not fall through to a root field that happens to share the name. It is not a silent drop, which is what an implementation does when it records only the scalar bindings. And it is not E412: `derive .label = $c`, the loop variable written as the WHOLE right-hand side, is the fourth derive_expr form of SPEC 6.4 and keeps its own type, so that spelling is a type mismatch against a `text` field. The rule is about interpolation and about nothing else.
+
+A `throw` message takes the same rule, for the same reason. A loop over a list of scalars is unaffected in either position.'''
+spec_note = '''E522 is new in this revision; the identifier was the next free one in the logic family. SPEC 11.3's negative-logic coverage now reads E501-E522.'''
+actual_1_0 = '''exit 1: `data/templates/Card.abt:11:9: error[E522]: Variable '$c' is not a scalar; it is an object.` with `note: interpolation inserts text; read a scalar field of it instead.`'''

@@ -1,0 +1,2 @@
+Probe :: @id.rel_traversal
+probe: "../../outside-project-marker.ini"

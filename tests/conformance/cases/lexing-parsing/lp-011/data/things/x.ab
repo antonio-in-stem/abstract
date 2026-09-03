@@ -1,0 +1,4 @@
+Thing :: @id.hero
+    name: red
+    icon: ./art/${id}.png
+    icon2: ./art/${id}_${name}.png

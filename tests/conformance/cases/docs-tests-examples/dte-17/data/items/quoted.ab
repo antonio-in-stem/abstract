@@ -1,0 +1,5 @@
+T :: @id.quoted
+    n: "42"
+    f: "3.5"
+    b: "true"
+    txt: "ok"

@@ -1,0 +1,9 @@
+schema Product {
+    price: float(0..9999)
+    featured: bool
+    tags[]: enum(core, public, internal)
+    capabilities[] {
+        id: enum(search, sync) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}

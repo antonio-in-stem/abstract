@@ -1,0 +1,23 @@
+id = '''mbc-11'''
+area = '''media-bundle-crypto'''
+title = '''VP8X (extended WebP) parses canvas dimensions with no signature/sanity check at all'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/media-bundle-crypto/case12-vp8x-nosanity/'''
+command = '''image(webp 200x100)'''
+expected_kind = '''undecided'''
+expected_note = '''At least a reserved/flags sanity check (VP8X reserved bits are defined by the spec) before trusting the canvas size.'''
+actual_0_2_0 = '''Arbitrary VP8X bytes accepted as 200x100 with no error.'''
+spec_ref = '''4.4.7, 4.4.7.1'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+4.4.7.1 states the VP8X rule outright: VP8X requires 30 bytes and carries no signature byte, so
+the dimension range check is the only validation it can receive and MUST be applied - every
+decoded dimension is at least 1 and at most 16777216 for VP8X, and a value outside the range is
+E422 with "note: malformed canvas size." assets/x.webp decodes as 24-bit little-endian 199 at
+offset 24 and 99 at offset 27, each plus one, so 200x100, which satisfies image(webp 200x100)
+and is accepted. The case is therefore a positive case under 1.0: the spec does not add a
+reserved-bits check, it fixes the sanity check that exists.
+'''

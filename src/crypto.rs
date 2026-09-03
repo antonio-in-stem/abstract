@@ -178,7 +178,8 @@ fn poly1305(key: &[u8; 32], message: &[u8]) -> [u8; 16] {
 
     let mut chunks = message.chunks_exact(16);
     let mut process = |block: &[u8], hibit: u32| {
-        h0 = h0.wrapping_add(u32::from_le_bytes([block[0], block[1], block[2], block[3]]) & 0x3ffffff);
+        h0 = h0
+            .wrapping_add(u32::from_le_bytes([block[0], block[1], block[2], block[3]]) & 0x3ffffff);
         h1 = h1.wrapping_add(
             (u32::from_le_bytes([block[3], block[4], block[5], block[6]]) >> 2) & 0x3ffffff,
         );
@@ -218,7 +219,7 @@ fn poly1305(key: &[u8; 32], message: &[u8]) -> [u8; 16] {
             + (h3 as u64) * (r1 as u64)
             + (h4 as u64) * (r0 as u64);
 
-        let mut carry = (d0 >> 26) as u64;
+        let mut carry = d0 >> 26;
         h0 = (d0 & 0x3ffffff) as u32;
         d1 += carry;
         carry = d1 >> 26;
@@ -316,11 +317,7 @@ fn poly1305(key: &[u8; 32], message: &[u8]) -> [u8; 16] {
     tag
 }
 
-fn poly1305_aead_mac(
-    otk: &[u8; 32],
-    aad: &[u8],
-    ciphertext: &[u8],
-) -> [u8; 16] {
+fn poly1305_aead_mac(otk: &[u8; 32], aad: &[u8], ciphertext: &[u8]) -> [u8; 16] {
     let mut mac_data = Vec::with_capacity(aad.len() + ciphertext.len() + 32);
     mac_data.extend_from_slice(aad);
     while mac_data.len() % 16 != 0 {
@@ -409,11 +406,9 @@ mod tests {
     #[test]
     fn chacha20_block_matches_rfc_8439_vector() {
         // RFC 8439 section 2.3.2.
-        let key: [u8; 32] = hex(
-            "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
-        )
-        .try_into()
-        .unwrap();
+        let key: [u8; 32] = hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+            .try_into()
+            .unwrap();
         let nonce: [u8; 12] = hex("000000090000004a00000000").try_into().unwrap();
         let block = chacha20_block(&key, 1, &nonce);
         assert_eq!(
@@ -426,11 +421,9 @@ mod tests {
     #[test]
     fn poly1305_matches_rfc_8439_vector() {
         // RFC 8439 section 2.5.2.
-        let key: [u8; 32] = hex(
-            "85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b",
-        )
-        .try_into()
-        .unwrap();
+        let key: [u8; 32] = hex("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b")
+            .try_into()
+            .unwrap();
         let tag = poly1305(&key, b"Cryptographic Forum Research Group");
         assert_eq!(to_hex(&tag), "a8061dc1305136c6c22b8baf0c0127a9");
     }
@@ -438,11 +431,9 @@ mod tests {
     #[test]
     fn aead_matches_rfc_8439_vector() {
         // RFC 8439 section 2.8.2.
-        let key: [u8; 32] = hex(
-            "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
-        )
-        .try_into()
-        .unwrap();
+        let key: [u8; 32] = hex("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
+            .try_into()
+            .unwrap();
         let nonce: [u8; 12] = hex("070000004041424344454647").try_into().unwrap();
         let aad = hex("50515253c0c1c2c3c4c5c6c7");
         let plaintext = b"Ladies and Gentlemen of the class of '99: If I could offer you \

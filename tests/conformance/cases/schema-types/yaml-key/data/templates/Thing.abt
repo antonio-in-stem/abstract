@@ -1,0 +1,6 @@
+schema Thing {
+    id: text(1..40)
+    [a]: text(1..9) = zz
+    *b: text(1..9) = yy
+    &c: text(1..9) = xx
+}

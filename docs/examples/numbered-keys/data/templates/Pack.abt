@@ -1,0 +1,13 @@
+schema Slot {
+    mode: enum(fixed, free) = free
+    capacity: int(0..64) @optional
+}
+
+schema Pack {
+    title: text(1..40)
+    slots {
+        1: $(Slot)
+        2: $(Slot) @optional
+        3: $(Slot) @optional
+    }
+}

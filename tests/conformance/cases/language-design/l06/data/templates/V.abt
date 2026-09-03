@@ -1,0 +1,5 @@
+schema V {
+    id: text(1..40)
+    rarity: enum(rare, epic)
+    name: text @optional
+}

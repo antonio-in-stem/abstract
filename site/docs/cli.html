@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CLI - Abstract</title>
+    <meta name="description" content="Every Abstract command and flag, the strict argument parser, exit codes and the diagnostic format.">
     <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -11,7 +12,7 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="topbar">
-    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
     <nav class="nav" aria-label="Primary navigation">
         <a href="../learn/index.html">Learn</a>
         <a href="index.html" aria-current="page">Docs</a>
@@ -24,8 +25,8 @@
 <main id="main">
     <section class="doc-hero">
         <p class="eyebrow">Command line</p>
-        <h1>The compiler is small on purpose.</h1>
-        <p class="lede">Abstract ships as a single CLI. It reads projects, validates data, prints JSON or YAML, writes files only when asked, and lists known templates.</p>
+        <h1>A parser that refuses to guess.</h1>
+        <p class="lede">Four commands, three flags, four exit codes, and a rule that nothing is ever silently ignored &mdash; not a stray positional, not a mistyped format keyword, not a flag it does not know.</p>
     </section>
     <div class="doc-shell">
         <aside class="sidebar">
@@ -36,84 +37,69 @@
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
                 <a href="logic.html">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
                 <a href="cli.html" aria-current="page">CLI</a>
                 <a href="raw.html">Compiled data</a>
                 <a href="java.html">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
-            <h2>Install</h2>
-            <p>Download the Windows executable from this site and install it (adds it to your PATH):</p>
-<pre><code>powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Prebuilt abstract-windows-x64.exe</code></pre>
-            <p>Or build from source on any platform with <a href="https://rustup.rs">Rust</a> installed:</p>
-<pre><code># Windows
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
-
-# Linux / macOS
-sh scripts/install.sh
-
-abstract --version</code></pre>
-
-            <h2><code>abstract init &lt;directory&gt;</code></h2>
-            <p>Scaffolds a working project: <code>pack.ab</code>, schemas under <code>data/templates/</code>, a sample instance, and an <code>assets/</code> folder. The scaffold compiles immediately and demonstrates floats, bools, images, and <code>derive?</code>.</p>
-<pre><code>abstract init my-pack
-abstract compile my-pack JSON</code></pre>
-
-            <h2><code>abstract compile &lt;path&gt; [JSON|YML|RAW] [true] [--out &lt;file&gt;]</code></h2>
-            <p>Compiles a file or directory. Directories are read recursively (<code>.abt</code> and <code>.ab</code>), sources sort by path, every instance is validated, and JSON prints by default. <code>RAW</code> emits the human-oriented <code>data: [...]</code> format.</p>
-<pre><code>abstract compile example JSON
-abstract compile example YML true          # also writes example/abstract.yml
-abstract compile example RAW --out out.abraw</code></pre>
-
-            <h2><code>abstract &lt;object.ab&gt; [Template.abt ...] JSON|YML|RAW [true]</code></h2>
-            <p>Direct form: compiles explicit source files. Sibling files load as context (clones resolve), but only the requested instances are emitted and validated.</p>
-<pre><code>abstract object.ab Template.abt JSON
-abstract object.ab Template.abt YML true</code></pre>
-
-            <h2><code>abstract lint &lt;path&gt;</code></h2>
-            <p>Validates the same project as <code>compile</code> but discards output. This is the command for pre-commit hooks and CI jobs. Success prints <code>abstract: ok</code>.</p>
-
-            <h2><code>abstract templates &lt;path&gt;</code></h2>
-            <p>Prints every schema name discovered in the project: useful for editor tooling and scripts.</p>
-
-            <h2><code>abstract bundle &lt;path&gt; --key &lt;k&gt; [--out &lt;file.abx&gt;] [--plain]</code></h2>
-            <p>Compiles a project and seals the JSON result into a tamper-evident <code>.abx</code> container (ChaCha20-Poly1305). The key is a passphrase (hashed with SHA-256) or exact bytes as <code>hex:&lt;64 digits&gt;</code>. <code>--plain</code> writes an unencrypted bundle for debugging. See <a href="java.html">Java &amp; bundles</a>.</p>
-<pre><code>abstract bundle my-pack --key "release passphrase" --out my-pack.abx</code></pre>
-
-            <h2><code>abstract unbundle &lt;file.abx&gt; [--key &lt;k&gt;]</code></h2>
-            <p>Opens a bundle and prints the JSON payload. A wrong key or a modified byte fails with an authentication error.</p>
-
-            <h2>Options</h2>
-            <table class="table">
-                <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
-                <tbody>
-                    <tr><td><code>--skip-assets</code></td><td>Skips on-disk checks (<code>file(...)</code> existence, <code>image(...)</code> probing, file-path <code>exists</code>). For authoring on machines without the binary assets.</td></tr>
-                    <tr><td><code>--allow-unknown</code></td><td>Accepts instance fields the schema does not declare (lenient migration mode).</td></tr>
-                    <tr><td><code>--out &lt;file&gt;</code></td><td>Writes output to an explicit path instead of the default sibling file.</td></tr>
-                    <tr><td><code>--key &lt;material&gt;</code></td><td>Bundle key: passphrase or <code>hex:&lt;64 hex digits&gt;</code>.</td></tr>
-                    <tr><td><code>--plain</code></td><td>Unencrypted bundle (debugging only).</td></tr>
-                </tbody>
-            </table>
-
-            <h2><code>abstract --help</code> / <code>--version</code></h2>
-<pre><code>abstract 0.2.0
-
-USAGE:
-    abstract compile &lt;path&gt; [JSON|YML|RAW] [true] [--out &lt;file&gt;]
-    abstract &lt;object.ab&gt; [Template.abt ...] JSON|YML|RAW [true] [--out &lt;file&gt;]
-    abstract lint &lt;path&gt;
-    abstract templates &lt;path&gt;
-    abstract init &lt;directory&gt;
-    abstract bundle &lt;path&gt; --key &lt;passphrase|hex:...&gt; [--out &lt;file.abx&gt;] [--plain]
-    abstract unbundle &lt;file.abx&gt; [--key &lt;passphrase|hex:...&gt;]</code></pre>
-
-            <h2>Exit behavior</h2>
-            <p>On success, the CLI exits with code <code>0</code>. On failure, it prints an error beginning with <code>abstract:</code> and exits with code <code>1</code>. Parse errors include the source path and line (<code>stickers/bad.ab:3: ...</code>); validation errors include the source path and the field context.</p>
+<h2>Invocation</h2>
+<pre><code>abstract &lt;command&gt; [positional ...] [flags ...]</code></pre>
+<p>The argument parser is strict. Every token must be recognised: an unknown command is E801, an unknown flag E802, a flag missing its value E803, an extra or unrecognised positional E804. Nothing is ever silently ignored. Flags may appear anywhere among the positionals. A command word is always required &mdash; there is no direct form.</p>
+<h2>Commands</h2>
+<table class="table"><thead><tr><th>Command</th><th>Synopsis</th></tr></thead><tbody><tr><td><code>compile</code></td><td><code>abstract compile &lt;path&gt;... [FORMAT] [--out &lt;file&gt;] [--skip-assets] [--max-errors &lt;n&gt;]</code></td></tr><tr><td><code>lint</code></td><td><code>abstract lint &lt;path&gt;... [--skip-assets] [--max-errors &lt;n&gt;]</code></td></tr><tr><td><code>templates</code></td><td><code>abstract templates &lt;path&gt;</code></td></tr><tr><td><code>init</code></td><td><code>abstract init &lt;directory&gt;</code></td></tr><tr><td>help</td><td><code>--help</code>, <code>-h</code>, <code>help</code> &mdash; usage to stdout, exit 0</td></tr><tr><td>version</td><td><code>--version</code>, <code>-V</code>, <code>version</code> &mdash; <code>abstract &lt;semver&gt;</code>, exit 0</td></tr></tbody></table>
+<pre><code>abstract init m-project
+abstract compile m-project JSON
+abstract compile m-project YML --out m-project.yml
+abstract lint m-project
+abstract templates m-project</code></pre>
+<p><strong>compile</strong> resolves the project, compiles it and renders the document. The path is either exactly one directory or one or more <code>.ab</code> files; mixing them, or naming paths that belong to different projects, is E807. A named directory must be the project root or the data directory &mdash; a directory inside the data directory is E806.</p>
+<p><strong>lint</strong> performs exactly the same work, including asset checks, and renders nothing. It writes nothing to stdout and, on success, one line <code>abstract: ok</code> to stderr.</p>
+<p><strong>templates</strong> prints the schema names of the project, one per line, sorted. It runs the discovery, parse, table and schema-validation phases, so a project whose schemas are broken fails instead of printing a partial list.</p>
+<p><strong>init</strong> scaffolds a project that compiles out of the box. The target directory must be empty (E813).</p>
+<h2>Output formats</h2>
+<table class="table"><thead><tr><th>Keyword</th><th>Rendering</th></tr></thead><tbody><tr><td><code>JSON</code></td><td>the default; two-space indent</td></tr><tr><td><code>YML</code> / <code>YAML</code></td><td>block style, every mapping key quoted</td></tr><tr><td><code>RAW</code></td><td>four-space indent, bare keys; a review format, not machine-parsed</td></tr></tbody></table>
+<p>Any other keyword is E805. Detail: <a href="raw.html">compiled data</a>.</p>
+<h2>Flags</h2>
+<table class="table"><thead><tr><th>Flag</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--out &lt;file&gt;</code> / <code>--out=&lt;file&gt;</code></td><td>write the document to a file instead of stdout</td></tr><tr><td><code>--skip-assets</code></td><td>skip on-disk asset checks</td></tr><tr><td><code>--max-errors &lt;n&gt;</code></td><td>report at most <code>n</code> diagnostics; default 20, <code>0</code> means no limit</td></tr></tbody></table>
+<p>A flag given twice is E811. A flag value must not begin with <code>-</code>, so <code>--out --skip-assets</code> is E803 rather than a request to write a file with that name; a destination that genuinely begins with <code>-</code> is written <code>--out=-name</code> or <code>--out ./-name</code>. <code>--max-errors</code> requires a decimal integer &ge; 0 (E812), and bounds reporting only: it never changes which diagnostic comes first and never changes the exit code.</p>
+<h3><code>--out</code></h3>
+<p>The destination is used exactly as written; no extension is appended or checked. It is refused with E808 when it is a discovered source file, when it lies inside the data directory, or when its extension is <code>.ab</code> or <code>.abt</code> and it lies inside the discovery root. A compiler never overwrites its own inputs and never writes a file it would read on the next run.</p>
+<pre><code>abstract compile m-project JSON --out m-project/out.json    # fine
+abstract compile m-project JSON --out m-project/data/x.json # E808</code></pre>
+<p>When <code>--out</code> is given, nothing is written to stdout; one informational line naming the path and the format goes to stderr. The bytes written are exactly the bytes that would have gone to stdout. A write failure of any kind is E810 and exit code 3.</p>
+<h3><code>--skip-assets</code></h3>
+<p>It skips exactly three checks and nothing else: for <code>file</code> values the on-disk existence check (E421); for <code>image</code> values the existence check, the header probe (E422) and the dimension check (E423).</p>
+<p>It does <strong>not</strong> skip the extension check (E420), the path-confinement check (E424), or any type, range, enum, reference, required-field or logic check, and it has no effect on <code>exists</code>, which never touches the filesystem in any mode.</p>
+<div class="callout"><p>The compiled bytes are identical with and without <code>--skip-assets</code>. The flag changes which errors are reported, never what is emitted. An implementation that lets the flag alter output is non-conforming.</p></div>
+<h2>Exit codes</h2>
+<table class="table"><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>success</td></tr><tr><td>1</td><td>compilation failed: at least one <code>E1xx</code>&ndash;<code>E7xx</code> diagnostic</td></tr><tr><td>2</td><td>usage error: an <code>E8xx</code> diagnostic other than E810</td></tr><tr><td>3</td><td>output could not be written (E810)</td></tr></tbody></table>
+<h2>stdout and stderr</h2>
+<p>stdout carries <strong>only</strong> the rendered document, the schema list, or the usage and version text. It is never mixed with diagnostics; stderr carries every diagnostic, note and informational line. If the reader closes stdout &mdash; piping into <code>head</code>, for instance &mdash; the process terminates quietly with exit code 0. Output is UTF-8 with <code>LF</code> line endings on every platform, with no BOM.</p>
+<h2>Diagnostics</h2>
+<pre><code>&lt;path&gt;:&lt;line&gt;:&lt;col&gt;: error[&lt;ID&gt;]: &lt;message&gt;
+  note: &lt;note text&gt;</code></pre>
+<pre><code>data/products/atlas.ab:4:5: error[E409]: Unknown field 'rarty' in atlas. Did you mean 'rarity'?
+  note: declared fields: title, status, rarity, owner.</code></pre>
+<p>The path is project-relative with <code>/</code> separators &mdash; absolute, canonical and extended-length platform paths never appear. Line and column are 1-based, and the column counts Unicode scalar values. The message is one sentence ending with a period, followed by zero or more notes indented two spaces, each naming a second position where it refers to one. Every identifier is catalogued in <a href="../reference/diagnostics.html">diagnostics</a> and is stable across 1.x releases.</p>
+<h2>Project resolution</h2>
+<pre><code>m-project/            &lt;- project root
+  assets/
+  data/               &lt;- data directory, and the discovery root
+    templates/Product.abt
+    products/atlas.ab</code></pre>
+<table class="table"><thead><tr><th>Invocation</th><th>Result</th></tr></thead><tbody><tr><td><code>abstract compile m-project</code></td><td>the whole project</td></tr><tr><td><code>abstract compile m-project/data</code></td><td>the same source set</td></tr><tr><td><code>abstract compile m-project/data/products/atlas.ab</code></td><td>the same project, emitting only that file&rsquo;s instances</td></tr><tr><td><code>abstract compile m-project/data/products</code></td><td>E806 &mdash; name the project root or the <code>data</code> directory</td></tr></tbody></table>
+<p>Discovery skips directories whose name starts with <code>.</code>, and <code>node_modules</code>, <code>target</code>, <code>build</code> and <code>out</code>. Symbolic links are resolved and each canonical directory is visited once, so link cycles terminate. A project with no source files is E103.</p>
+<h2>Optional commands</h2>
+<p><code>bundle</code> and <code>unbundle</code> ship with the reference implementation, operate on an already-compiled document, and are not part of the language: a conforming implementation need not provide them. See <a href="java.html">Java &amp; bundles</a>.</p>
         </article>
     </div>
 </main>
-<footer class="footer"><p>For output details, continue to <a href="raw.html">compiled data</a>.</p></footer>
+
+<footer class="footer"><p>The normative text is <code>docs/SPEC.md</code>; these pages explain it.</p></footer>
 <script src="../assets/site.js"></script>
 </body>
 </html>

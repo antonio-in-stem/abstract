@@ -1,0 +1,14 @@
+id = '''ADV2-08'''
+area = '''adversarial-2'''
+title = '''U+007F in a text value is escaped, so the YAML document a conforming reader gets is parseable'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''spec-conflict'''
+expected_kind = '''document'''
+spec_ref = '''3.5, 8.5, 8.8, 11.1, 11.3'''
+expected_note = '''SPEC 8.8's escaped set is now stated once and reaches U+007F: it is exactly the set SPEC 3.5 excludes from bare text - every C0 control, U+007F and every C1 control - plus the quote and the backslash, and it is the same in all three formats. The old enumeration ("any other C0 or C1 control character") left U+007F in neither range, which put SPEC 8.8 against SPEC 11.3: YAML 1.2 excludes U+007F from `c-printable`, so a literal DELETE inside a double-quoted scalar makes a document the runner is required to parse unreadable. Escaping it is the only rendering under which both hold, and it round-trips to the same string. JSON is unaffected either way, and RAW follows the same table.
+
+U+007F reaches the output legitimately: SPEC 3.5 places no restriction on a quoted string beyond closing on its own physical line, so `caption: "a<DEL>b"` is a valid source. Written bare it is now E210 (SPEC 3.5), which is the other half of the same ruling.'''
+actual_1_0 = '''exit 0, and the YAML document carries `"caption": "a\\u007fb"`, which PyYAML and every other conforming reader accept.'''
+status = '''ready'''
+note_1_0 = '''A runner that only compares bytes cannot catch the defect this case was filed for; only the YAML-parse leg of SPEC 11.3 does. The corpus expectation is the escaped rendering, which is what a byte comparison now pins as well.'''

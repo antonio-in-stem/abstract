@@ -1,0 +1,23 @@
+id = '''OC-07'''
+area = '''output-canon'''
+title = '''YAML renders an empty object inside an array as `- ` (null), diverging from JSON's `{}`'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc12-empty-object/'''
+command = '''caps[] @optional { name: text @optional }
+caps(): ()'''
+expected_kind = '''document'''
+expected_note = '''YAML emits `- {}` so that both formats decode to [{}].'''
+actual_0_2_0 = '''out.yml (cat -A shows the trailing space):
+  data:$
+    - template: "T"$
+      id: "a"$
+      caps:$
+        - $
+python: JSON: {'data': [{'template': 'T', 'id': 'a', 'caps': [{}]}]}
+        YAML: {'data': [{'template': 'T', 'id': 'a', 'caps': [None]}]}
+        EQUAL: False'''
+spec_ref = '''5.5, 8.5, 8.9, 10.4'''
+status = '''ready'''
+note_1_0 = ''''caps(): ()' is E416 with note: a tuple array declares at least one column (SPEC 5.5), so the empty object never reaches the output. The YAML divergence the case reports is unreachable in a conforming document (SPEC 8.9); were it reachable, SPEC 8.5 fixes the spelling as '- {}'.'''

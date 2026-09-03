@@ -1,0 +1,7 @@
+schema Product {
+    id: text(1..80)
+    status: enum(active, retired)
+    price: float(0..1000)
+    featured: bool @optional
+    tags[]: text(1..40) @optional
+}

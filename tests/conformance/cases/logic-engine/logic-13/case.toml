@@ -1,0 +1,33 @@
+id = '''LOGIC-13'''
+area = '''logic-engine'''
+title = '''$variables are not substituted in a derive TARGET path, contradicting the documented dynamic-path feature; a literal '$slot' field is created instead'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/logic-engine/L06-dynamic-path-derive-target/'''
+command = '''repro/logic-engine/L06-dynamic-path-derive-target — cd repro/logic-engine/L06-dynamic-path-derive-target && abstract compile data JSON   (and: ... abstract.exe compile data JSON --allow-unknown)'''
+expected_kind = '''undecided'''
+expected_note = '''`for $slot in [head, chest] { derive .slots.$slot = "auto" }` should write slots.head = "auto" and slots.chest = "auto".'''
+actual_0_2_0 = '''abstract: items/one.ab: Unknown field '$slot' at Gear.slots. Declared fields: head, chest.
+EXIT=1
+
+--- with --allow-unknown ---
+{
+  "data": [
+    {
+      "template": "Gear",
+      "id": "one",
+      "slots": {
+        "head": "manual",
+        "chest": "manual",
+        "$slot": "auto"
+      }
+    }
+  ]
+}
+EXIT=0
+
+(The same block's `require .slots.$slot == "manual"` passed for both iterations, proving the READ side does substitute — the asymmetry is inside one statement pair.)'''
+spec_ref = '''6.4, 6.5, 10.5'''
+status = '''ready'''
+note_1_0 = '''A loop variable is a read position, never a write position: 'derive .slots.$slot = auto' is E520 (SPEC 6.4). The read on the previous line is legal - a segment MAY be a loop variable in a logic path (SPEC 6.5) - so the asymmetry the audit found is now explicit and diagnosed rather than silent. To write both fields, write one derive per field.'''

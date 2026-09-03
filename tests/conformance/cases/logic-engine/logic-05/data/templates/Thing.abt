@@ -1,0 +1,12 @@
+schema Thing {
+    id: text(1..40)
+    label: text(1..40) @optional
+}
+
+logic Thing {
+    for $a in ["$b"] {
+        for $b in [7] {
+            derive .label = "value=$a"
+        }
+    }
+}

@@ -2,11 +2,11 @@
   "name": "abstract-language",
   "displayName": "Abstract Language",
   "description": "Syntax highlighting, completions, and CLI-backed linting for Abstract DSL files.",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "publisher": "minhocreates",
   "repository": {
     "type": "git",
-    "url": "https://local.minhocreates/wardrobe-stickers"
+    "url": "https://github.com/antonio-in-stem/abstract"
   },
   "license": "UNLICENSED",
   "engines": {
@@ -148,12 +148,12 @@
         "abstract.projectPath": {
           "type": "string",
           "default": "",
-          "description": "Optional Abstract project path to lint. Empty means the workspace .abstract folder or the current document."
+          "description": "Optional Abstract project path to lint. Empty means the project the open file belongs to: the parent of the nearest ancestor directory named 'data'."
         },
         "abstract.outputFormat": {
           "type": "string",
           "default": "JSON",
-          "enum": ["JSON", "YML"],
+          "enum": ["JSON", "YML", "YAML", "RAW"],
           "description": "Format used by the Abstract compile command."
         }
       }

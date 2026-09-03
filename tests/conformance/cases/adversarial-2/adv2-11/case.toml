@@ -1,0 +1,15 @@
+id = '''ADV2-11'''
+area = '''adversarial-2'''
+title = '''A reversed window on a body statement is E604, the diagnostic an instance header already gets for it'''
+severity = '''minor'''
+kind = '''ruling'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''4.12, 5.13, 5.14, 7.2, 11.1'''
+expected_note = '''SPEC 5.13 now restates both of SPEC 4.12's annotation rules for a body statement, as SPEC 5.14 already did for an instance header: `n` must lie inside the project range (E603), and `@removed(n)` must be strictly greater than the effective `@since` (E604). SPEC 4.12 states them of the annotations themselves rather than of the construct that carries them, so reading SPEC 5.13's earlier silence as "E603 applies, E604 does not" split a pair the specification states together.
+
+Both are checked before the applicability set is formed, which is what keeps the statement from being described by a range it does not have: with E604 unchecked the fallback was E430 carrying the degenerate substitution "the statement is annotated none", because the annotation had already been intersected with the project range. SPEC 11.1 now orders E603 and E604 before E430 and E440 together.'''
+spec_note = '''The companion cases adv2-01, adv2-02 and adv2-03 pin E603 for the out-of-range half of the same rule.'''
+actual_1_0 = '''exit 1: `data/items/x.ab:3:5: error[E604]: @removed(2) must be greater than @since(3).`'''

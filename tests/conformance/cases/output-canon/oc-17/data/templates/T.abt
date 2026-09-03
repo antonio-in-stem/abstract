@@ -1,0 +1,16 @@
+schema Owner {
+    team: text(1..80)
+}
+
+schema T {
+    id: text(1..80)
+    scalar_opt: text(1..80) @optional
+    list_opt[]: text(1..80) @optional
+    ref_opt: $(Owner) @optional
+    group_opt @optional {
+        inner: text(1..80) @optional
+    }
+    group_list_opt[] @optional {
+        inner: text(1..80) @optional
+    }
+}

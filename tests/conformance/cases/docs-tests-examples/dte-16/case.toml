@@ -1,0 +1,25 @@
+id = '''DTE-16'''
+area = '''docs-tests-examples'''
+title = '''Asset paths are resolved with no containment check: `../` and absolute paths escape the project and are validated/probed on disk'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/docs-tests-examples/path-traversal/'''
+command = '''cd .../repro/docs-tests-examples/path-traversal/proj && abstract compile data JSON
+doc: ../../outside_secret.txt
+file(txt)
+require .doc exists
+absdoc: C:/Windows/win.ini'''
+expected_kind = '''error'''
+expected_note = '''Paths that resolve outside `<project>/assets` are rejected with an error naming the escape, or at minimum the behaviour is documented as intentional.'''
+actual_0_2_0 = '''exit 0 — `"doc": "../../outside_secret.txt"`, `"absdoc": "C:/Windows/win.ini"`, `"checked": "yes"`. The `require ... exists` passed against a file two directories above the project, and win.ini was accepted as an existing `file(ini)`.'''
+spec_ref = '''5.9, 6.7, 9.5, 10.4 (E424), A.1 (A24)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = dte-16/proj) -> expected-error.txt
+Asset values must be relative, must contain no ".." segment and must have no drive or UNC
+prefix (5.9, A.1 A24). "doc" is checked first by source position and is E424; "absdoc" is a
+second E424. Path confinement is not skipped by --skip-assets (9.5). The compile never reaches
+the logic block, and "require .doc exists" would in any case be a presence test that never
+touches the filesystem (6.7).
+'''

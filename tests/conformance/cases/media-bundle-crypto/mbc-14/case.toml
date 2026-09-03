@@ -1,0 +1,18 @@
+id = '''mbc-14'''
+area = '''media-bundle-crypto'''
+title = '''Json.java is materially more permissive than strict JSON (leading +/zeros, duplicate keys last-wins, lone surrogate -> '?')'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/media-bundle-crypto/case06-json-robustness/'''
+command = '''repro/media-bundle-crypto/case06-json-robustness : JsonExp prints 'dup-keys: {a=3, b=2}', 'lone-surrogate UTF-8 bytes: 3f', 'num +5 -> 5 (Long)', 'num 007 -> 7', 'num 01.5 -> 1.5'.'''
+expected_kind = '''undecided'''
+expected_note = '''Reject non-JSON numbers, and either reject duplicate keys or document last-wins; validate surrogate pairs.'''
+actual_0_2_0 = '''All accepted silently; lone surrogate corrupts to '?' on UTF-8 round-trip.'''
+spec_ref = '''9.9, Appendix D.2 (item 7)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case: Appendix D.2 item 7 is the binding requirement - the runtime's
+JSON reader must reject a leading "+", leading zeros, duplicate object keys and lone surrogates.
+Verify as a tooling test. The case ships no Abstract sources.
+'''

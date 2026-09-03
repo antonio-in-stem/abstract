@@ -1,0 +1,7 @@
+// Exists in every version. Its version 1 and version 2 objects are identical,
+// so it contributes one entry, over 1..2.
+
+Item ::
+    name: Torch
+    icon: textures/item.png
+    legacy_tint: 200

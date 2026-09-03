@@ -1,0 +1,8 @@
+T :: @id.a
+    slots.1.mode: generate
+    switches.yes: A
+    switches.no: B
+    switches.on: C
+    switches.off: D
+    switches.null: E
+    switches.y: F

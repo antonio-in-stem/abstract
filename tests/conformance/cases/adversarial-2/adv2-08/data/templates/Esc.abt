@@ -1,0 +1,3 @@
+schema Esc {
+    caption: text(1..40)
+}

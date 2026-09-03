@@ -1,0 +1,27 @@
+id = '''OC-01'''
+area = '''output-canon'''
+title = '''YAML output writes mapping keys unquoted: numeric and boolean-looking schema field names change type, and yes/on (no/off) collide and silently drop fields'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc20-yaml-keys/ (also references: repro/output-canon/oc19-corpus/)'''
+command = '''cd repro/output-canon/oc20-yaml-keys
+abstract compile . JSON --out out.json
+abstract compile . YML  --out out.yml
+python -c "import json,yaml; j=json.load(open('out.json',encoding='utf-8')); y=yaml.safe_load(open('out.yml',encoding='utf-8')); print('EQUAL:',j==y); print('json keys:',list(j['data'][0]['slots'].keys()), list(j['data'][0]['switches'].keys())); print('yaml keys:',list(y['data'][0]['slots'].keys()), list(y['data'][0]['switches'].keys()))"
+Real-corpus confirmation (read-only, stdout only), repro dir repro/output-canon/oc19-corpus/:
+abstract.exe compile "<private corpus>/abstract-data" JSON --skip-assets > corpus.json
+abstract.exe compile "...same path..." YML --skip-assets > corpus.yml
+python -c "import json,yaml; print(json.load(open('corpus.json',encoding='utf-8'))==yaml.safe_load(open('corpus.yml',encoding='utf-8')))"'''
+expected_kind = '''undecided'''
+expected_note = '''JSON and YAML renderings of the same CompiledProject are semantically identical; every object key is a string in both formats. Emitting the SAME data in two supported formats must not change its meaning.'''
+actual_0_2_0 = '''oc20 output:
+  JSON: "slots": { "1": {...} }, "switches": {"yes":"A","no":"B","on":"C","off":"D","null":"E","y":"F"}
+  YAML:  slots:\n      1:\n        mode: "generate"   and   switches:\n      yes: "A"\n      no: "B"\n      on: "C"\n      off: "D"\n      null: "E"\n      y: "F"
+  python: EQUAL: False
+          json keys: ['1'] ['yes', 'no', 'on', 'off', 'null', 'y']
+          yaml keys: [1]   [True, False, None, 'y']       <-- 6 fields became 4 keys; "A" and "B" are gone
+Real corpus: EQUAL: False, with `KEYS DIFF at data[N].slots {1, '1'}` for all 41 items (up to {1,2,3,4,'1','2','3','4'}).'''
+spec_ref = '''4.9, 8.3, 8.4, 8.5'''
+status = '''ready'''
+note_1_0 = '''Every YAML mapping key is double-quoted, always, including numeric and boolean-looking field names (SPEC 8.5), so the numbered key '1' stays a string and yes/no/on/off/null/y stay six distinct keys. The JSON and YAML documents carry the same data once every mapping key is coerced to a string, which is the cross-format equivalence SPEC 11.3 requires. The empty oc19-corpus/ directory is the placeholder for the private real-world corpus and is deliberately not populated.'''

@@ -1,0 +1,4 @@
+Thing :: @id.a
+    name: Alpha,
+Thing :: @id.b
+    name: Beta

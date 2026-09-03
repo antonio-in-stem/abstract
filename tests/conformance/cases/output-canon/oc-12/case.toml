@@ -1,0 +1,17 @@
+id = '''OC-12'''
+area = '''output-canon'''
+title = '''RAW renders every array of objects on one unbroken line, defeating the format's stated purpose (diffs and reviews)'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc6-raw-nested/ (also references: repro/output-canon/oc19-corpus/)'''
+command = '''caps[] { name, level }
+caps(name, level): (search, 3), (export, 7)'''
+expected_kind = '''undecided'''
+expected_note = '''Array elements that are objects are expanded one field per line (as JSON and YAML do), so a review diff touches only the changed field.'''
+actual_0_2_0 = '''RAW:  caps: [{name: "search", level: 3}, {name: "export", level: 7}],
+YAML: caps:\n      - name: "search"\n        level: 3\n      - name: "export"\n        level: 7
+Real corpus: `line 464 len 680` (a single 680-character RAW line).'''
+spec_ref = '''8.3, 8.6'''
+status = '''ready'''
+note_1_0 = '''An array with at least one object element is multi-line in RAW, one element per line at the next indentation level (SPEC 8.6), so a review diff touches only the changed field. Only all-scalar arrays stay inline. Key order inside 'owner' and inside each 'caps' element follows the declaration order of the schema or group, not the assignment order (SPEC 8.3). The empty oc19-corpus/ directory is the placeholder for the private real-world corpus and is deliberately not populated.'''

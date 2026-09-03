@@ -1,0 +1,2 @@
+Thing :: @id.x
+    tags: ./art/{red,blue}/icon/{small,large}.png

@@ -1,0 +1,19 @@
+id = '''OC-26'''
+area = '''output-canon'''
+title = '''docs/raw-data.md's JSON example and CLI section do not match the emitter (inline arrays, missing RAW/.abraw, wrong write condition)'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/output-canon/oc4-raw-doc-shape/ (also references: repro/output-canon/oc14-outpath/)'''
+command = "cd repro/output-canon/oc4-raw-doc-shape\nabstract compile . JSON\nWrite-condition half, repro/output-canon/oc14-outpath/:\nabstract compile . RAW true   ; ls   # -> abstract.abraw\nabstract compile . JSON --out one.json  # writes despite no 'true'"
+expected_kind = '''undecided'''
+expected_note = '''docs/raw-data.md:9-21 shows `"tags": ["core", "public"]`; docs/raw-data.md:84-91 says a file is written only when the final argument is `true`.'''
+actual_0_2_0 = '''Actual JSON:
+      "tags": [
+        "core",
+        "public"
+      ]
+Actual write behaviour: `compile . RAW true` writes abstract.abraw (an extension the CLI section never mentions), and `compile . JSON --out one.json` writes one.json with no `true` anywhere.'''
+spec_ref = '''8.4, 8.7, 9.4'''
+status = '''ready'''
+note_1_0 = '''JSON puts every member of a non-empty array on its own line (SPEC 8.4), so the inline 'tags' of the 0.2.0 documentation was wrong, not the emitter. The write condition is now single: '--out <file>' writes the document and suppresses stdout (SPEC 9.4), the trailing 'true' write flag is gone (Appendix A, A58) and no extension is appended or checked. In the sibling project oc14-outpath/, 'compile . RAW true' is E805: with another positional present, a last positional that is neither a format keyword nor a valid input path is rejected (SPEC 9.2).'''

@@ -1,0 +1,16 @@
+id = '''ADV2-05'''
+area = '''adversarial-2'''
+title = '''`&other.id` reports E408 "does not exist on instance" before the E410 the spec prescribes'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+expected_kind = '''error'''
+spec_ref = '''5.7, 10.4, 11.1'''
+expected_note = '''SPEC 5.7, "Identity is never cloned": "`&other.id` and `&other.template` are E410: the path exists on the source, but it is a reserved envelope key and cannot be written." The spec states in the same sentence both that the diagnostic is E410 and that the E408 precondition (the path is absent on the source) does not hold, so E410 is the only diagnostic this construct may raise, and by SPEC 11.1 it is the one a compiler reporting a single diagnostic must report.'''
+actual_1_0 = '''exit 1 with two diagnostics, E408 first:
+  data/items/x.ab:5:1: error[E408]: Clone path 'id' does not exist on instance 'src' in any version.
+    note: versions checked: 1.
+  data/items/x.ab:5:6: error[E410]: 'id' is a reserved envelope key and cannot be assigned.
+E408 wins on position (5:1 before 5:6) inside the same phase. Its message is also untrue of the source: `src` has an id in every version. `&other.template` behaves the same way.'''
+status = '''ready'''
+note_1_0 = '''The envelope keys are not part of the authored object the clone resolver searches, so the absence test fires before the reserved-key test. Suppressing E408 for the two envelope keys leaves E410 as the only diagnostic.'''

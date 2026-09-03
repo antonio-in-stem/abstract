@@ -1,0 +1,24 @@
+id = '''LOGIC-16'''
+area = '''logic-engine'''
+title = ''''$field' interpolation has no word boundary, so any text where a field name is a prefix of the following word is silently corrupted'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L15-interpolation-no-word-boundary/'''
+command = '''repro/logic-engine/L15-interpolation-no-word-boundary — cd repro/logic-engine/L15-interpolation-no-word-boundary && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''`derive .note = "all $names must be unique"` — either "$names" is not a field so the text is left alone, or this is an error.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "T",
+      "id": "one",
+      "name": "atlas",
+      "note": "all atlass must be unique"
+    }
+  ]
+}
+EXIT=0'''
+spec_ref = '''6.9, 7.2, 10.5'''
+status = '''ready'''
+note_1_0 = ''''$names' consumes the maximal identifier run (SPEC 5.11), so it names 'names', not 'name'. A $name inside a derive value that no enclosing loop binds must name a declared root field, and a name that is not one is E503 at P3 (SPEC 6.9). Write '${name}s' for the intended text.'''

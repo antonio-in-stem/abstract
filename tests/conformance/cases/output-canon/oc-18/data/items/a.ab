@@ -1,0 +1,3 @@
+T :: @id.a
+    lang: en_us
+    rows(key, lang_values): (a, uno), (b, dos)

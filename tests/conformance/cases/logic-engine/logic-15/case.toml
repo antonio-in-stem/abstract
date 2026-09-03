@@ -1,0 +1,27 @@
+id = '''LOGIC-15'''
+area = '''logic-engine'''
+title = '''A logic block attached to a schema used as a nested $(Schema) type never runs'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/logic-engine/L14-nested-schema-logic-skipped/'''
+command = '''repro/logic-engine/L14-nested-schema-logic-skipped — cd repro/logic-engine/L14-nested-schema-logic-skipped && abstract compile data JSON   (control: cd .../L14-nested-schema-logic-skipped/control && ... compile data JSON --allow-unknown)'''
+expected_kind = '''error'''
+expected_note = '''`logic Address` requires city == "Lisbon" and derives country. The nested home.city is "Berlin", so compilation should fail (or at minimum country should be derived).'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Person",
+      "id": "one",
+      "home": {
+        "city": "Berlin"
+      }
+    }
+  ]
+}
+EXIT=0
+
+(Control run with the identical Address.abt but Address as the top-level template: "abstract: items/berlin.ab: Address logic: Address logic: city must be Lisbon", EXIT=1.)'''
+spec_ref = '''6.11, 6.12, 10.5'''
+status = '''ready'''
+note_1_0 = '''Logic is attached to a schema and runs for every nested object validated against that schema (SPEC 6.1, 6.11): 'logic Address' runs for the $(Address) value at .home before Person's own logic. home.city is 'Berlin', string comparison is exact (SPEC 6.8), so the require fails with E515 and exit 1 - the same outcome the case's own control project produces with Address as the root template.'''

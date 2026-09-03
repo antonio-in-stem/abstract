@@ -1,0 +1,13 @@
+schema T {
+    id: text(1..40)
+    name: text
+    short: bool @optional
+}
+
+logic T {
+    // intent: reject names shorter than 4 characters
+    require length(.name) >= 4 else throw "name '$name' is too short"
+    if length(.name) == 1 {
+        derive .short = true
+    }
+}

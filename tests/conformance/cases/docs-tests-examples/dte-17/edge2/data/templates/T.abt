@@ -1,0 +1,7 @@
+schema T {
+    id: text(1..40)
+    n: int(0..100)
+    f: float(0..100)
+    b: bool
+    txt: text(1..40)
+}

@@ -1,0 +1,4 @@
+Thing :: @id.bare
+name: Bare
+caps: #s*
+flags: hat_*

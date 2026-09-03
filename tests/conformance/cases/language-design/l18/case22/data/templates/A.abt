@@ -1,0 +1,8 @@
+schema A {
+    id: text(1..40)
+    name: text @optional
+    pairs[] {
+        key: text
+        value: text
+    }
+}

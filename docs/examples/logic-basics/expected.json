@@ -1,0 +1,43 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Product",
+      "id": "atlas",
+      "title": "Atlas Search",
+      "status": "active",
+      "shipping_class": "standard",
+      "release_wave": 1,
+      "flag_count": 2,
+      "flags": [
+        "core",
+        "promo"
+      ],
+      "owner": {
+        "team": "Knowledge Systems",
+        "contact": "systems@example.com"
+      }
+    },
+    {
+      "template": "Product",
+      "id": "relic",
+      "title": "Relic",
+      "status": "retired",
+      "visibility": "hidden",
+      "shipping_class": "standard",
+      "release_wave": 1,
+      "flag_count": 0,
+      "owner": {
+        "team": "Knowledge Systems"
+      }
+    }
+  ],
+  "overlays": []
+}

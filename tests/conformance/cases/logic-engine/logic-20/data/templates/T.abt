@@ -1,0 +1,8 @@
+schema T {
+    id: text(1..40)
+    msg: text(1..80)
+}
+
+logic T {
+    require .msg == "run else throw now" else throw "msg must be the phrase"
+}

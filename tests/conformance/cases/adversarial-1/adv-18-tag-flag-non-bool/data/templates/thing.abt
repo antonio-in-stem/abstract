@@ -1,0 +1,7 @@
+schema Thing {
+    name: text(1..40)
+    caps[] @optional {
+        key: text @tag
+        label: text @optional
+    }
+}

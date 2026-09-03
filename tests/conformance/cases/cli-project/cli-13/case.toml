@@ -1,0 +1,17 @@
+id = '''cli-13'''
+area = '''cli-project'''
+title = '''A leading `/` or `\` in an asset value silently discards the assets/ folder and resolves at the drive root'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-slash/'''
+command = '''../../project/target/release/abstract.exe compile case-slash/data JSON
+manual: /textures/note.txt
+manual: /Windows/win.ini'''
+expected_kind = '''error'''
+expected_note = ''''/textures/note.txt' either resolves inside <project>/assets or is rejected as an unsupported absolute/rooted path.'''
+actual_0_2_0 = '''Nonexistent case: "File not found at Doc.manual: '/textures/note.txt' resolved to '\\?\C:\textures\note.txt'". Existing case: exit 0 and "manual": "/Windows/win.ini" in the compiled JSON.'''
+spec_ref = '''5.9, 10.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''A leading slash or backslash makes the value non-relative, which is E424 (SPEC 5.9), so a rooted asset value can never resolve at the drive root and can never reach the output. E424 carries the note that names the assets directory and the parent-of-data rule, which is where an author learns that assets/ sits beside data/, not inside it.'''

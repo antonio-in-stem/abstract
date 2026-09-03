@@ -1,0 +1,136 @@
+schema Thing {
+    name: text(1..40)
+    flag: bool @optional
+}
+
+logic Thing {
+    if .flag == true {
+        if .flag == true {
+            if .flag == true {
+                if .flag == true {
+                    if .flag == true {
+                        if .flag == true {
+                            if .flag == true {
+                                if .flag == true {
+                                    if .flag == true {
+                                        if .flag == true {
+                                            if .flag == true {
+                                                if .flag == true {
+                                                    if .flag == true {
+                                                        if .flag == true {
+                                                            if .flag == true {
+                                                                if .flag == true {
+                                                                    if .flag == true {
+                                                                        if .flag == true {
+                                                                            if .flag == true {
+                                                                                if .flag == true {
+                                                                                    if .flag == true {
+                                                                                        if .flag == true {
+                                                                                            if .flag == true {
+                                                                                                if .flag == true {
+                                                                                                    if .flag == true {
+                                                                                                        if .flag == true {
+                                                                                                            if .flag == true {
+                                                                                                                if .flag == true {
+                                                                                                                    if .flag == true {
+                                                                                                                        if .flag == true {
+                                                                                                                            if .flag == true {
+                                                                                                                                if .flag == true {
+                                                                                                                                    if .flag == true {
+                                                                                                                                        if .flag == true {
+                                                                                                                                            if .flag == true {
+                                                                                                                                                if .flag == true {
+                                                                                                                                                    if .flag == true {
+                                                                                                                                                        if .flag == true {
+                                                                                                                                                            if .flag == true {
+                                                                                                                                                                if .flag == true {
+                                                                                                                                                                    if .flag == true {
+                                                                                                                                                                        if .flag == true {
+                                                                                                                                                                            if .flag == true {
+                                                                                                                                                                                if .flag == true {
+                                                                                                                                                                                    if .flag == true {
+                                                                                                                                                                                        if .flag == true {
+                                                                                                                                                                                            if .flag == true {
+                                                                                                                                                                                                if .flag == true {
+                                                                                                                                                                                                    if .flag == true {
+                                                                                                                                                                                                        if .flag == true {
+                                                                                                                                                                                                            if .flag == true {
+                                                                                                                                                                                                                if .flag == true {
+                                                                                                                                                                                                                    if .flag == true {
+                                                                                                                                                                                                                        if .flag == true {
+                                                                                                                                                                                                                            if .flag == true {
+                                                                                                                                                                                                                                if .flag == true {
+                                                                                                                                                                                                                                    if .flag == true {
+                                                                                                                                                                                                                                        if .flag == true {
+                                                                                                                                                                                                                                            if .flag == true {
+                                                                                                                                                                                                                                                if .flag == true {
+                                                                                                                                                                                                                                                    if .flag == true {
+                                                                                                                                                                                                                                                        if .flag == true {
+                                                                                                                                                                                                                                                            if .flag == true {
+                                                                                                                                                                                                                                                                if .flag == true {
+                                                                                                                                                                                                                                                                    require .name exists else throw "unreachable"
+                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                }
+                                                                                                                                                                                                            }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                    }
+                                                                                                                                                                                                }
+                                                                                                                                                                                            }
+                                                                                                                                                                                        }
+                                                                                                                                                                                    }
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

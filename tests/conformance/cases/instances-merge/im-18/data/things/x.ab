@@ -1,0 +1,4 @@
+Thing :: @id.x
+name: Win
+label: ./icons/$named.png
+icon: ./icons/$id_small.png

@@ -1,0 +1,8 @@
+schema Product {
+    title: text(1..60)
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+        preview: bool @optional
+    }
+}

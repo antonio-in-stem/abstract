@@ -1,0 +1,3 @@
+Asset :: @id.a
+    image: ./icon.png
+    manual: ./no_such_manual.pdf

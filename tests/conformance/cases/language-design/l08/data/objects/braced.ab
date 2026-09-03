@@ -1,0 +1,5 @@
+Pack :: @id.braced
+    owner {
+        team: Knowledge
+        contact: "k@example.com"
+    }

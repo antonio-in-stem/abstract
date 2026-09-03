@@ -1,0 +1,13 @@
+// Every field of this schema exists in a different set of versions, so the
+// three versions of the project compile to three different objects and the
+// reduction of SPEC 7.5 has something to reduce.
+
+versions 1..3
+
+schema Item {
+    name: text(1..40)
+    icon: image(png 16x16)
+    glow: bool @since(3) = false
+    legacy_tint: int(0..255) @removed(3) @optional
+    tier: int(1..9) @removed(2) @optional
+}

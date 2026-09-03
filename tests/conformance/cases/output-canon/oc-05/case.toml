@@ -1,0 +1,24 @@
+id = '''OC-05'''
+area = '''output-canon'''
+title = '''A plain `template:` / `id:` assignment silently rewrites the output envelope keys, producing a phantom template name and duplicate ids that defeat the duplicate-instance-id check'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc1-template-id-override/'''
+command = '''@id.alpha
+template: TotallyDifferent
+id: beta
+@id.gamma
+id: beta'''
+expected_kind = '''error'''
+expected_note = '''Either a compile error ('template'/'id' are reserved output keys and cannot be assigned; use the header `Template :: @id.x`), or at minimum an emitted-id uniqueness check that rejects two items sharing an id.'''
+actual_0_2_0 = '''{
+  "data": [
+    { "template": "TotallyDifferent", "id": "beta", "label": "Real Alpha" },
+    { "template": "Thing",            "id": "beta", "label": "Real Gamma" }
+  ]
+}
+exit 0, and `abstract lint .` prints `abstract: ok` (exit 0).'''
+spec_ref = '''4.11, 5.3, 5.4, 10.4'''
+status = '''ready'''
+note_1_0 = '''A statement whose leading path segment is 'template' or 'id' is E410 (SPEC 5.4, 5.3): alpha.ab lines 3 and 4 and gamma.ab line 3, reported in source order. The envelope keys are produced by the compiler from the header and the file name and no authored construct can change them (SPEC 8.2), so a forged template name or a duplicated emitted id is unreachable.'''

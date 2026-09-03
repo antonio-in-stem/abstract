@@ -1,0 +1,36 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  "data": [
+    {
+      "template": "Item",
+      "id": "torch",
+      "name": "Torch",
+      "glow": true,
+      "schema_version": 2
+    }
+  ],
+  "overlays": [
+    {
+      "versions": {
+        "min": 1,
+        "max": 1
+      },
+      "data": [
+        {
+          "template": "Item",
+          "id": "torch",
+          "name": "Torch",
+          "schema_version": 1
+        }
+      ],
+      "removed": []
+    }
+  ]
+}

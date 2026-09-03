@@ -1,0 +1,3 @@
+&base.tier
+Thing :: @id.child
+name: Child

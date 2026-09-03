@@ -6,12 +6,20 @@ const fs = require("fs");
 const COMPLETIONS = [
   "schema",
   "logic",
+  "versions 1..1",
   "text",
   "int",
+  "float",
+  "bool",
   "enum",
   "file",
+  "image",
+  "ref",
+  "$(Schema)",
   "@optional",
   "@tag",
+  "@since(2)",
+  "@removed(2)",
   "Product :: @id.",
   "copy(key, value): (en_us, Welcome), (es_*, Bienvenido)",
   "tags: [core, public, ai_ready]",
@@ -88,6 +96,10 @@ function provideDocumentSemanticTokens(document) {
     const line = maskStringsAndComments(rawLine);
     const tokens = [];
 
+    // `versions` is a top-level declaration, not a block, so it is coloured
+    // outside the block tracking below.
+    addRegexTokens(tokens, line, /^\s*(versions)\b/g, "abstractSchemaKeyword", 1);
+
     const blockStart = line.match(/\b(schema|logic)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/);
     if (!blockKind && blockStart) {
       blockKind = blockStart[1];
@@ -100,12 +112,19 @@ function provideDocumentSemanticTokens(document) {
     }
 
     if (blockKind === "schema") {
-      addRegexTokens(tokens, line, /\b(text|int|enum|file)\b(?=\s*\()/g, "abstractSchemaType");
-      addRegexTokens(tokens, line, /@(optional|tag)\b/g, "abstractSchemaModifier");
+      // Every type keyword of SPEC §4.4: the seven that take arguments, the
+      // four that also appear bare after ':', and $(Schema).
+      addRegexTokens(
+        tokens,
+        line,
+        /\b(text|int|float|enum|file|image|ref)\b(?=\s*\()|(?<=:\s*)\b(text|int|float|bool)\b(?!\s*\()|\$\([A-Za-z_][A-Za-z0-9_]*\)/g,
+        "abstractSchemaType"
+      );
+      addRegexTokens(tokens, line, /@(optional|tag|since|removed)\b/g, "abstractSchemaModifier");
       addRegexTokens(tokens, line, /^\s*([A-Za-z_][A-Za-z0-9_]*)(?:\[\])?(?=\s*[:{])/g, "abstractSchemaField", 1);
     } else if (blockKind === "logic") {
       addRegexTokens(tokens, line, /\b(if|require|else|throw|for|in|derive)\b/g, "abstractLogicKeyword");
-      addRegexTokens(tokens, line, /\b(contains|exists|length|and|or)\b|&&|\|\||==|!=|>=|<=|>|</g, "abstractLogicOperator");
+      addRegexTokens(tokens, line, /\b(contains|exists|length|and|or|not|in|version)\b|&&|\|\||==|!=|>=|<=|>|</g, "abstractLogicOperator");
       addRegexTokens(tokens, line, /\.[A-Za-z_][A-Za-z0-9_]*(?:\.(?:[A-Za-z_][A-Za-z0-9_]*|\$[A-Za-z_][A-Za-z0-9_]*))*/g, "abstractLogicPath");
     }
     addRegexTokens(tokens, line, /\$[A-Za-z_][A-Za-z0-9_]*/g, "abstractInterpolationVariable");
@@ -175,126 +194,179 @@ function addToken(tokens, start, length, type) {
   tokens.push({ start, length, type });
 }
 
-function lintDocument(document, diagnostics) {
+// The compiler is always invoked with an argument vector and never through a
+// shell (SPEC Appendix D.3 item 12). Paths from the workspace — the project
+// root, the configured compiler path — reach the process as single argv
+// entries, so a directory named `; rm -rf ~` is a directory name and not a
+// command. There is no quoting to get right because there is no shell to quote
+// for.
+function runCompiler(compiler, args, cwd) {
+  return new Promise((resolve) => {
+    cp.execFile(
+      compiler,
+      args,
+      { cwd, windowsHide: true, shell: false },
+      (error, stdout, stderr) => resolve({ error, stdout, stderr })
+    );
+  });
+}
+
+async function lintDocument(document, diagnostics) {
   const compiler = vscode.workspace.getConfiguration("abstract").get("compilerPath", "abstract");
   const target = resolveProjectPath(document);
-  const command = `"${compiler}" lint "${target}"`;
+  if (!target) {
+    // A file with no resolvable project is not linted at all: a single .ab
+    // file out of project context has no schemas, so every diagnostic it
+    // produced would be noise (SPEC Appendix D.3 item 13).
+    diagnostics.clear();
+    return;
+  }
 
-  cp.exec(command, { cwd: workspaceRoot(document), windowsHide: true }, (error, stdout, stderr) => {
-    const output = `${stderr || ""}\n${stdout || ""}`.trim();
-    if (!error) {
-      diagnostics.clear();
-      return;
-    }
+  const { error, stdout, stderr } = await runCompiler(compiler, ["lint", target], workspaceRoot(document));
+  diagnostics.clear();
+  if (!error) return;
 
-    const message = output || String(error);
-    const parsed = parseCompilerError(message, target);
-    const uri = parsed.file ? vscode.Uri.file(parsed.file) : document.uri;
-    const targetDocument = findOpenDocument(uri) || document;
-    const range = rangeForDiagnostic(targetDocument, parsed.detail || message);
+  const output = `${stderr || ""}\n${stdout || ""}`.trim();
+  const parsed = parseDiagnostics(output, projectRootOf(target));
+  if (parsed.length === 0) {
+    // The compiler failed but said nothing this parser understands — a
+    // missing binary, for instance. Report it once, on the open document,
+    // rather than dropping it.
     const diagnostic = new vscode.Diagnostic(
-      range,
-      parsed.detail || message,
+      new vscode.Range(0, 0, 0, 0),
+      output || String(error),
       vscode.DiagnosticSeverity.Error
     );
     diagnostic.source = "abstract";
-    if (parsed.file) {
-      diagnostic.relatedInformation = [
-        new vscode.DiagnosticRelatedInformation(
-          new vscode.Location(uri, range),
-          `Reported by: ${path.basename(compiler)} lint`
-        )
-      ];
+    diagnostics.set(document.uri, [diagnostic]);
+    return;
+  }
+
+  const byFile = new Map();
+  for (const item of parsed) {
+    const uri = item.file ? vscode.Uri.file(item.file) : document.uri;
+    const key = uri.fsPath;
+    if (!byFile.has(key)) byFile.set(key, { uri, items: [] });
+    byFile.get(key).items.push(item.diagnostic);
+  }
+  for (const { uri, items } of byFile.values()) {
+    diagnostics.set(uri, items);
+  }
+}
+
+// SPEC §9.8:
+//
+//   <path>:<line>:<col>: error[<ID>]: <message>
+//     note: <note text>
+//
+// with the shorter forms `<path>:<line>:`, `<path>:` and `abstract:` when a
+// diagnostic has no column, no position, or no file. `--max-errors` means
+// there is usually more than one, so every diagnostic in the output is
+// reported, not just the first.
+// `abstract` comes first so that the no-file form is never read as a path.
+const DIAGNOSTIC_LINE =
+  /^(?:abstract|(?<path>[^\s:][^:]*?)(?::(?<line>\d+))?(?::(?<col>\d+))?):\s*error\[(?<id>[A-Z]\d+)\]:\s*(?<message>.*)$/;
+
+function parseDiagnostics(output, projectRoot) {
+  const results = [];
+  let current;
+
+  for (const raw of output.split(/\r?\n/)) {
+    const match = raw.match(DIAGNOSTIC_LINE);
+    if (match) {
+      const { path: reported, line, col, id, message } = match.groups;
+      const lineIndex = Math.max(0, Number(line || 1) - 1);
+      const columnIndex = Math.max(0, Number(col || 1) - 1);
+      const diagnostic = new vscode.Diagnostic(
+        new vscode.Range(lineIndex, columnIndex, lineIndex, columnIndex + 1),
+        message,
+        vscode.DiagnosticSeverity.Error
+      );
+      diagnostic.source = "abstract";
+      diagnostic.code = id;
+      current = {
+        file: reported ? resolveReportedPath(reported, projectRoot) : "",
+        diagnostic
+      };
+      results.push(current);
+      continue;
     }
-    diagnostics.clear();
-    diagnostics.set(uri, [diagnostic]);
-  });
-}
 
-function parseCompilerError(message, target) {
-  const clean = message.replace(/^abstract:\s*/i, "").trim();
-  const match = clean.match(/^([^:\r\n]+\.ab(?:t|raw)?):\s*(.+)$/);
-  if (!match) return { file: "", detail: clean };
-
-  const reportedPath = match[1];
-  const detail = match[2];
-  const base = fs.existsSync(target) && fs.statSync(target).isDirectory()
-    ? target
-    : path.dirname(target);
-  const file = path.isAbsolute(reportedPath)
-    ? reportedPath
-    : path.resolve(base, reportedPath);
-  return { file, detail };
-}
-
-function findOpenDocument(uri) {
-  return vscode.workspace.textDocuments.find((document) => document.uri.fsPath === uri.fsPath);
-}
-
-function rangeForDiagnostic(document, message) {
-  const field = fieldFromMessage(message);
-  const needle = valueFromMessage(message);
-  const fallback = new vscode.Range(0, 0, 0, Math.max(1, document.lineAt(0).text.length));
-
-  for (let index = 0; index < document.lineCount; index += 1) {
-    const line = document.lineAt(index).text;
-    if (field && lineMatchesField(line, field)) {
-      return tokenRange(document, index, field) || document.lineAt(index).range;
-    }
-    if (needle && line.includes(needle)) {
-      return tokenRange(document, index, needle) || document.lineAt(index).range;
+    // A note belongs to the diagnostic above it. Notes that name a second
+    // position become related information, which VS Code turns into a link;
+    // the rest are appended to the message.
+    const note = raw.match(/^\s+(?:(?<path>[^\s:][^:]*?):(?<line>\d+)(?::(?<col>\d+))?:\s*)?note:\s*(?<text>.*)$/);
+    if (note && current) {
+      const { path: reported, line, col, text } = note.groups;
+      if (reported) {
+        const lineIndex = Math.max(0, Number(line) - 1);
+        const columnIndex = Math.max(0, Number(col || 1) - 1);
+        const location = new vscode.Location(
+          vscode.Uri.file(resolveReportedPath(reported, projectRoot)),
+          new vscode.Range(lineIndex, columnIndex, lineIndex, columnIndex + 1)
+        );
+        current.diagnostic.relatedInformation = [
+          ...(current.diagnostic.relatedInformation || []),
+          new vscode.DiagnosticRelatedInformation(location, text)
+        ];
+      } else {
+        current.diagnostic.message += `\nnote: ${text}`;
+      }
     }
   }
-  return fallback;
+
+  return results;
 }
 
-function fieldFromMessage(message) {
-  const match = message.match(/\b[A-Z][A-Za-z0-9_]*\.([A-Za-z0-9_]+)\b/);
-  return match ? match[1] : "";
+// Diagnostic paths are project-root-relative and use '/' (SPEC §9.8).
+function resolveReportedPath(reported, projectRoot) {
+  const native = reported.split("/").join(path.sep);
+  return path.isAbsolute(native) ? native : path.resolve(projectRoot, native);
 }
 
-function valueFromMessage(message) {
-  const match = message.match(/received '([^']+)'|unknown template '([^']+)'|clone cycle detected for '([^']+)'/);
-  return match ? (match[1] || match[2] || match[3] || "") : "";
+// Diagnostic paths are relative to the project root, which is the parent of
+// the data directory when there is one (SPEC §2.3). `abstract.projectPath` may
+// legitimately name either, so both spellings resolve to the same root here.
+function projectRootOf(target) {
+  let directory;
+  try {
+    directory = fs.statSync(target).isDirectory() ? target : path.dirname(target);
+  } catch (error) {
+    directory = path.dirname(target);
+  }
+  return path.basename(directory).toLowerCase() === "data" ? path.dirname(directory) : directory;
 }
 
-function lineMatchesField(line, field) {
-  return line.includes(`${field}:`)
-    || line.includes(`@${field}.`)
-    || line.includes(`.${field}:`)
-    || line.includes(`${field}[]`);
-}
-
-function tokenRange(document, lineIndex, token) {
-  const line = document.lineAt(lineIndex).text;
-  const start = line.indexOf(token);
-  if (start < 0) return undefined;
-  return new vscode.Range(lineIndex, start, lineIndex, start + token.length);
-}
-
-function runCliCommand(document, commandName) {
+async function runCliCommand(document, commandName) {
   const compiler = vscode.workspace.getConfiguration("abstract").get("compilerPath", "abstract");
   const target = resolveProjectPath(document);
-  const format = vscode.workspace.getConfiguration("abstract").get("outputFormat", "JSON");
-  const formatArg = commandName === "compile" ? ` ${format}` : "";
-  const command = `"${compiler}" ${commandName} "${target}"${formatArg}`;
+  const channel = getOutputChannel();
+  if (!target) {
+    channel.clear();
+    channel.appendLine(
+      `Abstract: ${document.uri.fsPath} is not inside a project. Open a folder whose sources ` +
+        "live under a 'data' directory, or set abstract.projectPath."
+    );
+    channel.show(true);
+    vscode.window.showErrorMessage(`Abstract ${commandName} needs a project.`);
+    return;
+  }
 
-  return new Promise((resolve) => {
-    cp.exec(command, { cwd: workspaceRoot(document), windowsHide: true }, (error, stdout, stderr) => {
-      const channel = getOutputChannel();
-      channel.clear();
-      channel.appendLine(`> ${command}`);
-      if (stdout) channel.appendLine(stdout.trimEnd());
-      if (stderr) channel.appendLine(stderr.trimEnd());
-      if (error) {
-        vscode.window.showErrorMessage(`Abstract ${commandName} failed. See Abstract output.`);
-      } else {
-        vscode.window.showInformationMessage(`Abstract ${commandName} completed.`);
-      }
-      channel.show(true);
-      resolve();
-    });
-  });
+  const format = vscode.workspace.getConfiguration("abstract").get("outputFormat", "JSON");
+  const args = commandName === "compile" ? [commandName, target, format] : [commandName, target];
+
+  const { error, stdout, stderr } = await runCompiler(compiler, args, workspaceRoot(document));
+  channel.clear();
+  // Shown for the reader, never handed to a shell.
+  channel.appendLine(`> ${[compiler, ...args].join(" ")}`);
+  if (stdout) channel.appendLine(stdout.trimEnd());
+  if (stderr) channel.appendLine(stderr.trimEnd());
+  if (error) {
+    vscode.window.showErrorMessage(`Abstract ${commandName} failed. See Abstract output.`);
+  } else {
+    vscode.window.showInformationMessage(`Abstract ${commandName} completed.`);
+  }
+  channel.show(true);
 }
 
 let outputChannel;
@@ -306,20 +378,55 @@ function getOutputChannel() {
   return outputChannel;
 }
 
+// SPEC §2.3, applied to the open document. The extension always lints a
+// project, never a lone file (Appendix D.3 item 13), so it resolves the
+// project root the way the compiler does and passes that.
+//
+// Step 1: D is the directory containing the file. Step 2: walk D and its
+// ancestors upwards for the first directory whose final component compares
+// case-insensitively equal to `data`. Step 4: the project root is that
+// directory's parent. The walk is upwards only — there is no search among D's
+// children, and step 3 does not apply because it is never applied to the
+// directory that contains a named file.
+//
+// Returns the path to lint, or "" when the document is not in a project.
 function resolveProjectPath(document) {
   const configured = vscode.workspace.getConfiguration("abstract").get("projectPath", "");
   if (configured) {
     return expandWorkspacePath(document, configured);
   }
 
-  const root = workspaceRoot(document);
-  const abstractFolder = path.join(root, ".abstract");
-  if (fs.existsSync(abstractFolder)) return abstractFolder;
-  const abstractExampleFolder = path.join(root, "example");
-  if (fs.existsSync(path.join(root, "Cargo.toml")) && fs.existsSync(abstractExampleFolder)) {
-    return abstractExampleFolder;
+  const dataDirectory = findDataDirectory(path.dirname(document.uri.fsPath));
+  if (dataDirectory) {
+    return path.dirname(dataDirectory);
   }
-  return document.uri.fsPath;
+
+  // No `data` marker anywhere above the file. A project in that layout keeps
+  // its sources in one directory, so that directory is the project — but only
+  // when it holds a template, since a lone .ab file has no schema to validate
+  // against and linting it would report nothing but noise.
+  const directory = path.dirname(document.uri.fsPath);
+  return directoryHasTemplate(directory) ? directory : "";
+}
+
+function findDataDirectory(startDirectory) {
+  let current = startDirectory;
+  while (true) {
+    if (path.basename(current).toLowerCase() === "data") {
+      return current;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) return "";
+    current = parent;
+  }
+}
+
+function directoryHasTemplate(directory) {
+  try {
+    return fs.readdirSync(directory).some((entry) => entry.toLowerCase().endsWith(".abt"));
+  } catch (error) {
+    return false;
+  }
 }
 
 function workspaceRoot(document) {
