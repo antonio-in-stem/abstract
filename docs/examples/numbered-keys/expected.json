@@ -1,0 +1,28 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Pack",
+      "id": "winter",
+      "title": "Winter",
+      "slots": {
+        "1": {
+          "mode": "fixed",
+          "capacity": 16
+        },
+        "2": {
+          "mode": "free",
+          "capacity": 8
+        }
+      }
+    }
+  ],
+  "overlays": []
+}

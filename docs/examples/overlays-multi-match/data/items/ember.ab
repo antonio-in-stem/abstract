@@ -1,0 +1,8 @@
+// Exists in every version, and differs in all three: tier exists only in
+// version 1, legacy_tint only in versions 1 and 2. Two entries, 1..1 and 2..2.
+
+Item ::
+    name: Ember
+    icon: textures/item.png
+    legacy_tint: 40
+    tier: 3

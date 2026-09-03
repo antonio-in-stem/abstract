@@ -1,0 +1,13 @@
+schema Limits {
+    soft: int(0..100)
+    hard: int(0..100)
+}
+
+schema Service {
+    title: text(1..40)
+    limits: $(Limits)
+    owner {
+        team: text(1..40)
+        contact: text(1..60)
+    }
+}

@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Language Guide - Abstract</title>
+    <title>Language guide - Abstract</title>
+    <meta name="description" content="A full tour of the Abstract 1.0 language: files, schemas, instances, values, logic, versions and output.">
     <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -11,7 +12,7 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="topbar">
-    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
     <nav class="nav" aria-label="Primary navigation">
         <a href="../learn/index.html">Learn</a>
         <a href="index.html" aria-current="page">Docs</a>
@@ -24,8 +25,8 @@
 <main id="main">
     <section class="doc-hero">
         <p class="eyebrow">Language guide</p>
-        <h1>The shape of Abstract.</h1>
-        <p class="lede">Abstract has two author-facing file types. <code>.abt</code> files define schemas. <code>.ab</code> files define instances. The compiler reads both and emits validated JSON, YAML, or RAW data, and can seal the result into encrypted bundles for applications.</p>
+        <h1>The whole surface, in order.</h1>
+        <p class="lede">Abstract is small enough to read in one sitting. This page walks the language from files to output; every section links to the page that goes deeper.</p>
     </section>
     <div class="doc-shell">
         <aside class="sidebar">
@@ -36,92 +37,102 @@
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
                 <a href="logic.html">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
                 <a href="cli.html">CLI</a>
                 <a href="raw.html">Compiled data</a>
                 <a href="java.html">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
-            <h2>The mental model</h2>
-            <p>A schema is a class of data. It says which fields exist, what type each field accepts, which values are allowed, and which defaults fill in missing pieces. An instance is one concrete object. The compiler validates the object, normalizes it, and emits JSON or YAML.</p>
-            <p>That makes Abstract more specific than JSON and less broad than a general programming language. It is a language for authored data: data that gets reviewed, translated, versioned, generated, and eventually consumed by other systems.</p>
-
-            <h2>File types</h2>
+<h2>Two kinds of file</h2>
+<table class="table"><thead><tr><th>Extension</th><th>Kind</th><th>Contains</th></tr></thead><tbody><tr><td><code>.abt</code></td><td>template</td><td><code>schema</code> declarations, <code>logic</code> blocks, at most one <code>versions</code> line</td></tr><tr><td><code>.ab</code></td><td>instance</td><td>concrete objects, each validated against a schema</td></tr></tbody></table>
+<p>A template file must not contain instances and an instance file must not contain schemas or logic; either way round it is E210. The compiler reads both, validates everything, evaluates logic, and emits one compiled document.</p>
+<h2>Four principles</h2>
+<table class="table"><thead><tr><th>Principle</th><th>What it decides</th></tr></thead><tbody><tr><td>Minimal</td><td>One way to express each thing. No imports, no free-key maps, no user-defined functions, no arithmetic, no nested lists, no comments in output.</td></tr><tr><td>Elegant</td><td>Authored source is shorter and more readable than the JSON it compiles to.</td></tr><tr><td>Deterministic</td><td>The same input bytes produce the same output bytes on every machine, in every locale, in any argument order.</td></tr><tr><td>Strict</td><td>Every construct is defined or an error with an identifier and a position. Nothing is silently ignored, coerced or dropped.</td></tr></tbody></table>
+<h2>Project layout</h2>
+<pre><code>m-project/            &lt;- project root
+  assets/
+    textures/atlas.png
+  data/               &lt;- data directory, and the root of source discovery
+    templates/Product.abt
+    products/atlas.ab</code></pre>
+<p>The compiler walks <em>up</em> from the path you name until a directory called <code>data</code> appears; the project root is that directory&rsquo;s parent, and assets live in <code>&lt;project root&gt;/assets</code>. A project may also keep its sources in one plain directory with no <code>data/</code> at all.</p>
+<pre><code>abstract compile m-project
+abstract compile m-project/data
+abstract compile m-project/data/products/atlas.ab</code></pre>
+<p>All three compile the same source set. Naming a directory <em>inside</em> <code>data/</code> is E806: it would silently compile more than it names.</p>
+<h2>Schemas</h2>
 <pre><code>schema Product {
-    id: text(1..40)
-    status: enum(draft, active, retired)
-    release_year: int(2000..2100)
-}</code></pre>
-            <p>Schema files use the <code>.abt</code> extension. Instance files use <code>.ab</code>:</p>
-<pre><code>Product :: @id.atlas, @status.active
-    release_year: 2026</code></pre>
-            <p>Compiled data is printed by default. Add <code>true</code> as the final CLI argument when you want Abstract to write a sibling <code>.json</code> or <code>.yml</code> file.</p>
-
-            <h2>Schemas</h2>
-            <p>A schema starts with <code>schema Name { ... }</code>. Field names are normalized to lowercase snake case. Fields can be <code>text</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>enum</code>, <code>file</code>, <code>image</code>, references to other schemas, nested groups, and lists, with defaults, optional markers, and tags. The full catalog lives in the <a href="types.html">type reference</a>.</p>
-<pre><code>schema Service {
-    id: text(1..40)
-    tier: enum(free, standard, premium)
-    replicas: int(1..12) = 1
-    price: float(0..999) = 0.0
-    public: bool = false
-    icon: image(png 128x128) @optional
-    notes: text(1..120) @optional
-}</code></pre>
-
-            <h2>Instances</h2>
-            <p>An instance starts with <code>Template ::</code>. Header tags are a concise form for simple field assignments. Longer values can be placed below the header with normal assignment syntax.</p>
-<pre><code>Service :: @id.search, @tier.premium
-    replicas: 3
-    notes: "Runs on the public cluster."</code></pre>
-
-            <h2>Groups and lists</h2>
-            <p>Groups are nested objects. A group field ending in <code>[]</code> becomes a list of objects.</p>
-<pre><code>schema Product {
+    title: text(1..60)
+    status: enum(draft, active, retired) = draft
+    price: float(0..9999)
     owner {
         team: text(1..50)
-        contact: text(1..80)
+        contact: text(1..80) @optional
     }
-
     capabilities[] {
         id: enum(search, sync, export) @tag
         availability: enum(alpha, beta, stable) = stable
     }
 }</code></pre>
+<p>A schema is a name and a block of fields. Names are unique project-wide. The declared order of fields is the key order of the output, so a schema is also a layout. Full detail: <a href="schemas.html">schema authoring</a> and <a href="types.html">types</a>.</p>
+<h2>Instances</h2>
+<pre><code>Product :: @id.atlas, @status.active
+&amp;base_product.*
+    title: Atlas Search
+    owner.team: Knowledge Systems
+    capabilities: [#search, #export(availability: alpha)]</code></pre>
+<p>An instance is a header, then zero or more clone statements, then body statements and body blocks. Indentation is conventional and carries no meaning. A line is a header only when its first token is a schema name and the next token is <code>::</code>, so <code>window: 12::30</code> stays an ordinary assignment.</p>
+<p>Full detail: <a href="instances.html">instance authoring</a>.</p>
+<h2>The three rules that catch everyone</h2>
+<h3>A comma always separates list items</h3>
+<pre><code>caption: "Hello, world"       // one string
+caption: Hello, world         // a two-item list; E412 on a non-list field</code></pre>
+<p>At bracket depth 0 a <code>,</code> is a list separator whatever the field&rsquo;s declared type, because the parser has no type information. A trailing comma at depth 0 is E442: a statement never continues onto the next line on a comma.</p>
+<h3>Quoting never coerces</h3>
+<pre><code>count: 5                      // int
+count: "5"                    // E412 - quoting does not coerce
+caption: "19.5"               // on a text field: the string 19.5</code></pre>
+<h3>Three characters are reserved at the start of a value</h3>
+<table class="table"><thead><tr><th>First character</th><th>Meaning</th><th>To write it literally</th></tr></thead><tbody><tr><td><code>[</code></td><td>starts a list</td><td>quote the value</td></tr><tr><td><code>#</code></td><td>starts a tagged object</td><td><code>color: "#ff0000"</code></td></tr><tr><td><code>"</code></td><td>starts a quoted string</td><td>quote the whole value</td></tr></tbody></table>
+<h2>Logic</h2>
+<pre><code>logic Product {
+    derive .shipping_class = standard
+    derive? .release_wave = 1
 
-            <h2>Tags</h2>
-            <p><code>@tag</code> marks the field that a shorthand tag fills. If <code>id</code> is tagged, <code>#search</code> means <code>{id: "search"}</code>. Tag calls can also include overrides.</p>
-<pre><code>capabilities: [#search, #sync(availability: beta)]</code></pre>
+    if .status == "active" {
+        require .owner.contact exists
+            else throw "Active products need an owner contact."
+    } else if .status == "retired" {
+        derive .visibility = hidden
+    } else {
+        derive .visibility = internal
+    }
 
-            <h2>Paths, tables, and expansion</h2>
-            <p>Dotted paths assign nested fields, tuple arrays make small tables pleasant to read, and wildcard expansion lets a tagged enum family expand without repeating every member.</p>
-<pre><code>owner.team: Platform
-copy(key, value): (en_us, "Hello"), (es_*, "Hola")
-thresholds.{warning, critical}: 90</code></pre>
+    require not .flags contains "banned"
+        else throw "Banned products cannot ship."
+}</code></pre>
+<p>Logic attaches rules to a schema and runs for every instance of it, and for every nested object validated against it. Paths start with <code>.</code>; there is no truthiness; string comparison is exact. Full detail: <a href="logic.html">logic blocks</a>.</p>
+<h2>Versions</h2>
+<pre><code>versions 1..3
 
-            <h2>Cloning: the template-instance heart</h2>
-            <p>Clone syntax copies a previous instance and applies overrides. It is meant for families of data that share most fields but differ in a few intentional places. <code>&amp;id.*</code> clones everything; <code>&amp;id.field.path</code> clones one subtree; several clone lines merge in order, later clones winning per field.</p>
-<pre><code>&atlas.*                 // start from all of atlas
-&pricing_2026.tiers      // then borrow just the tiers subtree
-
-Product :: @id.beacon, @status.draft
-    name: Beacon Export</code></pre>
-
-            <h2>Interpolation</h2>
-            <p>Strings and paths can reference the instance's own scalar fields with <code>$field</code> or <code>${field}</code>. Values resolve after clone overrides, which is what makes cloned families point at their own assets. <code>$$</code> writes a literal dollar sign.</p>
-<pre><code>Product :: @id.red_dragon
-    icon: ./textures/item/sets/$id/icon.png</code></pre>
-
-            <h2>Strict by default</h2>
-            <p>The compiler rejects fields the schema does not declare (with a "did you mean" suggestion), duplicate instance ids, and duplicate schema names. Values keep their authored types all the way to the output: <code>9.5</code> is a number, <code>true</code> is a boolean, and <code>1.21.5</code> stays text.</p>
-
-            <h2>Current boundaries</h2>
-            <p>Version 0.2.0 stays deliberately small. <code>logic</code> blocks derive values, branch with <code>if / else if / else</code>, loop, and validate relationships, but they are not a general programming language. Outputs are JSON, YAML, RAW, and sealed <code>.abx</code> bundles for the <a href="java.html">Java runtime</a>. The priority remains a small, stable language with standard readable output.</p>
+schema Item {
+    name: text(1..40)
+    glow: bool @since(2) = false
+    legacy_tint: int(0..255) @removed(3) @optional
+}</code></pre>
+<p>One project carries every version of its data. <code>@since(n)</code> and <code>@removed(n)</code> scope a field, a body statement or a whole instance. The compiled document holds the newest version in <code>data</code> and every earlier difference in <code>overlays</code>. Full detail: <a href="versions.html">versions and overlays</a>.</p>
+<h2>Output</h2>
+<p>Three renderings of the same tree: JSON (two-space indent), YAML (every mapping key quoted) and RAW (four-space indent, bare keys, for review). Objects begin with <code>template</code> and <code>id</code>, then the schema&rsquo;s fields in declaration order; instances are ordered by <code>(template, id)</code>. Absent optional fields are omitted in every format, including lists, and there is no null. Full detail: <a href="raw.html">compiled data</a>.</p>
+<h2>What Abstract deliberately lacks</h2>
+<p>Imports and includes, free-key maps, user-defined functions, arithmetic, nested lists, a null literal, comments in output, output key renaming, a lenient mode, per-schema version axes, non-ASCII identifiers, and list accumulation in logic. When a task seems to need one of them, the answer is a different schema shape: a keyed list instead of a map, two named fields instead of a dynamic key, a clone instead of an import.</p>
         </article>
     </div>
 </main>
-<footer class="footer"><p>Next: <a href="schemas.html">schema authoring</a> or <a href="instances.html">instance authoring</a>.</p></footer>
+
+<footer class="footer"><p>The normative text is <code>docs/SPEC.md</code>; these pages explain it.</p></footer>
 <script src="../assets/site.js"></script>
 </body>
 </html>

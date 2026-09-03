@@ -1,0 +1,5 @@
+Product :: @id.atlas
+    title: Atlas
+    image: ./textures/$id.png
+    label: ${id}_display
+    note: "$$99 special"

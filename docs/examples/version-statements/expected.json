@@ -1,0 +1,51 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 3
+    }
+  },
+  "data": [
+    {
+      "template": "Item",
+      "id": "beacon",
+      "name": "Beacon",
+      "glow": false
+    }
+  ],
+  "overlays": [
+    {
+      "versions": {
+        "min": 1,
+        "max": 1
+      },
+      "data": [
+        {
+          "template": "Item",
+          "id": "beacon",
+          "name": "Beacon",
+          "legacy_tint": 200
+        }
+      ],
+      "removed": []
+    },
+    {
+      "versions": {
+        "min": 2,
+        "max": 2
+      },
+      "data": [
+        {
+          "template": "Item",
+          "id": "beacon",
+          "name": "Beacon",
+          "glow": false,
+          "legacy_tint": 250
+        }
+      ],
+      "removed": []
+    }
+  ]
+}

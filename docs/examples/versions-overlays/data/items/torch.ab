@@ -1,0 +1,3 @@
+Item :: @id.torch
+    name: Torch
+    legacy_tint: 200

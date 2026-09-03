@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Abstract Language</title>
-    <meta name="description" content="Abstract is a small schema-backed language for authoring structured data that compiles into validated JSON or YAML.">
+    <meta name="description" content="Abstract is a small schema-backed language for authoring structured data that compiles into validated JSON, YAML or RAW.">
     <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
@@ -12,22 +12,17 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <div class="site-shell">
-    <header class="topbar">
-        <a class="brand" href="index.html" aria-label="Abstract home">
-            <span class="brand-mark" aria-hidden="true"></span>
-            <span>Abstract</span>
-        </a>
-        <nav class="nav" aria-label="Primary navigation">
-            <a href="learn/index.html">Learn</a>
-            <a href="docs/index.html">Docs</a>
-            <a href="examples/index.html">Examples</a>
-            <a href="reference/grammar.html">Reference</a>
-            <a href="docs/ai.html">AI Guide</a>
-        </nav>
-        <div class="top-actions">
-            <a class="button primary" href="downloads/abstract-windows-x64.exe">Download</a>
-        </div>
-    </header>
+<header class="topbar">
+    <a class="brand" href="index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="learn/index.html">Learn</a>
+        <a href="docs/index.html">Docs</a>
+        <a href="examples/index.html">Examples</a>
+        <a href="reference/grammar.html">Reference</a>
+        <a href="docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
 
     <main id="main">
         <section class="hero">
@@ -35,13 +30,13 @@
                 <div>
                     <p class="eyebrow">Schemas, instances, compiled data</p>
                     <h1>Data that reads like it was meant to be written.</h1>
-                    <p class="lede">Abstract is a compact language for data with rules. You describe the shape once, write instances in a friendly syntax, and compile them into stable JSON or YAML.</p>
+                    <p class="lede">Abstract is a compact language for data with rules. You describe the shape once, write instances in a friendly syntax, and compile them into stable JSON, YAML or RAW.</p>
                     <div class="hero-actions">
                         <a class="button primary" href="learn/index.html">Start learning</a>
                         <a class="button" href="docs/cli.html">Use the CLI</a>
                         <a class="button ghost" href="docs/language.html">Read the language guide</a>
                     </div>
-                    <p class="hero-note">Version 0.2.0 stays intentionally small: enough language to be useful, enough restraint to stay understandable, and now sealed bundles for shipping data inside applications.</p>
+                    <p class="hero-note">Version 1.0.0 is the first stable definition of the language: a normative specification, stable error identifiers, byte-exact output, and one project that carries every version of its data.</p>
                 </div>
                 <div class="world" aria-label="Abstract visual identity">
                     <div class="orbit-label">
@@ -58,20 +53,20 @@
                     <p class="eyebrow">Why it exists</p>
                     <h2>Configuration got too important to stay shapeless.</h2>
                 </div>
-                <p>Most projects begin with a few neat config files. Then rules appear: IDs must be unique, variants must match a list, translated values need the same keys, paths need known extensions. Abstract makes those rules part of the authoring language instead of burying them in memory or review comments.</p>
+                <p>Most projects begin with a few neat config files. Then rules appear: ids must be unique, variants must match a list, translated values need the same keys, paths need known extensions and real dimensions. Abstract makes those rules part of the authoring language instead of burying them in memory or review comments.</p>
             </div>
             <div class="cards">
                 <article class="card">
                     <strong>Write with constraints</strong>
-                    <p>Use <code>text</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>enum</code>, <code>file</code>, <code>image</code>, groups, lists, defaults, and tags to describe what valid data looks like before anyone writes instances.</p>
+                    <p>Nine types &mdash; <code>text</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>enum</code>, <code>file</code>, <code>image</code>, <code>ref</code>, <code>$(Schema)</code> &mdash; plus groups, lists with cardinality, defaults and tags describe what valid data looks like before anyone writes an instance.</p>
                 </article>
                 <article class="card">
                     <strong>Compile before shipping</strong>
-                    <p>The compiler checks every instance against its schema. Typos in field names, bad enum values, missing files, images with the wrong size or lying extensions, clone cycles, and range mistakes fail early, with suggestions.</p>
+                    <p>Every instance is checked against its schema. Typos in field names, bad enum values, missing files, images with the wrong size or a lying extension, clone cycles, duplicate ids and range mistakes all fail early, with an identifier, a position and a suggestion.</p>
                 </article>
                 <article class="card">
-                    <strong>Ship it sealed</strong>
-                    <p>Output is standard JSON, YAML, or RAW for pipelines, and <code>abstract bundle</code> seals compiled data into encrypted, tamper-evident containers a zero-dependency Java runtime opens on Java 8+.</p>
+                    <strong>Carry every version</strong>
+                    <p><code>versions 1..3</code>, <code>@since(n)</code> and <code>@removed(n)</code> let one project describe several releases at once. The compiled document holds the newest version plus overlays for the older ones.</p>
                 </article>
             </div>
         </section>
@@ -82,12 +77,12 @@
                     <p class="eyebrow">The three worlds</p>
                     <h2>A language, a compiler, and a contract.</h2>
                 </div>
-                <p>The site is organized around the three parts you actually touch while working: language design, compiler behavior, and the RAW contract other tools can trust.</p>
+                <p>The site is organised around the three parts you actually touch while working: language design, compiler behaviour, and the compiled-data contract other tools can trust.</p>
             </div>
             <div class="cards">
                 <article class="card">
                     <strong>Language</strong>
-                    <p>The pleasant surface: concise instance headers, dotted paths, tuple tables, tagged objects, wildcard expansion, and copy-by-clone when repetition stops helping.</p>
+                    <p>The pleasant surface: concise instance headers, dotted paths, body blocks, tuple tables, tagged objects, wildcard expansion, and copy-by-clone when repetition stops helping.</p>
                     <ul class="mini-list">
                         <li><a href="docs/language.html">Language guide</a></li>
                         <li><a href="docs/schemas.html">Schema authoring</a></li>
@@ -96,7 +91,7 @@
                 </article>
                 <article class="card">
                     <strong>Compiler</strong>
-                    <p>The part that says no on purpose. It reads <code>.abt</code> and <code>.ab</code>, validates the project (including real image headers), lists templates, and emits JSON, YAML, or RAW.</p>
+                    <p>The part that says no on purpose. It reads <code>.abt</code> and <code>.ab</code>, validates the project including real image headers, lists templates, and emits JSON, YAML or RAW.</p>
                     <ul class="mini-list">
                         <li><a href="docs/cli.html">CLI commands</a></li>
                         <li><a href="docs/types.html">Type reference</a></li>
@@ -105,10 +100,10 @@
                 </article>
                 <article class="card">
                     <strong>Contract</strong>
-                    <p>The output format is a quiet promise: stable keys, native types, ordered fields, and, when data ships inside an application, sealed tamper-evident bundles.</p>
+                    <p>The output format is a quiet promise: a fixed envelope, stable keys, native types, ordered objects, no null, and version overlays a consumer applies by id.</p>
                     <ul class="mini-list">
                         <li><a href="docs/raw.html">Compiled data</a></li>
-                        <li><a href="docs/java.html">Java &amp; bundles</a></li>
+                        <li><a href="docs/versions.html">Versions &amp; overlays</a></li>
                         <li><a href="reference/grammar.html">Syntax reference</a></li>
                     </ul>
                 </article>
@@ -121,19 +116,42 @@
                     <p class="eyebrow">A tiny tour</p>
                     <h2>From schema to JSON in three files.</h2>
                     <p class="lede">Abstract is not trying to replace a programming language. It is the missing middle between free-form config and code: a place where data can be authored with taste, then checked with teeth.</p>
+                    <p>This project is checked in as <code>docs/examples/readme-tour</code>, stored with the exact document it compiles to.</p>
                 </div>
                 <div class="terminal">
                     <div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-<pre><code>schema Product {
-    id: text(1..40)
-    status: enum(draft, active, retired)
-    release_year: int(2000..2100)
+<pre><code>versions 1..2
+
+schema Pack {
+    title: text(1..40)
+}
+
+schema Product {
+    title: text(1..60)
+    status: enum(draft, active, retired) = draft
+    price: float(0..9999)
+    icon: image(png 128x128)
+    pack: ref(Pack)
+    glow: bool @since(2) = false
+    owner {
+        team: text(1..50)
+        contact: text(1..80) @optional
+    }
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
 }
 
 Product :: @id.atlas, @status.active
-    release_year: 2026
+    title: Atlas Search
+    price: 19.5
+    icon: ./textures/$id.png
+    pack: core
+    owner.team: Knowledge Systems
+    capabilities: [#search, #export(availability: alpha)]
 
-abstract compile example JSON true</code></pre>
+abstract compile m-project JSON</code></pre>
                 </div>
             </div>
         </section>
@@ -144,7 +162,7 @@ abstract compile example JSON true</code></pre>
                     <p class="eyebrow">Get it</p>
                     <h2>Download the compiler or build it from source.</h2>
                 </div>
-                <p>The Windows build is included with this site. The Rust source lives beside the docs, so the language can be published as its own repository without carrying application-specific baggage.</p>
+                <p>The Windows build ships with this site. The Rust source lives beside the docs and has no dependencies at all, so the language can be published as its own repository.</p>
             </div>
             <div class="cards">
                 <article class="card">
@@ -158,7 +176,7 @@ abstract compile example JSON true</code></pre>
                 <article class="card">
                     <strong>Build from source</strong>
 <pre><code># Windows
-powershell -File scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 
 # Linux / macOS
 sh scripts/install.sh</code></pre>
@@ -166,17 +184,15 @@ sh scripts/install.sh</code></pre>
                 </article>
                 <article class="card">
                     <strong>Start a project</strong>
-<pre><code>abstract init my-pack
-abstract compile my-pack JSON
-abstract lint my-pack</code></pre>
+<pre><code>abstract init m-project
+abstract compile m-project JSON
+abstract lint m-project</code></pre>
                 </article>
             </div>
         </section>
     </main>
 
-    <footer class="footer">
-        <p>Abstract is a young language. The promise is not that it already does everything. The promise is that the core idea is small enough to understand and strong enough to build on.</p>
-    </footer>
+<footer class="footer"><p>Abstract 1.0 is small on purpose. The promise is not that it does everything, but that everything it does is defined, positioned and reproducible.</p></footer>
 </div>
 <script src="assets/site.js"></script>
 </body>

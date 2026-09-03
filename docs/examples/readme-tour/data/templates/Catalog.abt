@@ -1,0 +1,27 @@
+versions 1..2
+
+schema Pack {
+    title: text(1..40)
+}
+
+schema Product {
+    title: text(1..60)
+    status: enum(draft, active, retired) = draft
+    price: float(0..9999)
+    icon: image(png 128x128)
+    pack: ref(Pack)
+    glow: bool @since(2) = false
+    owner {
+        team: text(1..50)
+        contact: text(1..80) @optional
+    }
+    capabilities[] {
+        id: enum(search, sync, export) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}
+
+logic Product {
+    require .status != "retired" or not .capabilities.id contains "search"
+        else throw "A retired product cannot advertise search."
+}

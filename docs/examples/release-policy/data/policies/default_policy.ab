@@ -1,0 +1,4 @@
+Policy :: @id.default_policy
+    level: guarded
+    reviewers: platform, security
+    window_days: 30

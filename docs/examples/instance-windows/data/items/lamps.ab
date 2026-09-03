@@ -1,0 +1,5 @@
+Item :: @id.lantern @since(2)
+    name: Lantern
+
+Item :: @id.candle @removed(3)
+    name: Candle

@@ -1,0 +1,20 @@
+schema Owner {
+    team: text(1..50)
+    contact: text(1..80)
+}
+
+schema Pack {
+    title: text(1..40)
+}
+
+schema Product {
+    title: text(1..60)
+    replicas: int(1, 3..12)
+    price: float(0..9999)
+    featured: bool
+    status: enum(draft, active, retired)
+    manual: file(txt, pdf)
+    icon: image(png 32x32)
+    pack: ref(Pack)
+    owner: $(Owner)
+}

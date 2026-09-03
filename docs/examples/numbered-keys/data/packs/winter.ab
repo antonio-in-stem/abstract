@@ -1,0 +1,5 @@
+Pack :: @id.winter
+    title: Winter
+    slots.1.mode: fixed
+    slots.1.capacity: 16
+    slots.2.capacity: 8

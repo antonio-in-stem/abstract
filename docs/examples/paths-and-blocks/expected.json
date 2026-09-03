@@ -1,0 +1,26 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Service",
+      "id": "api",
+      "title": "API",
+      "limits": {
+        "soft": 10,
+        "hard": 10
+      },
+      "owner": {
+        "team": "Platform",
+        "contact": "platform@example.com"
+      }
+    }
+  ],
+  "overlays": []
+}

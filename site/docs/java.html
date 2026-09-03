@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Java &amp; Bundles - Abstract</title>
-    <meta name="description" content="Ship Abstract data inside Java applications with sealed, tamper-evident .abx bundles and a zero-dependency runtime.">
+    <title>Java and sealed bundles - Abstract</title>
+    <meta name="description" content="Optional tooling: sealed .abx containers and a zero-dependency Java runtime, including the version axis.">
     <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="topbar">
-    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
     <nav class="nav" aria-label="Primary navigation">
         <a href="../learn/index.html">Learn</a>
         <a href="index.html" aria-current="page">Docs</a>
@@ -26,7 +26,7 @@
     <section class="doc-hero">
         <p class="eyebrow">Java integration</p>
         <h1>Sealed data, typed access, honest security.</h1>
-        <p class="lede">Compile once, seal the result into a .abx bundle, and load it in any JVM from Java 8 up. The authored data never sits as plain text inside your jar, and every modification is detected at load time.</p>
+        <p class="lede">Compile once, seal the result into a .abx container, and load it in any JVM from Java 8 up. The authored data never sits as plain text inside your jar, and every modification is detected at load time.</p>
     </section>
     <div class="doc-shell">
         <aside class="sidebar">
@@ -37,60 +37,54 @@
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
                 <a href="logic.html">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
                 <a href="cli.html">CLI</a>
-                <a href="raw.html">RAW</a>
+                <a href="raw.html">Compiled data</a>
                 <a href="java.html" aria-current="page">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
-            <h2>The pipeline</h2>
-<pre><code>.abt + .ab  ──&gt;  abstract bundle --key "release passphrase"  ──&gt;  data.abx
-                                                                    │
+<div class="callout"><p>Bundles, the Java runtime and the editor extension are <strong>optional tooling</strong>. They ship with the reference implementation, operate on an already-compiled document, and never change compilation semantics. A conforming Abstract implementation is not required to provide any of them.</p></div>
+<h2>The pipeline</h2>
+<pre><code>.abt + .ab  --&gt;  abstract compile  --&gt;  JSON document
+                 abstract bundle --key "release passphrase"  --&gt;  data.abx
+                                                                    |
              AbstractBundle.loadResource(Plugin.class, "/data.abx", key)
-                                                                    │
+                                                                    |
                                                         AbstractData (typed API)</code></pre>
-            <p>The bundle payload is the compiled JSON document encrypted with ChaCha20-Poly1305 (RFC 8439). The 22-byte header (magic, flags, format, nonce, length) is authenticated as associated data, so header tampering, truncation, and encryption-flag downgrades all fail with a clear error.</p>
-
-            <h2>Create a bundle</h2>
-<pre><code>abstract bundle path/to/project --key "my release passphrase" --out stickers.abx
-abstract bundle path/to/project --key hex:8081...9f9f --out stickers.abx
-abstract unbundle stickers.abx --key "my release passphrase"   # inspect
-abstract bundle path/to/project --plain --out debug.abx        # unencrypted, debugging only</code></pre>
-            <p>Passphrases are derived with SHA-256; <code>hex:</code> keys are used verbatim (64 hex digits). Re-bundling identical data still produces fresh ciphertext (per-seal nonces).</p>
-
-            <h2>Load it in Java</h2>
-            <p>The runtime lives in <code>java/</code> in the repository: seven small files, zero dependencies, Java 8 compatible. Copy the package into your project or install it with Maven.</p>
+<p>The bundle payload is the compiled JSON document encrypted with ChaCha20-Poly1305 (RFC 8439). The 22-byte header (magic, flags, format, nonce, length) is authenticated as associated data, so header tampering, truncation and encryption-flag downgrades all fail with a clear error.</p>
+<h2>Create a bundle</h2>
+<pre><code>abstract bundle m-project --key "my release passphrase" --out data.abx
+abstract bundle m-project --key hex:8081...9f9f --out data.abx
+abstract unbundle data.abx --key "my release passphrase"   # inspect
+abstract bundle m-project --plain --out debug.abx          # unencrypted, debugging only</code></pre>
+<p>Passphrases are derived with SHA-256; a <code>hex:</code> key is used verbatim (64 hex digits). A bare 64-character hexadecimal string is a <em>passphrase</em>: only the <code>hex:</code> prefix selects raw key bytes, and the Java runtime derives keys by the same rule. Re-bundling identical data still produces fresh ciphertext, because every seal gets its own nonce.</p>
+<table class="table"><thead><tr><th>Refused</th><th>Why</th></tr></thead><tbody><tr><td><code>--key</code> together with <code>--plain</code></td><td>a supplied key must never be silently discarded, and no command may write an unencrypted container while a key was given</td></tr><tr><td>a flag value beginning with <code>-</code></td><td><code>bundle m-project --key --out x.abx</code> is a usage error, not a container sealed with the passphrase <code>--out</code></td></tr><tr><td><code>--key</code> against a container that declares itself unencrypted</td><td>the refusal must not depend on caller behaviour</td></tr><tr><td>opening a container whose encryption flag was cleared</td><td>fails whether or not the caller supplied a key</td></tr></tbody></table>
+<p><code>unbundle</code> without a key on an unencrypted container is supported.</p>
+<h2>Load it in Java</h2>
+<p>The runtime lives in <code>java/</code> in the repository: a handful of small files, zero dependencies, Java 8 compatible. Copy the package into your project or install it with Maven.</p>
 <pre><code>byte[] key = AbstractKeys.combine(KeyA.PART, KeyB.PART, KeyC.PART);
-AbstractData data = AbstractBundle.loadResource(MyPlugin.class, "/data/stickers.abx", key);
+AbstractData data = AbstractBundle.loadResource(MyApp.class, "/data/stickers.abx", key);
 
 for (AbstractObject sticker : data.byTemplate("Sticker")) {
-    String rarity  = sticker.getString("rarity");
-    long variants  = sticker.getInt("variant_count", 0);
-    boolean shiny  = sticker.getBool("featured", false);
-    String mode    = sticker.getString("slots.1.mode", "generate");
+    String rarity = sticker.getString("rarity");
+    boolean glow  = sticker.getBool("glow", false);
+    String team   = sticker.getString("owner.team", "unknown");
 
-    for (AbstractObject entry : sticker.getObjects("lang_values")) {
+    for (AbstractObject entry : sticker.getObjects("copy")) {
         register(entry.getString("key"), entry.getString("value"));
     }
 }</code></pre>
-            <table class="table">
-                <thead><tr><th>Call</th><th>Returns</th></tr></thead>
-                <tbody>
-                    <tr><td><code>getString(path[, fallback])</code></td><td>text (numbers and booleans stringify)</td></tr>
-                    <tr><td><code>getInt(path[, fallback])</code></td><td><code>long</code></td></tr>
-                    <tr><td><code>getFloat(path[, fallback])</code></td><td><code>double</code></td></tr>
-                    <tr><td><code>getBool(path[, fallback])</code></td><td><code>boolean</code></td></tr>
-                    <tr><td><code>getObject(path)</code> / <code>getObjects(path)</code></td><td>nested object / list of objects</td></tr>
-                    <tr><td><code>getStrings(path)</code> / <code>getList(path)</code></td><td>lists</td></tr>
-                    <tr><td><code>has(path)</code> / <code>raw(path)</code></td><td>presence / raw value</td></tr>
-                    <tr><td><code>data.get(id)</code> / <code>require(id)</code> / <code>byTemplate(name)</code> / <code>all()</code></td><td>collection access</td></tr>
-                </tbody>
-            </table>
-            <p>Paths are dotted (<code>"stats.power"</code>, <code>"slots.1.mode"</code>) and match the compiled JSON exactly.</p>
-
-            <h2>Key handling that survives a decompiler</h2>
-            <p>Never store the passphrase or the final key as one constant. Split it into XOR shares at build time and keep each share in a different class; ProGuard renaming then buries them in anonymous classes.</p>
+<table class="table"><thead><tr><th>Call</th><th>Returns</th></tr></thead><tbody><tr><td><code>getString(path[, fallback])</code></td><td>text (numbers and booleans stringify)</td></tr><tr><td><code>getInt(path[, fallback])</code></td><td><code>long</code></td></tr><tr><td><code>getFloat(path[, fallback])</code></td><td><code>double</code></td></tr><tr><td><code>getBool(path[, fallback])</code></td><td><code>boolean</code></td></tr><tr><td><code>getObject(path)</code> / <code>getObjects(path)</code></td><td>nested object / list of objects</td></tr><tr><td><code>getStrings(path)</code> / <code>getList(path)</code></td><td>lists</td></tr><tr><td><code>has(path)</code> / <code>raw(path)</code></td><td>presence / raw value</td></tr><tr><td><code>data.get(id)</code> / <code>require(id)</code> / <code>byTemplate(name)</code> / <code>all()</code></td><td>collection access</td></tr><tr><td><code>data.forVersion(int)</code></td><td>the document as of that version, with overlays applied</td></tr></tbody></table>
+<p>Paths are dotted (<code>"owner.team"</code>, <code>"slots.1.mode"</code>) and match the compiled JSON exactly. Because there is no null, <code>has(path)</code> is the only absence test you need.</p>
+<h2>Reading an older version</h2>
+<p>A compiled document carries the newest version in <code>data</code> and every earlier difference in <code>overlays</code>. <code>forVersion(int)</code> applies <strong>every</strong> overlay whose range contains the requested version, exactly as the specification prescribes: replace or add by <code>id</code> from the overlay&rsquo;s <code>data</code>, then delete the ids in its <code>removed</code>.</p>
+<pre><code>AbstractData v1 = data.forVersion(1);</code></pre>
+<p>It must not assume that at most one overlay matches a version, and must not assume that every id in an overlay is already present in the base &mdash; an overlay may add an object the base does not carry at all.</p>
+<h2>Key handling that survives a decompiler</h2>
+<p>Never store the passphrase or the final key as one constant. Split it into XOR shares at build time and keep each share in a different class; ProGuard renaming then buries them in anonymous classes.</p>
 <pre><code>// Build time: run once, paste the printed arrays into separate classes.
 byte[] key = AbstractKeys.fromPassphrase("my release passphrase");
 for (byte[] share : AbstractKeys.split(key, 3)) {
@@ -99,32 +93,24 @@ for (byte[] share : AbstractKeys.split(key, 3)) {
 
 // Runtime: any single share reveals nothing.
 byte[] key = AbstractKeys.combine(KeyA.PART, KeyB.PART, KeyC.PART);</code></pre>
-            <p>The repository ships a ready <code>proguard-rules.pro</code>: it keeps the runtime API callable, renames everything else, enables aggressive optimization passes, and strips debug attributes. For string encryption and control-flow obfuscation on top, layer a commercial obfuscator (DexGuard, Zelix, Allatori).</p>
-
-            <h2>The honest threat model</h2>
-            <p>Read this before relying on bundles. Sealed bundles give you:</p>
-            <ul>
-                <li><strong>Confidentiality at rest:</strong> unzipping the jar or running <code>strings</code> reveals nothing.</li>
-                <li><strong>Tamper evidence:</strong> a single flipped bit fails authentication loudly.</li>
-                <li><strong>Downgrade resistance:</strong> a loader holding a key refuses plain bundles, so stripping the encryption flag does not work.</li>
-            </ul>
-            <p>They cannot give you:</p>
-            <ul>
-                <li><strong>Protection from full reverse engineering.</strong> The key ships with the application; a determined attacker with a debugger will eventually recover it. Obfuscation raises the cost from minutes to days. It does not make it infinite. No client-side system does.</li>
-                <li><strong>Licensing.</strong> Per-customer gating belongs on a server you control.</li>
-            </ul>
-            <div class="callout"><p>Design rule: bundle data you would be annoyed to see extracted, not data that would be catastrophic. Catastrophic data belongs on a server. For online applications, fetch one XOR share from your backend at startup so the jar alone cannot decrypt anything offline.</p></div>
-
-            <h2>Verified interop</h2>
-            <p>Both sides implement the same RFC 8439 vectors in their test suites: <code>cargo test</code> runs them in Rust, the JUnit suite and the dependency-free <code>Selftest</code> runner replay them in Java, and the cross-language fixture is a real bundle produced by the CLI (including non-ASCII content). If a JVM can run your application, it can open your bundles.</p>
+<p>The repository ships a ready <code>proguard-rules.pro</code>: it keeps the runtime API callable, renames everything else, enables aggressive optimisation passes and strips debug attributes. For string encryption and control-flow obfuscation on top, layer a commercial obfuscator.</p>
+<h2>The honest threat model</h2>
+<p>Read this before relying on bundles. Sealed bundles give you:</p>
+<ul><li><strong>Confidentiality at rest.</strong> Unzipping the jar or running <code>strings</code> reveals nothing.</li><li><strong>Tamper evidence.</strong> A single flipped bit fails authentication loudly.</li><li><strong>Downgrade resistance.</strong> A loader holding a key refuses plain bundles, so stripping the encryption flag does not work.</li></ul>
+<p>They cannot give you:</p>
+<ul><li><strong>Protection from full reverse engineering.</strong> The key ships with the application; a determined attacker with a debugger will eventually recover it. Obfuscation raises the cost from minutes to days. It does not make it infinite. No client-side system does.</li><li><strong>Licensing.</strong> Per-customer gating belongs on a server you control.</li></ul>
+<div class="callout"><p>Design rule: bundle data you would be annoyed to see extracted, not data that would be catastrophic. Catastrophic data belongs on a server. For online applications, fetch one XOR share from your backend at startup so the jar alone cannot decrypt anything offline.</p></div>
+<h2>Robustness requirements</h2>
+<p>The runtime is held to the same &ldquo;never crash on input&rdquo; rule as the compiler. Its JSON reader enforces a nesting-depth limit and reports it as the runtime&rsquo;s own exception type rather than <code>StackOverflowError</code>; it rejects a leading <code>+</code>, leading zeros, duplicate object keys and lone surrogates; every parsing failure, including a malformed <code>\u</code> escape, surfaces as the runtime&rsquo;s own exception type; and <code>fromHex(null)</code> or a non-hexadecimal digit never escapes as <code>NullPointerException</code> or <code>NumberFormatException</code>.</p>
+<h2>Verified interop</h2>
+<p>Both sides implement the same RFC 8439 vectors in their test suites: <code>cargo test</code> runs them in Rust, and the JUnit suite plus a dependency-free <code>Selftest</code> runner replay them in Java against a real bundle produced by the CLI, including non-ASCII content.</p>
 <pre><code>cd java
 javac -d out $(find src -name '*.java')
-java -cp out com.abstractlang.runtime.Selftest my-bundle.abx "my passphrase"
-# selftest: all RFC 8439 vectors and unit checks passed
-# selftest: opened bundle with 41 instance(s)</code></pre>
+java -cp out com.abstractlang.runtime.Selftest my-bundle.abx "my passphrase"</code></pre>
         </article>
     </div>
 </main>
+
 <footer class="footer"><p>Full hardening checklist: <code>java/SECURITY.md</code> in the repository.</p></footer>
 <script src="../assets/site.js"></script>
 </body>

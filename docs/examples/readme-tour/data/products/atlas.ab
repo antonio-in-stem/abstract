@@ -1,0 +1,7 @@
+Product :: @id.atlas, @status.active
+    title: Atlas Search
+    price: 19.5
+    icon: ./textures/$id.png
+    pack: core
+    owner.team: Knowledge Systems
+    capabilities: [#search, #export(availability: alpha)]

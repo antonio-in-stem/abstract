@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Types - Abstract</title>
-    <meta name="description" content="Every Abstract value type: text, int, float, bool, enum, file, image, references, groups, and lists.">
+    <meta name="description" content="All nine Abstract types with their constraint syntax, output kind and validation rules.">
     <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
 <canvas class="starfield" data-starfield aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="topbar">
-    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
     <nav class="nav" aria-label="Primary navigation">
         <a href="../learn/index.html">Learn</a>
         <a href="index.html" aria-current="page">Docs</a>
@@ -37,110 +37,109 @@
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html">Instances</a>
                 <a href="logic.html">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
                 <a href="cli.html">CLI</a>
-                <a href="raw.html">RAW</a>
+                <a href="raw.html">Compiled data</a>
                 <a href="java.html">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
-            <h2>The type table</h2>
-            <table class="table">
-                <thead><tr><th>Type</th><th>Constraint syntax</th><th>Output</th></tr></thead>
-                <tbody>
-                    <tr><td><code>text</code></td><td><code>text</code>, <code>text(1..80)</code>, <code>text(2, 4..8)</code></td><td>JSON string</td></tr>
-                    <tr><td><code>int</code></td><td><code>int</code>, <code>int(0..99)</code>, <code>int(0, 2..15)</code></td><td>JSON number (integer)</td></tr>
-                    <tr><td><code>float</code></td><td><code>float</code>, <code>float(0..1)</code>, <code>float(0.5, 1.5..2.5)</code></td><td>JSON number (decimal)</td></tr>
-                    <tr><td><code>bool</code></td><td><code>bool</code></td><td>JSON true / false</td></tr>
-                    <tr><td><code>enum</code></td><td><code>enum(draft, active, retired)</code></td><td>JSON string (normalized)</td></tr>
-                    <tr><td><code>file</code></td><td><code>file(png, jpg)</code></td><td>JSON string (path, existence checked)</td></tr>
-                    <tr><td><code>image</code></td><td><code>image(png 128x128, jpg)</code></td><td>JSON string (path, header checked)</td></tr>
-                    <tr><td><code>$(Name)</code></td><td><code>owner: $(Owner)</code></td><td>JSON object validated by that schema</td></tr>
-                    <tr><td>group</td><td><code>stats { ... }</code></td><td>JSON object (inline shape)</td></tr>
-                </tbody>
-            </table>
-            <p>Every type accepts <code>[]</code> for lists, <code>= value</code> for defaults, and <code>@optional</code>. Constraint parentheses are optional for <code>text</code>, <code>int</code>, and <code>float</code>.</p>
-
-            <h2>text</h2>
-            <p>Ranges count characters (not bytes), so accented and non-Latin text measures the way a human would count it.</p>
-<pre><code>name: text(1..80)
-short_code: text(2, 4..8)     // exactly 2, or 4 to 8 characters
-notes: text @optional         // any length</code></pre>
-            <p>Unquoted values become text when they are not numbers or booleans. Quote anything with commas, deliberate casing, or characters that would otherwise be parsed: <code>desc: "Hello, world"</code>. Strings support <code>\"</code>, <code>\\</code>, <code>\n</code>, <code>\t</code>, and <code>\r</code> escapes.</p>
-            <div class="callout"><p>A value like <code>1.21.5</code> stays text automatically (two dots is not a number), but <code>1.5</code> is a float. When a text field receives a number, the compiler asks you to quote it instead of guessing.</p></div>
-
-            <h2>int</h2>
-            <p>Whole numbers with exact values and inclusive ranges, in any mix:</p>
-<pre><code>variant_count: int(0, 2..15) = 0
-release_year: int(2000..2100)
-priority: int               // any integer</code></pre>
-
-            <h2>float</h2>
-            <p>Decimal numbers. Instances write plain literals; integers are accepted and widened.</p>
-<pre><code>price: float(0..9999) = 0.0
-opacity: float(0..1)
-scale: float = 1.0</code></pre>
-<pre><code>Item :: @id.coin
-    price: 9.5
-    opacity: 0.85</code></pre>
-            <p>The compiled output keeps them as numbers: <code>"price": 9.5</code>. Scientific notation (<code>2.5e3</code>) is accepted; <code>inf</code> and <code>nan</code> are not values.</p>
-
-            <h2>bool</h2>
-            <p><code>true</code> and <code>false</code> are real booleans in the output. Header tags have a shorthand: a bare <code>@flag</code> means <code>true</code>.</p>
-<pre><code>tradable: bool = true
-featured: bool</code></pre>
-<pre><code>Item :: @id.star, @featured        // featured: true
-    tradable: false</code></pre>
-
-            <h2>enum</h2>
-            <p>A closed vocabulary. Values normalize to lowercase snake case, so <code>Legendary</code>, <code>legendary</code>, and <code>LEGENDARY</code> are the same member. Unknown values fail with a suggestion.</p>
-<pre><code>rarity: enum(common, rare, epic, legendary)
-flags[]: enum(hat_overrides_helmet, hat_has_variations) @optional</code></pre>
-            <p>List fields accept wildcard members that expand against the vocabulary:</p>
-<pre><code>flags: hat_*      // becomes every enum member starting with hat_</code></pre>
-
-            <h2>file</h2>
-            <p>A path with an approved extension. When compiling from disk, the file must exist. Relative paths resolve under the project <code>assets/</code> folder; paths that already start with <code>./assets/</code> resolve from the project root.</p>
-<pre><code>texture: file(png)
-document: file(pdf, md)</code></pre>
-
-            <h2>image</h2>
-            <p><code>image(...)</code> is <code>file(...)</code> plus real media validation. The compiler opens the file and reads only the header bytes (26 bytes for a PNG, a handful of segment headers for a JPG) to learn the true format and dimensions. Pixels are never decoded, so validating hundreds of textures costs almost nothing.</p>
-<pre><code>icon: image(png 128x128)                  // exactly 128x128 png
-hero: image(png 1920x1080, jpg 1920x1080) // either container
-thumb: image(png 64x*)                    // fixed width, any height
-art: image(png, jpg, gif, bmp, webp)      // any size, checked signature</code></pre>
-            <p>Three distinct failures are caught at compile time:</p>
-            <ul>
-                <li><strong>Wrong extension:</strong> the path extension is not one of the declared formats.</li>
-                <li><strong>Lying content:</strong> the file is named <code>.png</code> but its bytes are GIF data (a re-exported or renamed asset). The error names both formats.</li>
-                <li><strong>Wrong size:</strong> the header dimensions do not match any declared alternative. The error shows the actual size.</li>
-            </ul>
-            <p>Supported containers: PNG, JPG, GIF, BMP, and WebP (lossy, lossless, and extended). Use <code>--skip-assets</code> to compile on machines that do not have the binary assets checked out.</p>
-
-            <h2>References and groups</h2>
-            <p><code>$(Name)</code> validates a nested object against another schema; groups declare the shape inline. Both emit objects ordered by their schema fields.</p>
-<pre><code>schema Slot {
-    mode: enum(generate, custom) @tag
-    distribution[]: file(png) @optional
+<h2>The type table</h2>
+<table class="table"><thead><tr><th>Type</th><th>Constraint syntax</th><th>Output</th></tr></thead><tbody><tr><td><code>text</code></td><td><code>text</code>, <code>text(1..80)</code>, <code>text(2, 4..8)</code></td><td>JSON string</td></tr><tr><td><code>int</code></td><td><code>int</code>, <code>int(0..99)</code>, <code>int(1, 3..12)</code></td><td>JSON number, no fractional part</td></tr><tr><td><code>float</code></td><td><code>float</code>, <code>float(0..1)</code>, <code>float(0.5, 1.5..2.5)</code></td><td>JSON number, always with a fractional part or an exponent</td></tr><tr><td><code>bool</code></td><td><code>bool</code></td><td>JSON true / false</td></tr><tr><td><code>enum</code></td><td><code>enum(draft, active, retired)</code></td><td>JSON string, normalised</td></tr><tr><td><code>file</code></td><td><code>file(png, jpg)</code></td><td>JSON string; path, extension and existence checked</td></tr><tr><td><code>image</code></td><td><code>image(png 128x128, jpg)</code></td><td>JSON string; path, header and dimensions checked</td></tr><tr><td><code>ref</code></td><td><code>ref(Pack)</code></td><td>JSON string; the referenced instance&rsquo;s id</td></tr><tr><td><code>$(Name)</code></td><td><code>owner: $(Owner)</code></td><td>JSON object validated by that schema</td></tr><tr><td>group</td><td><code>owner { ... }</code></td><td>JSON object, shape declared inline</td></tr></tbody></table>
+<h2>One schema using all nine</h2>
+<p>This is <code>docs/examples/types-tour</code>, stored with the document it compiles to.</p>
+<pre><code>schema Owner {
+    team: text(1..50)
+    contact: text(1..80)
 }
 
-schema Sticker {
-    slots {
-        1: $(Slot)
-        2: $(Slot) @optional
+schema Pack {
+    title: text(1..40)
+}
+
+schema Product {
+    title: text(1..60)
+    replicas: int(1, 3..12)
+    price: float(0..9999)
+    featured: bool
+    status: enum(draft, active, retired)
+    manual: file(txt, pdf)
+    icon: image(png 32x32)
+    pack: ref(Pack)
+    owner: $(Owner)
+}</code></pre>
+<pre><code>Product :: @id.atlas, @status.Active
+    title: Atlas Search
+    replicas: 3
+    price: 19.5
+    featured: true
+    manual: docs/atlas.txt
+    icon: ./icons/atlas.png
+    pack: core
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com</code></pre>
+<pre><code>{
+  "template": "Product",
+  "id": "atlas",
+  "title": "Atlas Search",
+  "replicas": 3,
+  "price": 19.5,
+  "featured": true,
+  "status": "active",
+  "manual": "docs/atlas.txt",
+  "icon": "./icons/atlas.png",
+  "pack": "core",
+  "owner": {
+    "team": "Knowledge Systems",
+    "contact": "systems@example.com"
+  }
+}</code></pre>
+<p>Note <code>@status.Active</code> compiling to <code>"active"</code>: an enum value is normalised, so case and <code>-</code>/<code>_</code> differences in the source disappear. Note also that <code>owner</code> appears last because that is where the schema declares it, not because it was written last.</p>
+<h2>Ranges</h2>
+<table class="table"><thead><tr><th>Written</th><th>Meaning</th></tr></thead><tbody><tr><td><code>int(7)</code></td><td>exactly 7</td></tr><tr><td><code>int(2..15)</code></td><td>a closed interval</td></tr><tr><td><code>int(1, 3..12)</code></td><td>satisfied by at least one part &mdash; 1, 3 and 12 pass, 2 does not</td></tr><tr><td><code>int(5..)</code>, <code>int(..5)</code></td><td>E305: both bounds are required</td></tr><tr><td><code>int(10..5)</code></td><td>E305: reversed, rejected at the schema, not at some later instance</td></tr><tr><td><code>text(-5..-1)</code></td><td>E318: unsatisfiable</td></tr></tbody></table>
+<p>A <code>text</code> range counts <strong>Unicode scalar values</strong>, not bytes and not grapheme clusters: an emoji with a skin-tone modifier counts as 2.</p>
+<h2>Numbers do not substitute for one another</h2>
+<pre><code>replicas: 3            // int field: fine
+replicas: 3.0          // E412 - a float literal is not an int value
+price: 19.5            // float field: fine
+count: "5"             // E412 - quoting never coerces, for any numeric type
+version_text: 1.21.5   // on a text field: the string "1.21.5"; two dots is not a number</code></pre>
+<p>Write every <code>float</code> value with a fractional part. A float always renders with one &mdash; <code>3</code> becomes <code>3.0</code> &mdash; so writing it that way in the source keeps the source and the output reading alike.</p>
+<h2>Assets: <code>file</code> and <code>image</code></h2>
+<p>Both name assets under <code>&lt;project root&gt;/assets</code>. There is one resolution rule: strip one leading <code>./</code>, then resolve relative to <code>assets/</code>.</p>
+<table class="table"><thead><tr><th>Written</th><th>Resolves to</th></tr></thead><tbody><tr><td><code>./textures/a.png</code></td><td><code>assets/textures/a.png</code></td></tr><tr><td><code>textures/a.png</code></td><td><code>assets/textures/a.png</code></td></tr><tr><td><code>./assets/textures/a.png</code></td><td><code>assets/assets/textures/a.png</code> &mdash; the prefix is not special-cased</td></tr><tr><td><code>../secret.png</code>, <code>/etc/x</code>, <code>C:\x</code></td><td>E424</td></tr></tbody></table>
+<p><code>file</code> checks the extension and, unless <code>--skip-assets</code>, that the file exists. It never inspects contents. <code>image</code> additionally reads a bounded header prefix &mdash; at most 64 KiB, never decoding pixels &mdash; to confirm the real format and the dimensions.</p>
+<pre><code>schema Sticker {
+    icon: image(png 128x128)
+    hero: image(png 1920x1080, jpg 1920x1080) @optional
+    wide: image(png 1024x*) @optional
+}</code></pre>
+<table class="table"><thead><tr><th>Check</th><th>Error</th></tr></thead><tbody><tr><td>extension not declared by the field</td><td>E420</td></tr><tr><td>file missing on disk</td><td>E421</td></tr><tr><td>content does not match the extension (a GIF renamed <code>.png</code>)</td><td>E422</td></tr><tr><td>dimensions match no declared alternative</td><td>E423</td></tr></tbody></table>
+<p>Supported formats are <code>png</code>, <code>jpg</code>, <code>gif</code>, <code>bmp</code> and <code>webp</code>; <code>jpeg</code> canonicalises to <code>jpg</code>, so <code>file(jpg, jpeg)</code> is E319 and every diagnostic spells it <code>jpg</code>. <code>*</code> on either side of a size token means &ldquo;any&rdquo;.</p>
+<div class="callout"><p><code>--skip-assets</code> skips exactly E421, E422 and E423. It never skips the extension check, the path-confinement check, or any type, range, enum, reference, required-field or logic check &mdash; and the compiled bytes are identical with and without it.</p></div>
+<h2>References between instances</h2>
+<pre><code>schema Sticker { pack: ref(Pack) }</code></pre>
+<pre><code>Sticker :: @id.dragon
+    pack: winter_2026</code></pre>
+<pre><code>{ "template": "Sticker", "id": "dragon", "pack": "winter_2026" }</code></pre>
+<p>The value is the <em>id</em> of another instance, normalised like every id. The target must exist (E431), must use the named schema (E432), and must exist in the version being compiled. The referenced object is never inlined. A list of references is written <code>refs[]: ref(Pack)</code>. Wildcards do not apply to <code>ref</code> fields.</p>
+<h2>Nested objects</h2>
+<p>Use <code>$(Schema)</code> when the same shape appears in more than one schema, and an inline group when the shape exists only here. They validate identically; the difference is reuse and whether a <code>logic</code> block can attach (only a named schema can have one).</p>
+<pre><code>schema Product {
+    owner: $(Owner)        // reusable, may have its own logic block
+    limits {               // inline, exists only here
+        soft: int(0..100)
+        hard: int(0..100)
     }
 }</code></pre>
-
-            <h2>Strictness</h2>
-            <p>Instances may only assign fields the schema declares. A typo fails with the closest declared name:</p>
-<pre><code>stickers/typo.ab: Unknown field 'rarty' at Sticker. Did you mean 'rarity'?
-Declared fields: id, rarity, origin, ...</code></pre>
-            <p>Pass <code>--allow-unknown</code> to the CLI (or set <code>allow_unknown_fields</code> in the library) if you need the lenient behavior during a migration.</p>
+<p>A nested object carries no <code>template</code> and no <code>id</code>: those belong to root objects. Inside a group, <code>id</code> and <code>template</code> are therefore ordinary field names, which is why <code>id: enum(...) @tag</code> is the usual spelling of a keyed list.</p>
         </article>
     </div>
 </main>
-<footer class="footer"><p>Types define shape; <a href="logic.html">logic blocks</a> define relationships.</p></footer>
+
+<footer class="footer"><p>The normative text is <code>docs/SPEC.md</code>; these pages explain it.</p></footer>
 <script src="../assets/site.js"></script>
 </body>
 </html>
