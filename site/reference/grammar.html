@@ -40,7 +40,9 @@
         <article class="doc-content">
             <h2>Comments</h2>
 <pre><code>// This is a comment.
-name: "http://example.test" // comments do not split quoted strings</code></pre>
+name: "http://example.test" // comments do not split quoted strings
+link: https://example.test  // unquoted URLs survive: // starts a comment
+                            // only at line start or after whitespace</code></pre>
 
             <h2>Schema blocks</h2>
 <pre><code>schema Name {
@@ -55,10 +57,13 @@ name: "http://example.test" // comments do not split quoted strings</code></pre>
 }</code></pre>
 
             <h2>Types</h2>
-<pre><code>text(1..40)
-int(0, 2..15)
+<pre><code>text            text(1..40)
+int             int(0, 2..15)
+float           float(0..1)       float(0.5, 1.5..2.5)
+bool
 enum(draft, active, retired)
 file(png, jpg, webp)
+image(png)      image(png 128x128, jpg)      image(png 64x*)
 $(OtherSchema)</code></pre>
 
             <h2>Modifiers</h2>
@@ -73,18 +78,23 @@ $(OtherSchema)</code></pre>
             </table>
 
             <h2>Instance blocks</h2>
-<pre><code>Template :: @field.value, @other.value
+<pre><code>Template :: @field.value, @other.value, @boolean_flag
     field: value
     nested.field: value</code></pre>
+            <p>A bare <code>@flag</code> header tag assigns <code>true</code>.</p>
 
             <h2>Values</h2>
-<pre><code>bare_word
-"quoted string"
-123
-[one, two, three]
-{id: "inline", weight: 2}
+<pre><code>bare_word                 // text
+"quoted string"           // text; supports \" \\ \n \t \r
+123                       // int
+9.5                       // float (multi-dot values like 1.21.5 stay text)
+true / false              // bool
+[one, two, three]         // list; may span lines while brackets are open
 #tag
-#tag(field: value)</code></pre>
+#tag(field: value)
+./art/{hero,thumb}.png    // brace pattern expands to a list of paths
+flags: hat_*              // enum wildcard expands against the vocabulary
+./sets/$id/icon.png       // $field / ${field} interpolation; $$ is a literal $</code></pre>
 
             <h2>Tuple assignment</h2>
 <pre><code>(field_a, field_b): (value_a, value_b)
@@ -94,7 +104,9 @@ lang(key, value): (en_us, Hello), (es_es, Hola)</code></pre>
 <pre><code>object.{first, second}: value</code></pre>
 
             <h2>Clone overlay</h2>
-<pre><code>&base_id.*
+<pre><code>&base_id.*            // full clone
+&base_id.stats        // partial clone: one subtree
+&theme_id.*           // multiple clones merge in order; later wins
 
 Template :: @id.new_id
     field: override</code></pre>
@@ -102,11 +114,19 @@ Template :: @id.new_id
             <h2>Logic blocks</h2>
 <pre><code>logic Template {
     derive .computed_field = value
+    derive? .wave = 1                 // only when missing
 
     if .field == "value" {
         require .other_field exists
             else throw "Message for the author."
+    } else if .field == "other" {
+        derive .mode = alternate
+    } else {
+        derive .mode = fallback
     }
+
+    require not .flags contains "banned"
+        else throw "Banned values are rejected."
 
     for item in .items {
         require item.value exists
@@ -116,13 +136,16 @@ Template :: @id.new_id
             <table class="table">
                 <thead><tr><th>Syntax</th><th>Meaning</th></tr></thead>
                 <tbody>
-                    <tr><td><code>if condition { ... }</code></td><td>Runs nested rules when a condition is true.</td></tr>
-                    <tr><td><code>derive .path = value</code></td><td>Writes a derived value onto the current instance.</td></tr>
+                    <tr><td><code>if condition { ... } else if ... { } else { }</code></td><td>Branches; both <code>}</code> + <code>else {</code> and <code>} else {</code> styles parse.</td></tr>
+                    <tr><td><code>derive .path = value</code></td><td>Writes a derived value onto the current instance (interpolates <code>$vars</code>).</td></tr>
+                    <tr><td><code>derive? .path = value</code></td><td>Writes only when the field is missing; authored values win.</td></tr>
                     <tr><td><code>require condition else throw "message"</code></td><td>Fails compilation when the condition is false.</td></tr>
-                    <tr><td><code>for name in .path { ... }</code></td><td>Loops over array values and binds a variable.</td></tr>
-                    <tr><td><code>exists</code></td><td>Checks that a path resolves to at least one value.</td></tr>
-                    <tr><td><code>contains</code></td><td>Checks array or projected path membership.</td></tr>
-                    <tr><td><code>== != &gt; &gt;= &lt; &lt;=</code></td><td>Compares strings or integers.</td></tr>
+                    <tr><td><code>for name in .path { ... }</code> / <code>for $v in [a, b] { ... }</code></td><td>Loops over arrays or literal lists.</td></tr>
+                    <tr><td><code>exists</code></td><td>Path resolves to a value; file paths check the real filesystem.</td></tr>
+                    <tr><td><code>contains</code></td><td>Array or projected path membership.</td></tr>
+                    <tr><td><code>length(.path)</code></td><td>Counts array items or projected results.</td></tr>
+                    <tr><td><code>== != &gt; &gt;= &lt; &lt;=</code></td><td>Compares text, ints, floats, and booleans.</td></tr>
+                    <tr><td><code>not</code> / <code>!</code></td><td>Negates the condition that follows.</td></tr>
                     <tr><td><code>and or &amp;&amp; ||</code></td><td>Combines conditions.</td></tr>
                 </tbody>
             </table>

@@ -50,7 +50,8 @@
             </ul>
 
             <h2 id="editing">Editing rules</h2>
-            <p>Do not guess enum values. They are declared in the schema. Do not invent nested fields unless the schema allows them. If a value needs spaces, quote it. If several values are mostly the same, prefer cloning over copy-pasting a full instance.</p>
+            <p>Do not guess enum values. They are declared in the schema. Do not invent fields: the compiler rejects unknown fields with a suggestion, so a typo will fail the build. If a value needs commas or deliberate casing, quote it. If several values are mostly the same, prefer cloning (<code>&amp;id.*</code>, <code>&amp;id.field</code>) over copy-pasting a full instance.</p>
+            <p>Respect value types: <code>9.5</code> compiles to a float, <code>true</code> to a boolean, <code>1.21.5</code> stays text. <code>image(...)</code> fields are validated against the real file header, so point them at actual assets or compile with <code>--skip-assets</code>.</p>
 
             <h2 id="generation">Generation checklist</h2>
             <ol>
@@ -74,7 +75,7 @@ If lint passes, run:
 Summarize changed instances and any schema assumptions.</code></pre>
 
             <h2 id="limits">Limits to respect</h2>
-            <p>Logic blocks can derive values and evaluate validation rules. Keep domain-specific derivations inside the relevant <code>.abt</code> template, not in external tooling. If you see a mismatch between source and output, regenerate from source instead of editing the compiled JSON or YAML by hand.</p>
+            <p>Logic blocks can derive values (including <code>derive?</code> for defaults the author may override), branch with <code>if / else if / else</code>, negate with <code>not</code>, and loop. Keep domain-specific derivations inside the relevant <code>.abt</code> template, not in external tooling. If you see a mismatch between source and output, regenerate from source instead of editing the compiled JSON or YAML by hand. Never commit bundle keys; <code>abstract bundle</code> keys belong in release tooling, not in source.</p>
 
             <div class="callout"><p>The good AI workflow is simple: read schema, edit source, lint, compile, explain. Anything more clever should earn its keep.</p></div>
         </article>

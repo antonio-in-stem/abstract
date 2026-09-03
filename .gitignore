@@ -1,5 +1,5 @@
-﻿node_modules/
 target/
+node_modules/
 build/
 dist/
 .gradle/
@@ -13,3 +13,5 @@ __pycache__/
 *.db-wal
 .DS_Store
 Thumbs.db
+.local-references/
+/site/qa-*.png

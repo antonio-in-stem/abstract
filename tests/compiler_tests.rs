@@ -824,3 +824,844 @@ fn unique_temp_project(name: &str) -> PathBuf {
     let _ = fs::remove_dir_all(&path);
     path
 }
+
+// ---------------------------------------------------------------------------
+// Parser robustness (v0.2 audit fixes)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn values_with_double_colons_and_urls_are_not_misparsed() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            link: text(1..120)
+            window: text(1..40)
+            note: text(1..80)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/site.ab",
+        r#"
+        Thing :: @id.site
+            link: https://example.com/path
+            window: 12::30
+            note: "namespaced::value stays text"
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("URLs and :: values must not be parsed as headers or comments");
+    let json = compiled.to_json_string();
+
+    assert!(json.contains("https://example.com/path"));
+    assert!(json.contains("12::30"));
+    assert!(json.contains("namespaced::value stays text"));
+}
+
+#[test]
+fn comments_require_whitespace_before_the_slashes() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            path: text(1..80)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/one.ab",
+        "Thing :: @id.one\n    path: a//b // this part is a comment\n",
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("inline // after non-space must stay in the value");
+    let json = compiled.to_json_string();
+
+    assert!(json.contains("\"a//b\""));
+    assert!(!json.contains("this part is a comment"));
+}
+
+#[test]
+fn multiple_clones_merge_in_order() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            name: text(1..40) @optional
+            color: enum(red, blue, green) @optional
+            size: enum(small, large) @optional
+        }
+        "#,
+    );
+    let base = SourceFile::new(
+        "things/base.ab",
+        r#"
+        Thing :: @id.base, @color.red
+            name: Base
+        "#,
+    );
+    let style = SourceFile::new(
+        "things/style.ab",
+        r#"
+        Thing :: @id.style, @color.blue, @size.large
+        "#,
+    );
+    let combined = SourceFile::new(
+        "things/combined.ab",
+        r#"
+        &base.*
+        &style.*
+
+        Thing :: @id.combined
+        "#,
+    );
+
+    let compiled = compile_sources(
+        vec![template, base, style, combined],
+        CompileOptions::default(),
+    )
+    .expect("multiple clones should merge instead of dropping earlier ones");
+    let json = compiled.to_json_string();
+
+    // From base (not overridden by style), from style (later clone wins).
+    let combined_output = json.split("\"combined\"").nth(1).expect("combined instance");
+    assert!(combined_output.contains("\"name\": \"Base\""));
+    assert!(combined_output.contains("\"color\": \"blue\""));
+    assert!(combined_output.contains("\"size\": \"large\""));
+}
+
+#[test]
+fn partial_clones_copy_a_single_subtree() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            name: text(1..40)
+            stats {
+                power: int(0..100) = 0
+                agility: int(0..100) = 0
+            }
+        }
+        "#,
+    );
+    let source = SourceFile::new(
+        "things/hero.ab",
+        r#"
+        Thing :: @id.hero
+            name: Hero
+            stats.power: 90
+            stats.agility: 70
+        "#,
+    );
+    let borrower = SourceFile::new(
+        "things/sidekick.ab",
+        r#"
+        &hero.stats
+
+        Thing :: @id.sidekick
+            name: Sidekick
+            stats.agility: 40
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, source, borrower], CompileOptions::default())
+        .expect("partial clone should copy just the stats subtree");
+    let json = compiled.to_json_string();
+    let sidekick = json.split("\"sidekick\"").nth(1).expect("sidekick output");
+
+    assert!(sidekick.contains("\"power\": 90"));
+    assert!(sidekick.contains("\"agility\": 40"));
+    assert!(sidekick.contains("\"name\": \"Sidekick\""));
+}
+
+#[test]
+fn unknown_fields_are_rejected_with_a_suggestion() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            rarity: enum(rare, epic) = rare
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/typo.ab",
+        r#"
+        Thing :: @id.typo
+            rarty: epic
+        "#,
+    );
+
+    let error = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect_err("misspelled fields must fail in strict mode");
+
+    assert!(error.to_string().contains("Unknown field 'rarty'"));
+    assert!(error.to_string().contains("Did you mean 'rarity'?"));
+}
+
+#[test]
+fn unknown_fields_can_be_allowed_explicitly() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/extra.ab",
+        r#"
+        Thing :: @id.extra
+            annotation: kept
+        "#,
+    );
+
+    let compiled = compile_sources(
+        vec![template, instance],
+        CompileOptions {
+            allow_unknown_fields: true,
+            ..CompileOptions::default()
+        },
+    )
+    .expect("allow_unknown_fields should accept undeclared fields");
+    assert!(compiled.to_json_string().contains("\"annotation\": \"kept\""));
+}
+
+#[test]
+fn duplicate_instance_ids_are_rejected() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        "schema Thing {\n id: text(1..40)\n}\n",
+    );
+    let first = SourceFile::new("things/a.ab", "Thing :: @id.same\n");
+    let second = SourceFile::new("things/b.ab", "Thing :: @id.same\n");
+
+    let error = compile_sources(vec![template, first, second], CompileOptions::default())
+        .expect_err("duplicate ids must fail");
+    assert!(error.to_string().contains("Duplicate instance id 'same'"));
+    assert!(error.to_string().contains("things/a.ab"));
+}
+
+#[test]
+fn duplicate_schema_names_are_rejected() {
+    let first = SourceFile::new(
+        "templates/A.abt",
+        "schema Thing {\n id: text(1..40)\n}\n",
+    );
+    let second = SourceFile::new(
+        "templates/B.abt",
+        "schema Thing {\n id: text(1..40)\n}\n",
+    );
+
+    let error = compile_sources(vec![first, second], CompileOptions::default())
+        .expect_err("duplicate schemas must fail");
+    assert!(error.to_string().contains("Duplicate schema 'Thing'"));
+}
+
+#[test]
+fn multiline_arrays_do_not_need_trailing_commas() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            tags[]: enum(core, public, internal)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/multi.ab",
+        "Thing :: @id.multi\n    tags: [\n        core,\n        public\n    ]\n",
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("open brackets should continue statements across lines");
+    assert!(compiled
+        .to_raw_string()
+        .contains("tags: [\"core\", \"public\"]"));
+}
+
+#[test]
+fn quoted_strings_with_braces_are_never_expanded() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            desc: text(1..120)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/braces.ab",
+        r#"
+        Thing :: @id.braces
+            desc: "use {placeholder}. literally"
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("quoted braces must stay literal");
+    assert!(compiled
+        .to_json_string()
+        .contains("use {placeholder}. literally"));
+}
+
+#[test]
+fn brace_patterns_allow_spaces_inside_the_braces() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            icons[]: text(1..60)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/pattern.ab",
+        r#"
+        Thing :: @id.pattern
+            icons: ./art/{hero, thumb}.png
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("brace pattern should expand");
+    let raw = compiled.to_raw_string();
+    assert!(raw.contains("./art/hero.png"));
+    assert!(raw.contains("./art/thumb.png"));
+}
+
+#[test]
+fn tuples_respect_quotes_with_parentheses_and_arity_is_checked() {
+    let template = SourceFile::new(
+        "templates/Page.abt",
+        r#"
+        schema Page {
+            id: text(1..40)
+            copy[] {
+                key: enum(en_us, es_es) @tag
+                value: text(1..60)
+            }
+        }
+        "#,
+    );
+    let good = SourceFile::new(
+        "pages/good.ab",
+        r#"
+        Page :: @id.good
+            copy(key, value): (en_us, "Hi (there)"), (es_es, "Hola (tu)")
+        "#,
+    );
+    let compiled = compile_sources(vec![template.clone(), good], CompileOptions::default())
+        .expect("parentheses inside quoted tuple values must not break parsing");
+    assert!(compiled.to_json_string().contains("Hi (there)"));
+
+    let bad = SourceFile::new(
+        "pages/bad.ab",
+        r#"
+        Page :: @id.bad
+            copy(key, value): (en_us, Hello, extra)
+        "#,
+    );
+    let error = compile_sources(vec![template, bad], CompileOptions::default())
+        .expect_err("tuple arity mismatch must fail");
+    assert!(error.to_string().contains("tuple arity mismatch"));
+    assert!(error.to_string().contains("pages/bad.ab:3"));
+}
+
+#[test]
+fn escaped_quotes_and_backslashes_roundtrip() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            note: text(1..120)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/escapes.ab",
+        "Thing :: @id.escapes\n    note: \"she said \\\"hi\\\" \\\\ done\"\n",
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("escape sequences should parse");
+    let json = compiled.to_json_string();
+    assert!(json.contains("she said \\\"hi\\\" \\\\ done"));
+}
+
+// ---------------------------------------------------------------------------
+// Type system (v0.2 features)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn bool_and_float_values_keep_native_types_in_output() {
+    let template = SourceFile::new(
+        "templates/Item.abt",
+        r#"
+        schema Item {
+            id: text(1..40)
+            price: float(0..100)
+            scale: float = 1.0
+            tradable: bool = true
+            featured: bool
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "items/coin.ab",
+        r#"
+        Item :: @id.coin, @featured
+            price: 9.5
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("bool and float should compile");
+    let json = compiled.to_json_string();
+    let yaml = compiled.to_yaml_string();
+
+    assert!(json.contains("\"price\": 9.5"));
+    assert!(json.contains("\"scale\": 1.0"));
+    assert!(json.contains("\"tradable\": true"));
+    assert!(json.contains("\"featured\": true"));
+    assert!(yaml.contains("price: 9.5"));
+    assert!(yaml.contains("tradable: true"));
+}
+
+#[test]
+fn float_ranges_are_validated() {
+    let template = SourceFile::new(
+        "templates/Item.abt",
+        r#"
+        schema Item {
+            id: text(1..40)
+            opacity: float(0..1)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "items/glass.ab",
+        r#"
+        Item :: @id.glass
+            opacity: 1.5
+        "#,
+    );
+
+    let error = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect_err("out-of-range float must fail");
+    assert!(error.to_string().contains("Range mismatch"));
+    assert!(error.to_string().contains("1.5"));
+}
+
+#[test]
+fn version_like_strings_stay_text() {
+    let template = SourceFile::new(
+        "templates/Item.abt",
+        r#"
+        schema Item {
+            id: text(1..40)
+            mc_version: text(1..20)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "items/pack.ab",
+        r#"
+        Item :: @id.pack
+            mc_version: 1.21.5
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("multi-dot versions are text, not floats");
+    assert!(compiled.to_json_string().contains("\"mc_version\": \"1.21.5\""));
+}
+
+#[test]
+fn bare_types_without_constraints_are_accepted() {
+    let template = SourceFile::new(
+        "templates/Item.abt",
+        r#"
+        schema Item {
+            id: text(1..40)
+            label: text
+            count: int
+            weight: float
+            active: bool
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "items/free.ab",
+        r#"
+        Item :: @id.free, @active.true
+            label: anything goes here
+            count: 12
+            weight: 0.25
+        "#,
+    );
+
+    compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("bare text/int/float/bool types should work");
+}
+
+#[test]
+fn enum_list_wildcards_expand_against_the_vocabulary() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            flags[]: enum(hat_overrides_helmet, hat_has_variations, other) @optional
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/hats.ab",
+        r#"
+        Thing :: @id.hats
+            flags: hat_*
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("enum list wildcards should expand");
+    let raw = compiled.to_raw_string();
+    assert!(raw.contains("hat_overrides_helmet"));
+    assert!(raw.contains("hat_has_variations"));
+    assert!(!raw.contains("\"other\""));
+}
+
+#[test]
+fn image_extension_rules_apply_even_in_memory() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            icon: image(png 128x128)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/bad.ab",
+        r#"
+        Thing :: @id.bad
+            icon: ./icons/logo.jpg
+        "#,
+    );
+
+    let error = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect_err("jpg must be rejected when only png is allowed");
+    assert!(error.to_string().contains("png 128x128"));
+}
+
+#[test]
+fn image_probe_checks_signature_and_dimensions_on_disk() {
+    fn png_bytes(width: u32, height: u32) -> Vec<u8> {
+        let mut bytes = vec![0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+        bytes.extend_from_slice(&13u32.to_be_bytes());
+        bytes.extend_from_slice(b"IHDR");
+        bytes.extend_from_slice(&width.to_be_bytes());
+        bytes.extend_from_slice(&height.to_be_bytes());
+        bytes.extend_from_slice(&[8, 6, 0, 0, 0]);
+        bytes
+    }
+
+    let project = unique_temp_project("image_probe");
+    fs::create_dir_all(project.join("data")).expect("data dir");
+    fs::create_dir_all(project.join("assets/icons")).expect("asset dir");
+    fs::write(project.join("assets/icons/ok.png"), png_bytes(32, 32)).expect("ok icon");
+    fs::write(project.join("assets/icons/small.png"), png_bytes(16, 16)).expect("small icon");
+    fs::write(project.join("assets/icons/fake.png"), b"GIF89a\x20\x00\x20\x00xxx")
+        .expect("fake icon");
+    fs::write(
+        project.join("data/Thing.abt"),
+        r#"
+        schema Thing {
+            id: text(1..40)
+            icon: image(png 32x32)
+        }
+        "#,
+    )
+    .expect("template");
+
+    fs::write(
+        project.join("data/good.ab"),
+        "Thing :: @id.good\n    icon: ./icons/ok.png\n",
+    )
+    .expect("good instance");
+    compile_project(&project.join("data"), CompileOptions::default())
+        .expect("32x32 png should validate");
+
+    fs::write(
+        project.join("data/good.ab"),
+        "Thing :: @id.good\n    icon: ./icons/small.png\n",
+    )
+    .expect("small instance");
+    let error = compile_project(&project.join("data"), CompileOptions::default())
+        .expect_err("16x16 png must fail the 32x32 constraint");
+    assert!(error.to_string().contains("Image size mismatch"));
+    assert!(error.to_string().contains("16x16"));
+
+    fs::write(
+        project.join("data/good.ab"),
+        "Thing :: @id.good\n    icon: ./icons/fake.png\n",
+    )
+    .expect("fake instance");
+    let error = compile_project(&project.join("data"), CompileOptions::default())
+        .expect_err("gif bytes in a .png file must fail");
+    assert!(error.to_string().contains("Image content mismatch"));
+
+    fs::remove_dir_all(&project).ok();
+}
+
+#[test]
+fn skip_asset_checks_compiles_without_files_on_disk() {
+    let project = unique_temp_project("skip_assets");
+    fs::create_dir_all(project.join("data")).expect("data dir");
+    fs::write(
+        project.join("data/Thing.abt"),
+        r#"
+        schema Thing {
+            id: text(1..40)
+            icon: image(png)
+            texture: file(png)
+        }
+        "#,
+    )
+    .expect("template");
+    fs::write(
+        project.join("data/one.ab"),
+        "Thing :: @id.one\n    icon: ./icons/missing.png\n    texture: ./missing.png\n",
+    )
+    .expect("instance");
+
+    assert!(compile_project(&project.join("data"), CompileOptions::default()).is_err());
+    compile_project(
+        &project.join("data"),
+        CompileOptions {
+            skip_asset_checks: true,
+            ..CompileOptions::default()
+        },
+    )
+    .expect("skip_asset_checks should ignore missing files");
+    fs::remove_dir_all(&project).ok();
+}
+
+// ---------------------------------------------------------------------------
+// Logic upgrades (v0.2 features)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn logic_else_and_else_if_branches_execute() {
+    let template = SourceFile::new(
+        "templates/Card.abt",
+        r#"
+        schema Card {
+            id: text(1..40)
+            kind: enum(big, medium, tiny)
+            size: enum(small, mid, large) = small
+        }
+
+        logic Card {
+            if .kind == "big" {
+                derive .size = large
+            } else if .kind == "medium" {
+                derive .size = mid
+            } else {
+                derive .size = small
+            }
+        }
+        "#,
+    );
+
+    for (kind, expected) in [("big", "large"), ("medium", "mid"), ("tiny", "small")] {
+        let instance = SourceFile::new(
+            "cards/one.ab",
+            format!("Card :: @id.one, @kind.{kind}\n"),
+        );
+        let compiled = compile_sources(
+            vec![template.clone(), instance],
+            CompileOptions::default(),
+        )
+        .expect("else chains should compile");
+        assert!(
+            compiled
+                .to_json_string()
+                .contains(&format!("\"size\": \"{expected}\"")),
+            "kind {kind} should produce size {expected}"
+        );
+    }
+}
+
+#[test]
+fn logic_not_operator_negates_conditions() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            flags[]: enum(safe, banned) @optional
+        }
+
+        logic Thing {
+            require not .flags contains "banned"
+                else throw "Banned things are not allowed."
+
+            if !(.flags contains "safe") {
+                derive .flags = safe
+            }
+        }
+        "#,
+    );
+
+    let bad = SourceFile::new("things/bad.ab", "Thing :: @id.bad\n    flags: banned\n");
+    let error = compile_sources(vec![template.clone(), bad], CompileOptions::default())
+        .expect_err("not-contains must reject");
+    assert!(error.to_string().contains("Banned things are not allowed"));
+
+    let empty = SourceFile::new("things/empty.ab", "Thing :: @id.empty\n");
+    let compiled = compile_sources(vec![template, empty], CompileOptions::default())
+        .expect("bang-negation should run the derive");
+    assert!(compiled.to_raw_string().contains("flags: [\"safe\"]"));
+}
+
+#[test]
+fn derive_if_missing_respects_authored_values() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            wave: int(1..99) @optional
+        }
+
+        logic Thing {
+            derive? .wave = 3
+        }
+        "#,
+    );
+
+    let defaulted = SourceFile::new("things/defaulted.ab", "Thing :: @id.defaulted\n");
+    let compiled = compile_sources(vec![template.clone(), defaulted], CompileOptions::default())
+        .expect("derive? should fill missing values");
+    assert!(compiled.to_json_string().contains("\"wave\": 3"));
+
+    let explicit = SourceFile::new("things/explicit.ab", "Thing :: @id.explicit, @wave.7\n");
+    let compiled = compile_sources(vec![template, explicit], CompileOptions::default())
+        .expect("derive? should not override authored values");
+    assert!(compiled.to_json_string().contains("\"wave\": 7"));
+}
+
+#[test]
+fn derive_values_interpolate_variables_with_native_types() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            slot_count: int(0..9) = 0
+            banner: text(1..80) @optional
+        }
+
+        logic Thing {
+            for $n in [3] {
+                derive .slot_count = $n
+                derive .banner = "pack $id uses $n slots"
+            }
+        }
+        "#,
+    );
+    let instance = SourceFile::new("things/kit.ab", "Thing :: @id.kit\n");
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("derive interpolation should work");
+    let json = compiled.to_json_string();
+
+    assert!(json.contains("\"slot_count\": 3"), "int type preserved: {json}");
+    assert!(json.contains("pack kit uses 3 slots"));
+}
+
+#[test]
+fn header_flags_without_values_become_true() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            featured: bool = false
+        }
+        "#,
+    );
+    let instance = SourceFile::new("things/star.ab", "Thing :: @id.star, @featured\n");
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("bare @flags should mean true");
+    assert!(compiled.to_json_string().contains("\"featured\": true"));
+}
+
+#[test]
+fn dollar_interpolation_handles_prefixes_braces_and_escapes() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        r#"
+        schema Thing {
+            id: text(1..40)
+            identity: text(1..40)
+            path_value: text(1..120)
+            braced: text(1..60)
+            escaped: text(1..60)
+        }
+        "#,
+    );
+    let instance = SourceFile::new(
+        "things/red.ab",
+        r#"
+        Thing :: @id.red
+            identity: blue_ish
+            path_value: ./sets/$identity/$id.png
+            braced: ${id}_suffix
+            escaped: "$$id is literal"
+        "#,
+    );
+
+    let compiled = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect("interpolation should resolve");
+    let json = compiled.to_json_string();
+
+    assert!(json.contains("./sets/blue_ish/red.png"), "longest key first: {json}");
+    assert!(json.contains("red_suffix"));
+    assert!(json.contains("$id is literal"));
+}
+
+#[test]
+fn error_messages_carry_line_numbers_for_parse_problems() {
+    let template = SourceFile::new(
+        "templates/Thing.abt",
+        "schema Thing {\n id: text(1..40)\n}\n",
+    );
+    let instance = SourceFile::new(
+        "things/broken.ab",
+        "Thing :: @id.broken\n    just some words\n",
+    );
+
+    let error = compile_sources(vec![template, instance], CompileOptions::default())
+        .expect_err("statements without ':' must fail");
+    assert!(
+        error.to_string().contains("things/broken.ab:2"),
+        "line number expected in: {error}"
+    );
+}

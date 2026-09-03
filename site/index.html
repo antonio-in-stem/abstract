@@ -41,7 +41,7 @@
                         <a class="button" href="docs/cli.html">Use the CLI</a>
                         <a class="button ghost" href="docs/language.html">Read the language guide</a>
                     </div>
-                    <p class="hero-note">Version 0.1.0 is intentionally small: enough language to be useful, enough restraint to stay understandable.</p>
+                    <p class="hero-note">Version 0.2.0 stays intentionally small: enough language to be useful, enough restraint to stay understandable, and now sealed bundles for shipping data inside applications.</p>
                 </div>
                 <div class="world" aria-label="Abstract visual identity">
                     <div class="orbit-label">
@@ -63,15 +63,15 @@
             <div class="cards">
                 <article class="card">
                     <strong>Write with constraints</strong>
-                    <p>Use <code>text</code>, <code>int</code>, <code>enum</code>, <code>file</code>, groups, lists, defaults, and tags to describe what valid data looks like before anyone writes instances.</p>
+                    <p>Use <code>text</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>enum</code>, <code>file</code>, <code>image</code>, groups, lists, defaults, and tags to describe what valid data looks like before anyone writes instances.</p>
                 </article>
                 <article class="card">
                     <strong>Compile before shipping</strong>
-                    <p>The compiler checks every instance against its schema. Bad enum values, missing required fields, invalid file extensions, clone cycles, and range mistakes fail early.</p>
+                    <p>The compiler checks every instance against its schema. Typos in field names, bad enum values, missing files, images with the wrong size or lying extensions, clone cycles, and range mistakes fail early, with suggestions.</p>
                 </article>
                 <article class="card">
-                    <strong>Keep output boring</strong>
-                    <p>Output is deliberately standard. It is readable in diffs, easy to review, and simple for future Java, web, Rust, or build-tool integrations to consume.</p>
+                    <strong>Ship it sealed</strong>
+                    <p>Output is standard JSON, YAML, or RAW for pipelines, and <code>abstract bundle</code> seals compiled data into encrypted, tamper-evident containers a zero-dependency Java runtime opens on Java 8+.</p>
                 </article>
             </div>
         </section>
@@ -96,20 +96,20 @@
                 </article>
                 <article class="card">
                     <strong>Compiler</strong>
-                    <p>The part that says no on purpose. It reads <code>.abt</code> and <code>.ab</code>, validates the project, lists templates, and emits JSON or YAML.</p>
+                    <p>The part that says no on purpose. It reads <code>.abt</code> and <code>.ab</code>, validates the project (including real image headers), lists templates, and emits JSON, YAML, or RAW.</p>
                     <ul class="mini-list">
                         <li><a href="docs/cli.html">CLI commands</a></li>
+                        <li><a href="docs/types.html">Type reference</a></li>
                         <li><a href="reference/diagnostics.html">Diagnostics</a></li>
-                        <li><a href="learn/first-project.html">First project</a></li>
                     </ul>
                 </article>
                 <article class="card">
                     <strong>Contract</strong>
-                    <p>The output format is a quiet promise: stable keys, explicit templates, normalized enum values, ordered fields, and no hidden binary step.</p>
+                    <p>The output format is a quiet promise: stable keys, native types, ordered fields, and, when data ships inside an application, sealed tamper-evident bundles.</p>
                     <ul class="mini-list">
                         <li><a href="docs/raw.html">Compiled data</a></li>
+                        <li><a href="docs/java.html">Java &amp; bundles</a></li>
                         <li><a href="reference/grammar.html">Syntax reference</a></li>
-                        <li><a href="docs/ai.html">AI collaborator guide</a></li>
                     </ul>
                 </article>
             </div>
@@ -149,19 +149,26 @@ abstract compile example JSON true</code></pre>
             <div class="cards">
                 <article class="card">
                     <strong>Windows executable</strong>
-                    <p>Download <code>abstract.exe</code>, put it somewhere on your PATH, then run <code>abstract --help</code>.</p>
+                    <p>Download <code>abstract.exe</code>, then install it onto your PATH:</p>
+<pre><code>powershell -ExecutionPolicy Bypass `
+  -File scripts\install.ps1 `
+  -Prebuilt abstract-windows-x64.exe</code></pre>
                     <p><a class="button primary" href="downloads/abstract-windows-x64.exe">Download for Windows</a></p>
                 </article>
                 <article class="card">
-                    <strong>Build with Rust</strong>
-<pre><code>cargo build --release
-target\release\abstract.exe --version</code></pre>
+                    <strong>Build from source</strong>
+<pre><code># Windows
+powershell -File scripts\install.ps1
+
+# Linux / macOS
+sh scripts/install.sh</code></pre>
+                    <p>Needs <a href="https://rustup.rs">Rust</a>; no other dependencies.</p>
                 </article>
                 <article class="card">
-                    <strong>Install locally</strong>
-<pre><code>cargo install --path .
-abstract lint example
-abstract compile example</code></pre>
+                    <strong>Start a project</strong>
+<pre><code>abstract init my-pack
+abstract compile my-pack JSON
+abstract lint my-pack</code></pre>
                 </article>
             </div>
         </section>

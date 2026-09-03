@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Types - Abstract</title>
+    <meta name="description" content="Every Abstract value type: text, int, float, bool, enum, file, image, references, groups, and lists.">
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Type reference</p>
+        <h1>Every value knows what it is.</h1>
+        <p class="lede">Abstract keeps the authored type all the way to the output: integers stay integers, decimals stay floats, booleans stay booleans, and images are checked against their real bytes.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="types.html" aria-current="page">Types</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">RAW</a>
+                <a href="java.html">Java &amp; bundles</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+            <h2>The type table</h2>
+            <table class="table">
+                <thead><tr><th>Type</th><th>Constraint syntax</th><th>Output</th></tr></thead>
+                <tbody>
+                    <tr><td><code>text</code></td><td><code>text</code>, <code>text(1..80)</code>, <code>text(2, 4..8)</code></td><td>JSON string</td></tr>
+                    <tr><td><code>int</code></td><td><code>int</code>, <code>int(0..99)</code>, <code>int(0, 2..15)</code></td><td>JSON number (integer)</td></tr>
+                    <tr><td><code>float</code></td><td><code>float</code>, <code>float(0..1)</code>, <code>float(0.5, 1.5..2.5)</code></td><td>JSON number (decimal)</td></tr>
+                    <tr><td><code>bool</code></td><td><code>bool</code></td><td>JSON true / false</td></tr>
+                    <tr><td><code>enum</code></td><td><code>enum(draft, active, retired)</code></td><td>JSON string (normalized)</td></tr>
+                    <tr><td><code>file</code></td><td><code>file(png, jpg)</code></td><td>JSON string (path, existence checked)</td></tr>
+                    <tr><td><code>image</code></td><td><code>image(png 128x128, jpg)</code></td><td>JSON string (path, header checked)</td></tr>
+                    <tr><td><code>$(Name)</code></td><td><code>owner: $(Owner)</code></td><td>JSON object validated by that schema</td></tr>
+                    <tr><td>group</td><td><code>stats { ... }</code></td><td>JSON object (inline shape)</td></tr>
+                </tbody>
+            </table>
+            <p>Every type accepts <code>[]</code> for lists, <code>= value</code> for defaults, and <code>@optional</code>. Constraint parentheses are optional for <code>text</code>, <code>int</code>, and <code>float</code>.</p>
+
+            <h2>text</h2>
+            <p>Ranges count characters (not bytes), so accented and non-Latin text measures the way a human would count it.</p>
+<pre><code>name: text(1..80)
+short_code: text(2, 4..8)     // exactly 2, or 4 to 8 characters
+notes: text @optional         // any length</code></pre>
+            <p>Unquoted values become text when they are not numbers or booleans. Quote anything with commas, deliberate casing, or characters that would otherwise be parsed: <code>desc: "Hello, world"</code>. Strings support <code>\"</code>, <code>\\</code>, <code>\n</code>, <code>\t</code>, and <code>\r</code> escapes.</p>
+            <div class="callout"><p>A value like <code>1.21.5</code> stays text automatically (two dots is not a number), but <code>1.5</code> is a float. When a text field receives a number, the compiler asks you to quote it instead of guessing.</p></div>
+
+            <h2>int</h2>
+            <p>Whole numbers with exact values and inclusive ranges, in any mix:</p>
+<pre><code>variant_count: int(0, 2..15) = 0
+release_year: int(2000..2100)
+priority: int               // any integer</code></pre>
+
+            <h2>float</h2>
+            <p>Decimal numbers. Instances write plain literals; integers are accepted and widened.</p>
+<pre><code>price: float(0..9999) = 0.0
+opacity: float(0..1)
+scale: float = 1.0</code></pre>
+<pre><code>Item :: @id.coin
+    price: 9.5
+    opacity: 0.85</code></pre>
+            <p>The compiled output keeps them as numbers: <code>"price": 9.5</code>. Scientific notation (<code>2.5e3</code>) is accepted; <code>inf</code> and <code>nan</code> are not values.</p>
+
+            <h2>bool</h2>
+            <p><code>true</code> and <code>false</code> are real booleans in the output. Header tags have a shorthand: a bare <code>@flag</code> means <code>true</code>.</p>
+<pre><code>tradable: bool = true
+featured: bool</code></pre>
+<pre><code>Item :: @id.star, @featured        // featured: true
+    tradable: false</code></pre>
+
+            <h2>enum</h2>
+            <p>A closed vocabulary. Values normalize to lowercase snake case, so <code>Legendary</code>, <code>legendary</code>, and <code>LEGENDARY</code> are the same member. Unknown values fail with a suggestion.</p>
+<pre><code>rarity: enum(common, rare, epic, legendary)
+flags[]: enum(hat_overrides_helmet, hat_has_variations) @optional</code></pre>
+            <p>List fields accept wildcard members that expand against the vocabulary:</p>
+<pre><code>flags: hat_*      // becomes every enum member starting with hat_</code></pre>
+
+            <h2>file</h2>
+            <p>A path with an approved extension. When compiling from disk, the file must exist. Relative paths resolve under the project <code>assets/</code> folder; paths that already start with <code>./assets/</code> resolve from the project root.</p>
+<pre><code>texture: file(png)
+document: file(pdf, md)</code></pre>
+
+            <h2>image</h2>
+            <p><code>image(...)</code> is <code>file(...)</code> plus real media validation. The compiler opens the file and reads only the header bytes (26 bytes for a PNG, a handful of segment headers for a JPG) to learn the true format and dimensions. Pixels are never decoded, so validating hundreds of textures costs almost nothing.</p>
+<pre><code>icon: image(png 128x128)                  // exactly 128x128 png
+hero: image(png 1920x1080, jpg 1920x1080) // either container
+thumb: image(png 64x*)                    // fixed width, any height
+art: image(png, jpg, gif, bmp, webp)      // any size, checked signature</code></pre>
+            <p>Three distinct failures are caught at compile time:</p>
+            <ul>
+                <li><strong>Wrong extension:</strong> the path extension is not one of the declared formats.</li>
+                <li><strong>Lying content:</strong> the file is named <code>.png</code> but its bytes are GIF data (a re-exported or renamed asset). The error names both formats.</li>
+                <li><strong>Wrong size:</strong> the header dimensions do not match any declared alternative. The error shows the actual size.</li>
+            </ul>
+            <p>Supported containers: PNG, JPG, GIF, BMP, and WebP (lossy, lossless, and extended). Use <code>--skip-assets</code> to compile on machines that do not have the binary assets checked out.</p>
+
+            <h2>References and groups</h2>
+            <p><code>$(Name)</code> validates a nested object against another schema; groups declare the shape inline. Both emit objects ordered by their schema fields.</p>
+<pre><code>schema Slot {
+    mode: enum(generate, custom) @tag
+    distribution[]: file(png) @optional
+}
+
+schema Sticker {
+    slots {
+        1: $(Slot)
+        2: $(Slot) @optional
+    }
+}</code></pre>
+
+            <h2>Strictness</h2>
+            <p>Instances may only assign fields the schema declares. A typo fails with the closest declared name:</p>
+<pre><code>stickers/typo.ab: Unknown field 'rarty' at Sticker. Did you mean 'rarity'?
+Declared fields: id, rarity, origin, ...</code></pre>
+            <p>Pass <code>--allow-unknown</code> to the CLI (or set <code>allow_unknown_fields</code> in the library) if you need the lenient behavior during a migration.</p>
+        </article>
+    </div>
+</main>
+<footer class="footer"><p>Types define shape; <a href="logic.html">logic blocks</a> define relationships.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

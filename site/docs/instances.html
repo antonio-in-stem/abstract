@@ -32,25 +32,36 @@
             <span class="sidebar-title">Docs</span>
             <nav>
                 <a href="language.html">Language guide</a>
+                <a href="types.html">Types</a>
                 <a href="schemas.html">Schemas</a>
                 <a href="instances.html" aria-current="page">Instances</a>
-                <a href="cli.html">CLI</a>
-                <a href="raw.html">RAW</a>
                 <a href="logic.html">Logic blocks</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">Compiled data</a>
+                <a href="java.html">Java &amp; bundles</a>
                 <a href="../reference/diagnostics.html">Diagnostics</a>
             </nav>
         </aside>
         <article class="doc-content">
             <h2>Instance header</h2>
             <p>The header names the template and optionally assigns short values with <code>@field.value</code>.</p>
-<pre><code>Product :: @id.atlas, @status.active, @tier.premium</code></pre>
-            <p>If no explicit <code>id</code> is assigned, the compiler uses the file stem. A file named <code>atlas.ab</code> becomes <code>id: "atlas"</code>.</p>
+<pre><code>Product :: @id.atlas, @status.active, @tier.premium, @featured</code></pre>
+            <p>If no explicit <code>id</code> is assigned, the compiler uses the file stem. A file named <code>atlas.ab</code> becomes <code>id: "atlas"</code>. A bare tag with no value, like <code>@featured</code>, assigns <code>true</code>: the natural shorthand for boolean flags.</p>
 
             <h2>Plain assignments</h2>
 <pre><code>name: Atlas Search
 release_year: 2026
+price: 9.5
+tradable: true
 tags: [core, public, ai_ready]</code></pre>
-            <p>Unquoted bare words become strings. Use quotes when a value needs spaces, punctuation, or deliberate casing.</p>
+            <p>Values keep their authored type: integers stay integers, decimals become floats, <code>true</code>/<code>false</code> become booleans, everything else becomes text. Use quotes when a value needs commas, deliberate casing, or characters the parser would otherwise interpret; quoted strings support <code>\"</code>, <code>\\</code>, <code>\n</code>, <code>\t</code>, and <code>\r</code>. Unquoted URLs (<code>https://...</code>) and values containing <code>::</code> are safe.</p>
+
+            <h2>Multi-line values</h2>
+            <p>A statement continues while brackets are open or while a line ends with a comma, so long arrays and tables can breathe:</p>
+<pre><code>tags: [
+    core,
+    public
+]</code></pre>
 
             <h2>Dotted paths</h2>
             <p>Dotted paths fill nested objects without making the source visually heavy.</p>
@@ -78,16 +89,30 @@ owner.contact: systems@example.com</code></pre>
 <pre><code>images: ./assets/{hero,thumbnail,card}.png</code></pre>
 
             <h2>Wildcard expansion</h2>
-            <p>Wildcard expansion works against tagged enum groups. A value such as <code>es_*</code> expands to every allowed enum value that starts with <code>es_</code>.</p>
-<pre><code>lang(key, value): (es_*, "Hola")</code></pre>
+            <p>Wildcard expansion works against enum vocabularies. In tagged tuple arrays, <code>es_*</code> expands to every allowed enum value that starts with <code>es_</code>. Plain enum list fields expand the same way.</p>
+<pre><code>lang(key, value): (es_*, "Hola")
+flags: hat_*</code></pre>
+
+            <h2>Interpolation</h2>
+            <p>Strings and paths can reference the instance's own scalar fields. Variables resolve after clone overrides, longest name first, so <code>$id</code> never clobbers <code>$identity</code>.</p>
+<pre><code>icon: ./textures/item/sets/$id/icon.png
+label: ${id}_display
+price_note: "$$9.99 introductory"      // $$ writes a literal $</code></pre>
 
             <h2>Clones</h2>
-            <p>Put <code>&target.*</code> before an instance to clone a compiled instance, then override fields in the new one.</p>
+            <p>Put <code>&target.*</code> before an instance header to start from a compiled sibling, then override what changed. Targets resolve by instance id; cycles are rejected.</p>
 <pre><code>&atlas.*
 
 Product :: @id.beacon, @status.draft
     name: Beacon Export</code></pre>
-            <p>Clone targets are resolved by instance id. Cycles are rejected.</p>
+            <p>Two more clone forms complete the template-instance model:</p>
+<pre><code>&hero.stats          // partial clone: copy only the stats subtree
+
+&base.*              // multiple clones deep-merge in order;
+&winter_theme.*      // later clones win on conflicting fields</code></pre>
+
+            <h2>Strict fields</h2>
+            <p>Instances may only assign fields their schema declares. A typo like <code>rarty:</code> fails with <em>Unknown field 'rarty'. Did you mean 'rarity'?</em> instead of silently shipping garbage. During migrations, <code>--allow-unknown</code> restores the lenient behavior.</p>
         </article>
     </div>
 </main>

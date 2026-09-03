@@ -1,6 +1,6 @@
 [package]
 name = "abstract-lang"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Abstract DSL compiler for schema-defined instances and human-readable RAW data."
 

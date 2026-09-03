@@ -38,10 +38,20 @@
             </nav>
         </aside>
         <article class="doc-content">
+            <h2>0. Install the CLI</h2>
+<pre><code># Windows (prebuilt exe from this site)
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Prebuilt abstract-windows-x64.exe
+
+# Any platform with Rust installed
+sh scripts/install.sh
+
+abstract --version</code></pre>
+
             <h2>1. Create folders</h2>
 <pre><code>mkdir abstract-demo
 cd abstract-demo
 mkdir templates data build</code></pre>
+            <p>Shortcut: <code>abstract init abstract-demo</code> scaffolds a ready project with a compiling example. This tutorial builds one by hand so every piece is understood.</p>
 
             <h2>2. Write a schema</h2>
             <p>Create <code>templates/Product.abt</code>:</p>
@@ -78,24 +88,34 @@ mkdir templates data build</code></pre>
 
             <h2>5. Compile JSON</h2>
 <pre><code>abstract compile . JSON true</code></pre>
-            <p>The output will include defaults and expanded tagged objects:</p>
-<pre><code>data: [
+            <p>The output includes defaults and expanded tagged objects:</p>
+<pre><code>{
+  "data": [
     {
-        template: "Product",
-        id: "atlas",
-        name: "Atlas Search",
-        status: "active",
-        release_year: 2026,
-        owner: {team: "Knowledge Systems", contact: "systems@example.com"},
-        capabilities: [{id: "search", availability: "stable"}, {id: "sync", availability: "beta"}]
+      "template": "Product",
+      "id": "atlas",
+      "name": "Atlas Search",
+      "status": "active",
+      "release_year": 2026,
+      "owner": {
+        "team": "Knowledge Systems",
+        "contact": "systems@example.com"
+      },
+      "capabilities": [
+        { "id": "search", "availability": "stable" },
+        { "id": "sync", "availability": "beta" }
+      ]
     }
-]</code></pre>
+  ]
+}</code></pre>
+            <p>Prefer a review-friendly text form? <code>abstract compile . RAW</code> prints the same data with unquoted keys.</p>
 
             <h2>6. Break it on purpose</h2>
-            <p>Change <code>@status.active</code> to <code>@status.public</code> and run lint again. The compiler should reject it because <code>public</code> is not declared in the enum.</p>
+            <p>Change <code>@status.active</code> to <code>@status.public</code> and run lint again. The compiler rejects it because <code>public</code> is not in the enum, and suggests the closest member. Then try misspelling a field (<code>nmae:</code>): strict mode answers <em>Unknown field 'nmae'. Did you mean 'name'?</em></p>
 
             <h2>7. What just happened?</h2>
             <p>You authored compact source, but shipped validated output. The schema carried the rules; the instance stayed readable; the compiler caught the bad value before another tool had to guess what you meant.</p>
+            <p>From here: the <a href="../docs/types.html">type reference</a> adds floats, booleans, and header-validated images; <a href="../docs/logic.html">logic blocks</a> add business rules; and <a href="../docs/java.html">bundles</a> ship the result inside a Java application.</p>
         </article>
     </div>
 </main>
