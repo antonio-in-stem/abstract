@@ -3,8 +3,8 @@
 This release is the result of a full audit of the v0.1 compiler. It fixes
 every correctness bug found, extends the template-instance model, and adds
 the distribution, Java, and security layers. Existing v0.1 projects compile
-unchanged (verified against the complete Wardrobe & Stickers corpus, 41
-instances) with one intentional improvement: nested `$(Schema)` objects are
+unchanged, verified against the complete m-project corpus (41 instances),
+with one intentional improvement: nested `$(Schema)` objects are
 now emitted in schema field order.
 
 ## 1. Bugs found by the audit (all fixed)
@@ -176,4 +176,4 @@ that does not have the textures checked out is a real workflow.
 audit fix above), image probe tests for all five formats, and the official
 RFC 8439 / FIPS 180-4 vectors for the crypto. The Java side mirrors the
 vectors in JUnit plus a dependency-free `Selftest` runner, and the full
-Wardrobe & Stickers corpus is the cross-language integration fixture.
+m-project corpus is the cross-language integration fixture.
