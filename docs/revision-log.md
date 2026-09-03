@@ -393,12 +393,15 @@ rather than an editorial fix:
 
 Scope: the five specification issues the Revision 6 section left **Open** — `S1`, `S4`, `S5`, `S7`
 and `S8` — each settled by a binding ruling and applied to `SPEC.md`, `GRAMMAR.ebnf`, the compiler,
-the tests and the conformance corpus. Shipped as **1.0.1**.
+the tests and the conformance corpus; then the five findings `D1`–`D5` of the independent stage that
+verified those rulings against the built compiler, settled in the same revision because each is a
+consequence of a ruling above rather than a new question. Shipped as **1.0.1**.
 
 Counts: **5 rulings** — **5 changed normative text**, **1 changed the compiler's behaviour** (S7),
 **1 changed a documentation page's wording only** in addition to the specification (S4, the
 reference site's E511 note). Four of the five make the specification say what the compiler already
-did; S7 adds a limit, an identifier and the code that enforces it.
+did; S7 adds a limit, an identifier and the code that enforces it. Then **5 findings** — **3 changed
+the compiler** (D1, D2, D3), **2 changed normative text** (D4, D5), and none changed a ruling.
 
 ## 1. The rulings and where they landed
 
@@ -447,19 +450,20 @@ Mechanical checks run over the final files:
 - `ErrorId::ALL` and §10 agree on 123 identifiers, which `every_catalogue_id_has_a_unique_code_and_a_template`
   asserts;
 - `cargo build` and `cargo clippy --all-targets` are clean under `-D warnings`, `cargo fmt --check`
-  is clean, and `cargo test` is green: 439 library unit tests, 26 binary unit tests, 43 CLI
+  is clean, and `cargo test` is green: 442 library unit tests, 26 binary unit tests, 43 CLI
   tests, 28 compiler tests (21 more stay `#[ignore]`d as the record of the 0.2.0 migration), 1 doc test,
-  the documentation-example runner, and the conformance corpus at **282 cases** (273 passed, 9
-  without an expectation, 0 failed).
+  the documentation-example runner, and the conformance corpus at **301 cases** (292 passed, 9
+  without an expectation, 0 pending, 0 failed) once §6 below has landed; the rulings alone stood at
+  439 library unit tests and 282 cases.
 
 ## 4. New and changed error identifiers
 
 | ID | Status | Condition |
 |---|---|---|
-| E523 | **new** | The logic of one instance executed more than 1 000 000 loop iterations for one version (§3.7, §6.2) |
-| E511 | changed | Narrowed to the two reachable reasons. The unbalanced-parenthesis reason is withdrawn: it was unreachable, because §3.6 makes an unclosed `(` E203, a stray `)` E205 and a `]` closing a `(` E204, all in P1 |
+| E523 | **new** | The logic of one instance executed more than 1 000 000 loop iterations for one version (§3.7, §6.2). Its note tail — the instance header, then one note per enclosing `for` — is described by §10.5 (D5) |
+| E511 | changed | Narrowed to the two reachable reasons. The unbalanced-parenthesis reason is withdrawn: it was unreachable, because §3.6 makes an unclosed `(` E203, a stray `)` E205 and a `]` closing a `(` E204, all in P1. Its `{text}` is the condition **as written**, sliced from the source rather than re-spelled from the tokens (D2), and the conditions D1 kept out of value mode now reach it at all |
 | E413 | changed | No condition and no message changed. `{value}` is now defined for a `text` range and for an instance id: the scalar count, not the text |
-| E517 | clarified | Unchanged in condition. §6.3 now says which fault an `else` after another statement is: rule (b) joins it to that statement, so the malformed logical line is reported where it is malformed (E210), and E517 is for an `else` that begins a logical line |
+| E517 | clarified | Unchanged in condition. §6.3 now says which fault an `else` after another statement is: rule (b) joins it to that statement, so the malformed logical line is reported where it is malformed (E210), and E517 is for an `else` that begins a logical line — at the top of a block, or after a block that is not an `if`, which D3 made the compiler report as E517 too |
 | E103 | clarified | Unchanged. §8.1 now names it as the case an empty `data` array is **not** |
 
 ## 5. Superseded entries of the previous revision
@@ -470,11 +474,33 @@ Mechanical checks run over the final files:
 - §6.6's sentence "An unknown operator, a missing operand, or an unbalanced parenthesis is E511" is
   withdrawn by S4 and replaced by the two bullets.
 - §8.1's sentence "An empty `data` array is only reachable in single-file mode …" is withdrawn by S1
-  and replaced by the two-way list.
+  and replaced by the two-way list, whose second bullet D4 then widened (§6 below).
+
+## 6. Verification 3 — the findings of `DEFECTS-3.md` and where they landed
+
+An independent stage re-derived all five rulings from the specification as this revision left it,
+put every expectation to the built compiler, and filed nineteen conformance cases together with
+`tests/conformance/DEFECTS-3.md`. Four of the cases failed and one was left pending on a
+specification decision. Nothing it found contradicts a ruling: three findings are places where the
+compiler did not yet do what the ruling made the specification say, and two are places where the
+specification did not yet describe what the compiler does.
+
+| Item | Finding | Ruling | Where it landed |
+|---|---|---|---|
+| D1 | A lone `=` anywhere in a logic head started a value run, so `if .name === b {` swallowed the block brace and reported E203 and E205 rather than the E511 §6.6 prescribes. The fault was invisible whenever the right-hand side was quoted, which is why S4 did not meet it | The derive-value scan is entered on a `derive` / `derive?` statement line and nowhere else. An `if`, `require` or `for` head keeps its block brace, and a malformed condition reaches the condition parser | `lexer.rs`: `scan_logic_line` tests the new `at_derive_value_equals`, which requires the logical line to begin with `derive`. No normative text moved — §3.6 makes the `{` a block brace and `GRAMMAR.ebnf` gives `=` to `derive_statement` alone, which is what the compiler now reads. `adversarial-3/adv3-01` and `adv3-02`; `adv3-03`'s swallowed `else throw` clause goes with it |
+| D2 | E511's `{text}` was re-spelled from the token stream, so `and .name == "a"` was quoted `and.name == "a"`, `.name === "a"` was quoted `.name == = "a"`, and `length(.name)` gained a space | §6.6 says the message quotes the condition **as written**, so the text is the source between the condition's first and last token | `logic.rs`: `spell_condition` slices the file's text; `append_spelling` and its spacing table are deleted. The text is threaded to the parsers, so `schema::parse_template` and `logic::parse_block` each take it beside the tokens. `adversarial-3/adv3-03` and `adv3-04` |
+| D3 | An `else` after the closing `}` of a `for` block was E210, not the E517 §6.3 prescribes for an `else` after a block that is not an `if`. Rule (b) joined the lines correctly; only the classification differed | §6.3 as S5 wrote it is normative: the two spellings of an `else` with no `if` to attach to — at the top of a block, and after a block that is not an `if` — are one fault and take one identifier. An `else` after a statement that opens no block stays E210 | `logic.rs`: the E517 arm of `statement` becomes `else_without_if`, and `for_statement` calls it where it would otherwise have required the end of the logical line. `adversarial-3/adv3-05` and `adv3-06` |
+| D4 | §8.1's second bullet named a project whose sources **declare schemas** and no instance; a project whose one source is empty, holds only comments, or holds only a `versions` declaration reaches the same empty document and was outside all three sentences | The bullet is widened to a whole-project compile that discovers source files and declares no instance. What those files declare does not matter, and the E103 sentence — discovery collected nothing — is untouched | §8.1's second bullet is rewritten and names the further shapes, including the `versions`-only file whose range the envelope carries. No compiler change: every shape already compiled. `adversarial-3/adv3-09` and `adv3-10` |
+| D5 | E523 carries one positionless `at index …, item ….` note per enclosing `for` in addition to the instance-header note §10.5 prescribed, and §11.2 compares `err.txt` byte for byte, which makes an undescribed tail normative for every conforming suite | The tail is kept and named rather than dropped: it says which iteration of each enclosing loop the crossing happened on, which the position — the innermost `for` — does not | §10.5's E523 row states the instance-header note and one `note: at index {i}, item {item}.` per enclosing `for`, written outermost first and so bounded by §3.7's block-nesting limit at one fewer than 64; §6.12 states the same order for every logic diagnostic raised inside a `for` body. No compiler change. `adversarial-3/adv3-16` is `ready` |
+
+`DEFECTS-3.md` moves up to `tests/conformance/`, beside `DEFECTS-1.md` and `DEFECTS-2.md`, and
+`tests/conformance/INDEX.md` is regenerated from the case files: **301 cases**, 292 passed, 9 without
+an expectation, 0 pending, 0 failed.
 
 ## Open
 
-None. Every issue the Revision 6 section recorded as open is settled by a ruling above, and no new
-question was left behind: the two additions that could have opened one — the work limit's counting
-rule and E413's `{value}` — are each stated in the specification with a worked example and pinned by
-a test.
+None. Every issue the Revision 6 section recorded as open is settled by a ruling above; every
+finding of the verification that followed is settled in §6; and no new question was left behind. The
+four additions that could have opened one — the work limit's counting rule, E413's `{value}`,
+E511's quoted text and E523's note tail — are each stated in the specification with a worked example
+or a rendered message, and each is pinned by a test.

@@ -298,18 +298,24 @@ pub enum DeriveExpr {
 /// The block's frame — the `logic` keyword and the schema name — is read by
 /// [`crate::schema`], which owns the template-file grammar; everything inside
 /// the braces is chapter 6 and is read here.
+///
+/// `text` is the source of the file the tokens came from; E511 quotes a
+/// condition by slicing it out of that text (SPEC §6.6).
 pub fn parse_block(
     file: &str,
+    text: &str,
     tokens: &[Token],
     index: usize,
 ) -> (Vec<LogicStatement>, usize, Diagnostics) {
-    let mut parser = Parser::new(file, tokens, index);
+    let mut parser = Parser::new(file, text, tokens, index);
     let statements = parser.body();
     (statements, parser.index, parser.errors)
 }
 
 struct Parser<'a> {
     file: &'a str,
+    /// The file's source text; token spans index into it.
+    text: &'a str,
     tokens: &'a [Token],
     index: usize,
     errors: Diagnostics,
@@ -318,13 +324,14 @@ struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    fn new(file: &'a str, tokens: &'a [Token], index: usize) -> Self {
+    fn new(file: &'a str, text: &'a str, tokens: &'a [Token], index: usize) -> Self {
         let position = tokens
             .last()
             .map(|token| token.position)
             .unwrap_or_else(|| crate::diagnostics::Position::new(1, 1));
         Self {
             file,
+            text,
             tokens,
             index,
             errors: Diagnostics::new(),
@@ -518,24 +525,40 @@ impl<'a> Parser<'a> {
             return self.for_statement(depth);
         }
         if token.is_keyword("else") {
-            let at = self.located(&token);
-            self.error(
-                ErrorId::E517,
-                &at,
-                "'else' must follow the closing '}' of an if block.",
-            );
-            self.bump();
-            if self.at_punctuation("{") {
-                self.skip_block();
-                self.end_of_statement();
-            } else {
-                self.skip_line();
-            }
+            self.else_without_if();
             return None;
         }
         self.unexpected("'derive', 'require', 'if', 'for' or '}'");
         self.skip_line();
         None
+    }
+
+    /// SPEC §6.3: an `else` that does not immediately follow the closing `}`
+    /// of an `if` has no `if` to attach to, and is E517.
+    ///
+    /// There are two spellings of it. One begins a logical line of its own,
+    /// at the top of a block, and [`Self::statement`] meets it looking for a
+    /// statement head. The other follows the closing `}` of a block that is
+    /// not an `if`: rule (b) of SPEC §3.6 joins it to that block's logical
+    /// line, so [`Self::for_statement`] meets it where it would otherwise
+    /// have required the end of the line. Both are the same fault and take
+    /// the same identifier; an `else` after a statement that opens no block
+    /// is the other fault the bullet names, and stays E210.
+    fn else_without_if(&mut self) {
+        let token = self.peek().clone();
+        let at = self.located(&token);
+        self.error(
+            ErrorId::E517,
+            &at,
+            "'else' must follow the closing '}' of an if block.",
+        );
+        self.bump();
+        if self.at_punctuation("{") {
+            self.skip_block();
+            self.end_of_statement();
+        } else {
+            self.skip_line();
+        }
     }
 
     // ------------------------------------------------------------- derive
@@ -723,7 +746,14 @@ impl<'a> Parser<'a> {
             return None;
         };
         let body = self.block(depth)?;
-        self.end_of_statement();
+        // A `for` block is a block, not an `if`, so an `else` that rule (b)
+        // joined to this line is E517 rather than the generic E210 of a
+        // logical line that did not end where it should (SPEC §6.3).
+        if self.peek().is_keyword("else") {
+            self.else_without_if();
+        } else {
+            self.end_of_statement();
+        }
         Some(LogicStatement::For {
             variable: normalise(&spelled),
             spelled,
@@ -1142,12 +1172,19 @@ impl<'a> Parser<'a> {
         );
     }
 
-    /// The `{text}` substitution of E511: the condition as written, from the
-    /// cursor to the `else`, the `{` or the end of the logical line.
+    /// The `{text}` substitution of E511: the condition **as written**
+    /// (SPEC §6.6).
+    ///
+    /// The condition runs from the cursor to the `else`, the `{` or the end
+    /// of the logical line; the quoted text is the source between the first
+    /// and the last token of that run. Slicing rather than re-spelling from
+    /// the token stream is what makes the message the author's own text: a
+    /// renderer that decided spacing from the token kind would write
+    /// `and.name` for `and .name` and `.name == = "a"` for `.name === "a"`.
     fn spell_condition(&self) -> String {
-        let mut out = String::new();
         let mut depth = 0usize;
         let mut index = self.index;
+        let mut last = None;
         while let Some(token) = self.tokens.get(index) {
             if token.is_newline() || token.is_end_of_file() {
                 break;
@@ -1161,10 +1198,16 @@ impl<'a> Parser<'a> {
             if token.is_punctuation(")") || token.is_punctuation("]") {
                 depth = depth.saturating_sub(1);
             }
-            append_spelling(&mut out, token);
+            last = Some(token);
             index += 1;
         }
-        out
+        let (Some(first), Some(last)) = (self.tokens.get(self.index), last) else {
+            return String::new();
+        };
+        self.text
+            .get(first.span.0..last.span.1)
+            .unwrap_or_default()
+            .to_string()
     }
 
     // ------------------------------------------------------------- values
@@ -1315,35 +1358,6 @@ fn split_commas(tokens: &[Token]) -> Vec<&[Token]> {
     }
     out.push(tokens.get(start..).unwrap_or(&[]));
     out
-}
-
-/// Appends one token to a rendering of a condition, with the spacing a reader
-/// expects: none around `.`, none inside brackets, one elsewhere.
-fn append_spelling(out: &mut String, token: &Token) {
-    let text = match &token.kind {
-        TokenKind::Identifier(text)
-        | TokenKind::SchemaName(text)
-        | TokenKind::IntLiteral(text)
-        | TokenKind::FloatLiteral(text)
-        | TokenKind::SizeToken(text)
-        | TokenKind::BareText(text) => text.clone(),
-        TokenKind::Punctuation(text) => (*text).to_string(),
-        TokenKind::QuotedString(text) => format!("\"{text}\""),
-        TokenKind::Newline | TokenKind::EndOfFile => String::new(),
-    };
-    if text.is_empty() {
-        return;
-    }
-    let tight_left = matches!(text.as_str(), "." | "[" | "]" | ")" | "," | "$");
-    let tight_right = out.ends_with('.')
-        || out.ends_with('(')
-        || out.ends_with('[')
-        || out.ends_with('$')
-        || out.is_empty();
-    if !tight_left && !tight_right {
-        out.push(' ');
-    }
-    out.push_str(&text);
 }
 
 /// A value as a diagnostic spells it.
@@ -3279,7 +3293,7 @@ mod tests {
     fn tables(text: &str) -> Result<TemplateTables, Diagnostics> {
         let source = SourceFile::new("data/T.abt", text);
         let tokens = crate::lexer::tokenize(&source)?;
-        let file = crate::schema::parse_template("data/T.abt", &tokens)?;
+        let file = crate::schema::parse_template("data/T.abt", &source.text, &tokens)?;
         crate::schema::build_tables(std::slice::from_ref(&file))
     }
 
@@ -3745,6 +3759,102 @@ mod tests {
         ));
         assert_eq!(errors.first().map(|item| item.id), Some(ErrorId::E205));
         assert!(!ids(&errors).contains(&ErrorId::E511));
+    }
+
+    #[test]
+    fn a_head_with_a_bare_right_hand_side_reaches_e511_with_its_brace_intact() {
+        // SPEC §3.6, §6.4: only a `derive` line carries a value, so the `{`
+        // that opens the block stays a block brace and the malformed
+        // condition reaches the condition parser. A value run would have
+        // swallowed the brace and reported E203 and E205 about braces the
+        // author balanced.
+        for head in [
+            "if .name === b {",
+            "if .count === 3 {",
+            "if length(.name) === 3 {",
+        ] {
+            let errors = check(&with_logic(&format!(
+                "    {head}\n\
+                 \x20       derive .ready = true\n\
+                 \x20   }}\n"
+            )));
+            assert_eq!(ids(&errors), [ErrorId::E511], "{head}");
+        }
+
+        // The same `=` in a `for` head is a malformed iterable, not a value.
+        let errors = check(&with_logic(
+            "    for $v in === 3 {\n\
+             \x20       derive .count = 1\n\
+             \x20   }\n",
+        ));
+        assert_eq!(errors.first().map(|item| item.id), Some(ErrorId::E210));
+    }
+
+    #[test]
+    fn e511_quotes_the_condition_as_written() {
+        // SPEC §6.6: the message quotes the condition as written, so it is
+        // sliced from the source rather than re-spelled from the tokens.
+        let errors = check(&with_logic(
+            "    if and .name == \"a\" {\n\
+             \x20       derive .ready = true\n\
+             \x20   }\n",
+        ));
+        let text = errors.to_string();
+        assert!(text.contains("'and .name == \"a\"'"), "{text}");
+
+        // The `else throw` clause is no part of the condition.
+        let errors = check(&with_logic("    require .count === 3 else throw \"no\"\n"));
+        let text = errors.to_string();
+        assert!(text.contains("'.count === 3'"), "{text}");
+
+        // A space the author did not write is not inserted either.
+        let errors = check(&with_logic(
+            "    require length(.name) zzz 3 else throw \"no\"\n",
+        ));
+        let text = errors.to_string();
+        assert!(text.contains("'length(.name) zzz 3'"), "{text}");
+    }
+
+    #[test]
+    fn an_else_after_a_block_that_is_not_an_if_is_e517() {
+        // SPEC §6.3: an `else` that begins a logical line of its own — at
+        // the top of a block, or after a block that is not an `if` — has no
+        // `if` to attach to. Rule (b) joins the `for` block's `}` to the
+        // `else`, and the fault is the classification, not the join.
+        let body = "    for $v in [1, 2] {\n\
+                    \x20       derive .count = $v\n\
+                    \x20   }\n\
+                    \x20   else {\n\
+                    \x20       derive .ready = false\n\
+                    \x20   }\n";
+        assert_eq!(
+            check(&with_logic(body)).first().map(|item| item.id),
+            Some(ErrorId::E517)
+        );
+
+        // Blank lines and comment lines between the two do not change it.
+        let spaced = "    for $v in [1, 2] {\n\
+                      \x20       derive .count = $v\n\
+                      \x20   }\n\
+                      \n\
+                      \x20   // a comment between the brace and the else\n\
+                      \x20   else {\n\
+                      \x20       derive .ready = false\n\
+                      \x20   }\n";
+        assert_eq!(
+            check(&with_logic(spaced)).first().map(|item| item.id),
+            Some(ErrorId::E517)
+        );
+
+        // An `else` after a statement that opens no block stays E210.
+        let after_derive = "    derive .count = 1\n\
+                            \x20   else {\n\
+                            \x20       derive .ready = false\n\
+                            \x20   }\n";
+        assert_eq!(
+            check(&with_logic(after_derive)).first().map(|item| item.id),
+            Some(ErrorId::E210)
+        );
     }
 }
 

@@ -171,7 +171,7 @@ pub fn parse(source: &SourceFile) -> Result<SourceUnit, Diagnostics> {
     // early in the file outranks a lexical error late in it.
     let (tokens, lexical) = crate::lexer::tokenize_recovering(source);
     let parsed = if source.is_template() {
-        crate::schema::parse_template(&source.path, &tokens).map(SourceUnit::Template)
+        crate::schema::parse_template(&source.path, &source.text, &tokens).map(SourceUnit::Template)
     } else {
         crate::instance::parse_instances(&source.path, &tokens).map(SourceUnit::Instance)
     };

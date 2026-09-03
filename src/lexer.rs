@@ -736,7 +736,13 @@ impl Lexer<'_> {
                 }
                 break;
             }
-            if self.at_value_introducing_equals() {
+            // Only a `derive` line has a right-hand side (SPEC §6.4): the
+            // grammar gives `=` to `derive_statement` alone, so an `=` in an
+            // `if`, `require` or `for` head is a token of a malformed
+            // condition or iterable, not the start of a value. Reading one as
+            // a value would make the block's `{` an ordinary character of
+            // that value (SPEC §3.6) and hide the fault behind a brace error.
+            if self.at_derive_value_equals() {
                 let start = self.pos;
                 self.emit_punctuation("=", start);
                 self.scan_derive_value();
@@ -860,11 +866,23 @@ impl Lexer<'_> {
             .unwrap_or(false)
     }
 
-    /// True when a single `=` at bracket depth 0 introduces a value: a schema
-    /// default (SPEC §4.3) or a `derive` right-hand side (SPEC §6.4). `==` is
-    /// the comparison operator and never introduces a value.
+    /// True when a single `=` at bracket depth 0 is in value-introducing
+    /// shape. `==` is the comparison operator and never introduces a value.
+    ///
+    /// Shape is not enough on its own: the two positions that carry a value
+    /// are a schema default (SPEC §4.3), where every `=` of the line is one,
+    /// and a `derive` right-hand side (SPEC §6.4), which
+    /// [`Self::at_derive_value_equals`] selects.
     fn at_value_introducing_equals(&self) -> bool {
         self.brackets.is_empty() && self.peek() == Some('=') && self.peek_at(1) != Some('=')
+    }
+
+    /// True when the `=` at the cursor is the one of a `derive` right-hand
+    /// side: a value-introducing `=` on a logical line that begins with the
+    /// `derive` keyword, which is how both `derive` and `derive?` are spelled
+    /// (SPEC §6.4). No other logic statement has a value region.
+    fn at_derive_value_equals(&self) -> bool {
+        self.line_starts_with("derive") && self.at_value_introducing_equals()
     }
 
     /// True when the current `[` opens the literal list of a `for` loop

@@ -10,14 +10,22 @@ and by the `abstract.format` number in every compiled document.
 
 Five specification questions that the 1.0 freeze recorded as open are settled.
 Four of them only make the specification say what the compiler already did; one
-adds a limit, an error identifier and the code that enforces it.
+adds a limit, an error identifier and the code that enforces it. An independent
+stage then re-derived all five from the settled text and put them to the built
+compiler, and five more things are closed with them: three diagnostics the
+compiler did not yet report the way the text prescribes, and two places where
+the text did not yet describe what the compiler does.
 
-- **A project with schemas and no instances compiles to an empty document.**
+- **A project that declares no instance compiles to an empty document.**
   §8.1 named single-file mode as the only way to reach an empty `data` array,
   and §7.2 blesses a whole-project compile of a project with zero instances at
   the same time. §8.1 now states both, and keeps them apart from the third
   case: a project with no source files at all is E103 and emits no document.
-  No behaviour changed.
+  The whole-project bullet asks only that discovery found source files and that
+  none of them declares an instance — an empty file, a file of comments and a
+  file holding nothing but `versions 1..3` each reach the same document, and
+  the envelope takes its range from that last one like any other. No behaviour
+  changed.
 
 - **E511's unreachable condition is removed.** §6.6 said an unbalanced
   parenthesis was E511, which no input could produce: `(` and `)` ride the
@@ -46,9 +54,11 @@ adds a limit, an error identifier and the code that enforces it.
   in that version including nested `$(Schema)` blocks, and fresh again for the
   next instance and the next version. Crossing it stops that instance and is
   the new **E523**, positioned at the `for` whose iteration crossed the bound
-  and naming the bound. This is the only behavioural change in 1.0.1: a project
-  that compiled under 1.0.0 and demanded more than a million iterations for one
-  instance in one version is now refused.
+  and naming the bound. It is the one change that refuses a project 1.0.0
+  compiled: one that demanded more than a million iterations for a single
+  instance in a single version. §10.5 also describes the diagnostic's notes —
+  the instance header, then one `at index …, item ….` note per enclosing `for`,
+  outermost first — which §11.2 makes normative for a conforming suite.
 
 - **E413's `{value}` is defined for a `text` range.** A `text` range constrains
   the value's length, so E413 substitutes the number of Unicode scalar values
@@ -59,9 +69,37 @@ adds a limit, an error identifier and the code that enforces it.
   renders both bounds. The compiler already rendered exactly this, and the
   catalogue's message template already matched it, so no message changed.
 
+Three diagnostics now read the way the settled text prescribes:
+
+- **A malformed condition reaches E511.** A lone `=` anywhere in a `logic`
+  statement began a bare value, so `if .name === b {` read the block's `{` as
+  an ordinary character of that value and reported an unclosed brace (E203) and
+  a stray one (E205) instead — three lines away from the fault, and about
+  braces the author had balanced. The value only ever belonged to a `derive`,
+  which is where the grammar puts `=`, so that is where the compiler now reads
+  one; an `if`, `require` or `for` head keeps its block brace and its malformed
+  condition reaches **E511**, where §6.6 puts it. Quoted right-hand sides were
+  never affected, which is why the fault survived the freeze.
+
+- **E511 quotes the condition as written.** The message rebuilt the text from
+  the token stream, which inserted spaces the author did not write and removed
+  ones they did: `and .name == "a"` was quoted `and.name == "a"`, and
+  `.name === "a"` was quoted `.name == = "a"`. It is now the author's own text,
+  taken from the source between the condition's first and last token.
+
+- **An `else` after a block that is not an `if` is E517.** §6.3 gives one
+  identifier to an `else` with no `if` to attach to, whether it stands at the
+  top of a block or follows the closing `}` of a `for` block; the second
+  spelling reported the generic end-of-line **E210**. An `else` that follows a
+  statement opening no block is a different fault and stays E210.
+
 Also: the conformance corpus gains a `revision-7` area with four cases — the
-work limit from both sides, the schemas-only project, and the commented `else`
-— for 282 cases in all.
+work limit from both sides, the schemas-only project and the commented `else` —
+and an `adversarial-3` area with nineteen, which pin the five findings above
+together with the work limit at exactly 1 000 000 iterations and one past it,
+the budget shared with a nested `$(Schema)` block, and E413's scalar count
+against astral and combining characters. 301 cases in all, and
+`tests/conformance/DEFECTS-3.md` records the verification that filed them.
 
 ---
 

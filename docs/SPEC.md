@@ -1533,7 +1533,7 @@ Logic evaluation is a pure function of the authored object, the schema set and t
 
 `require` failure aborts the instance immediately with E515 and the author's message; no later statement in that instance runs. Compilation as a whole fails.
 
-Every logic diagnostic carries the position of the statement in its `.abt` file and a note naming the instance and the version being compiled. A diagnostic raised inside a `for` body additionally carries `note: at index {i}, item {item}.`, counting from 0 in iteration order.
+Every logic diagnostic carries the position of the statement in its `.abt` file and a note naming the instance and the version being compiled. A diagnostic raised inside a `for` body additionally carries `note: at index {i}, item {item}.`, counting from 0 in iteration order — one such note for each `for` the statement is inside, written outermost first, so that the last one names the innermost loop.
 
 ### 6.13 What `derive` may write, summarised
 
@@ -1779,7 +1779,7 @@ Either array MAY be empty; an overlay whose `data` and `removed` are both empty 
 An empty `data` array is reachable in exactly two ways, and both of them are **successful** compiles that emit the envelope above with `data` and `overlays` both empty:
 
 - **single-file mode** (§2.5), when the named files declare no instances;
-- **a whole-project compile of a project whose sources declare schemas but no instances.** Discovery found source files and none of them declares an instance — a project of `.abt` files alone is the ordinary shape of it. §7.2 blesses such a project explicitly: P3 checks every schema and every logic block against no instance at all, so `abstract lint` on it reports `abstract: ok` and exits 0, and `abstract compile` on it emits the empty document.
+- **a whole-project compile that discovers source files and declares no instance.** Discovery found source files and none of them declares an instance. What those files *do* declare does not matter: a project of `.abt` files that declare schemas and logic is the ordinary shape of it, and a project whose one source is empty, holds nothing but comments, or holds nothing but a `versions` declaration reaches the same document — the project range of the envelope is read from that file like any other (§4.12). §7.2 blesses such a project explicitly: P3 checks every schema and every logic block against no instance at all, so `abstract lint` on it reports `abstract: ok` and exits 0, and `abstract compile` on it emits the empty document.
 
 A project with **no source files at all** is neither: discovery collects nothing, which is E103 (§2.4, §10.1), and no document is emitted. An empty directory is not an empty project.
 
@@ -2219,7 +2219,7 @@ error[E422]: Image content mismatch at frost.icon: 'a.bmp' is unreadable, not bm
 | E520 | Loop variable in a `derive` target | `A derive target cannot contain the variable '${name}'; write the field name.` | `derive .slots.$slot.mode = x` |
 | E521 | A `derive` executed against a field absent in this version | `derive cannot write {context}.{field} in version {v}; the field exists in versions {versions}.` + a note at the instance header + `note: guard the statement, for example with 'if version >= {n}'.` | `derive .glow = true` in version 1, where `glow` is `@since(2)` |
 | E522 | An interpolated `$name` in a `derive` value or a `throw` message is bound to a value that is not a scalar | `Variable '${name}' is not a scalar; it is {kind}.` + `note: interpolation inserts text; read a scalar field of it instead.` | `derive .label = cap-$c` inside `for $c in .caps`, where `caps` is a list of groups |
-| E523 | The logic of one instance executed more loop iterations for one version than §3.7 allows | `Logic work limit exceeded at {context}: the logic executed more than 1000000 loop iterations in version {v}.` + a note at the instance header | seven `for` blocks nested over a literal list of ten |
+| E523 | The logic of one instance executed more loop iterations for one version than §3.7 allows | `Logic work limit exceeded at {context}: the logic executed more than 1000000 loop iterations in version {v}.` + a note at the instance header + one `note: at index {i}, item {item}.` per `for` enclosing the one the position names, outermost first, and so at most one fewer than the block-nesting limit of §3.7 | seven `for` blocks nested over a literal list of ten |
 
 ### 10.6 E6xx — versions
 

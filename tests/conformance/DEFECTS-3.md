@@ -11,7 +11,7 @@ Scope: the five rulings of the Revision 7 section of `docs/revision-log.md` — 
 expectation below was re-derived from the specification text as it now stands, then put to the
 built binary; nothing was taken from the previous stage's report.
 
-Conformance cases live in `adversarial-3/adv3-01` … `adv3-19`, beside this file. Four of them are
+Conformance cases live in `cases/adversarial-3/adv3-01` … `adv3-19`. Four of them are
 `status = ready` and fail today (`adv3-01`, `adv3-02`, `adv3-05`, `adv3-06`); one is `pending`
 because its resolution is a specification decision (`adv3-16`); the other fourteen pass and pin
 edges the corpus did not previously reach.
