@@ -26,7 +26,7 @@
       "patterns": [
         {
           "name": "comment.line.double-slash.abstract",
-          "match": "(?:^|(?<=\\s))//.*$"
+          "match": "(?:^|(?<=[ \\t]))//.*$"
         }
       ]
     },
@@ -35,7 +35,7 @@
         {
           "name": "string.quoted.double.abstract",
           "begin": "\"",
-          "end": "\"",
+          "end": "\"|$",
           "patterns": [
             {
               "name": "constant.character.escape.abstract",
@@ -90,7 +90,7 @@
     "groupField": {
       "comment": "A group or list group nests a field list inside braces, to the depth SPEC 3.7 allows.",
       "name": "meta.block.group.abstract",
-      "begin": "^\\s*([A-Za-z_][A-Za-z0-9_]*)((?:\\[[^\\]]*\\])?)((?:\\s+@[A-Za-z_][A-Za-z0-9_]*(?:\\([^)]*\\))?)*)\\s*(\\{)",
+      "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*)((?:\\[[^\\]]*\\])?)((?:\\s+@[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\([^)]*\\))?)*)\\s*(\\{)",
       "beginCaptures": {
         "1": { "name": "variable.other.field.schema.abstract" },
         "2": { "name": "meta.cardinality.abstract", "patterns": [{ "include": "#cardinality" }] },
@@ -178,7 +178,7 @@
     "bodyBlock": {
       "comment": "An instance body block is sugar for dotted paths: owner { team: X }.",
       "name": "meta.block.body.abstract",
-      "begin": "^\\s*([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\s*(\\{)\\s*$",
+      "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)*)\\s*(\\{)\\s*$",
       "beginCaptures": {
         "1": { "name": "variable.other.field.instance.abstract" },
         "2": { "name": "punctuation.section.block.begin.abstract" }
@@ -263,7 +263,7 @@
     "schemaFieldDeclarations": {
       "patterns": [
         {
-          "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)((?:\\[[^\\]]*\\])?)(?=\\s*[:{@])",
+          "match": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*)((?:\\[[^\\]]*\\])?)(?=\\s*[:{@])",
           "captures": {
             "1": { "name": "variable.other.field.schema.abstract" },
             "2": { "patterns": [{ "include": "#cardinality" }] }
@@ -300,7 +300,7 @@
       "patterns": [
         {
           "name": "storage.modifier.header.abstract",
-          "match": "@[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_*.-]+)?"
+          "match": "@[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_*.-]+)?"
         }
       ]
     },
@@ -308,7 +308,7 @@
       "patterns": [
         {
           "name": "constant.other.symbol.abstract",
-          "match": "#[A-Za-z_][A-Za-z0-9_]*(?=\\b|\\()"
+          "match": "#[A-Za-z0-9_][A-Za-z0-9_-]*(?=\\b|\\()"
         }
       ]
     },
@@ -316,11 +316,11 @@
       "patterns": [
         {
           "name": "variable.other.clone.abstract",
-          "match": "&[A-Za-z_][A-Za-z0-9_]*\\.\\*"
+          "match": "&[A-Za-z0-9_][A-Za-z0-9_-]*\\.\\*"
         },
         {
           "name": "variable.other.clone.member.abstract",
-          "match": "&[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?"
+          "match": "&[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)?"
         }
       ]
     },
@@ -332,7 +332,7 @@
         },
         {
           "name": "variable.other.interpolation.abstract",
-          "match": "\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}|\\$[A-Za-z_][A-Za-z0-9_]*"
+          "match": "\\$\\{[A-Za-z0-9_][A-Za-z0-9_-]*\\}|\\$[A-Za-z0-9_][A-Za-z0-9_-]*"
         }
       ]
     },
@@ -348,7 +348,7 @@
       "patterns": [
         {
           "name": "variable.other.path.abstract",
-          "match": "\\.[A-Za-z_][A-Za-z0-9_]*(?:\\.(?:[A-Za-z_][A-Za-z0-9_]*|\\$[A-Za-z_][A-Za-z0-9_]*))*"
+          "match": "\\.[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\\$[A-Za-z0-9_][A-Za-z0-9_-]*))*"
         }
       ]
     },

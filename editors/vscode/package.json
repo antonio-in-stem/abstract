@@ -1,8 +1,8 @@
 {
   "name": "abstract-language",
   "displayName": "Abstract Language",
-  "description": "Syntax highlighting, completions, and CLI-backed linting for Abstract DSL files.",
-  "version": "1.0.0",
+  "description": "Schema-aware completions, navigation, refactoring, highlighting, and compiler diagnostics for Abstract 1.x.",
+  "version": "1.1.0",
   "publisher": "minhocreates",
   "repository": {
     "type": "git",
@@ -29,15 +29,31 @@
     "onLanguage:abstract"
   ],
   "main": "./src/extension.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:integration": "node test/run-integration.js",
+    "benchmark": "node test/performance.js",
+    "package": "vsce package --no-dependencies"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Editing features are available. Running the configured compiler requires workspace trust.",
+      "restrictedConfigurations": ["abstract.compilerPath"]
+    },
+    "virtualWorkspaces": { "supported": false }
+  },
   "contributes": {
     "commands": [
       {
         "command": "abstract.compileCurrentProject",
-        "title": "Abstract: Compile Current Project"
+        "title": "Abstract: Compile Current Project",
+        "enablement": "isWorkspaceTrusted && editorLangId == abstract"
       },
       {
         "command": "abstract.lintCurrentProject",
-        "title": "Abstract: Lint Current Project"
+        "title": "Abstract: Lint Current Project",
+        "enablement": "isWorkspaceTrusted && editorLangId == abstract"
       }
     ],
     "languages": [
@@ -107,14 +123,30 @@
       {
         "language": "abstract",
         "scopes": {
-          "abstractSchemaKeyword": ["keyword.declaration.schema.abstract"],
-          "abstractSchemaType": ["support.type.primitive.schema.abstract"],
-          "abstractSchemaModifier": ["storage.modifier.schema.abstract"],
-          "abstractSchemaField": ["variable.other.field.schema.abstract"],
-          "abstractLogicKeyword": ["keyword.control.logic.abstract"],
-          "abstractLogicOperator": ["keyword.operator.logical.logic.abstract"],
-          "abstractLogicPath": ["variable.other.path.abstract"],
-          "abstractInterpolationVariable": ["variable.other.interpolation.abstract"]
+          "abstractSchemaKeyword": [
+            "keyword.declaration.schema.abstract"
+          ],
+          "abstractSchemaType": [
+            "support.type.primitive.schema.abstract"
+          ],
+          "abstractSchemaModifier": [
+            "storage.modifier.schema.abstract"
+          ],
+          "abstractSchemaField": [
+            "variable.other.field.schema.abstract"
+          ],
+          "abstractLogicKeyword": [
+            "keyword.control.logic.abstract"
+          ],
+          "abstractLogicOperator": [
+            "keyword.operator.logical.logic.abstract"
+          ],
+          "abstractLogicPath": [
+            "variable.other.path.abstract"
+          ],
+          "abstractInterpolationVariable": [
+            "variable.other.interpolation.abstract"
+          ]
         }
       }
     ],
@@ -153,13 +185,21 @@
         "abstract.outputFormat": {
           "type": "string",
           "default": "JSON",
-          "enum": ["JSON", "YML", "YAML", "RAW"],
+          "enum": [
+            "JSON",
+            "YML",
+            "YAML",
+            "RAW"
+          ],
           "description": "Format used by the Abstract compile command."
         }
       }
     }
   },
   "devDependencies": {
-    "@vscode/vsce": "^3.9.1"
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.9.1",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.2.0"
   }
 }

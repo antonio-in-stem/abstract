@@ -2,30 +2,8 @@ const vscode = require("vscode");
 const cp = require("child_process");
 const path = require("path");
 const fs = require("fs");
-
-const COMPLETIONS = [
-  "schema",
-  "logic",
-  "versions 1..1",
-  "text",
-  "int",
-  "float",
-  "bool",
-  "enum",
-  "file",
-  "image",
-  "ref",
-  "$(Schema)",
-  "@optional",
-  "@tag",
-  "@since(2)",
-  "@removed(2)",
-  "Product :: @id.",
-  "copy(key, value): (en_us, Welcome), (es_*, Bienvenido)",
-  "tags: [core, public, ai_ready]",
-  "owner.team: Knowledge Systems",
-  "capabilities: [#search, #sync(availability: beta)]"
-];
+const { scanLine } = require("./language-model");
+const { registerLanguageFeatures } = require("./providers");
 
 const SEMANTIC_TOKEN_TYPES = [
   "abstractSchemaKeyword",
@@ -45,6 +23,8 @@ function activate(context) {
   context.subscriptions.push(diagnostics);
 
   const runLint = (document) => lintDocument(document, diagnostics);
+  registerLanguageFeatures(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message));
+  context.subscriptions.push({ dispose() { outputChannel?.dispose(); outputChannel = undefined; lintProjects.clear(); } });
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
@@ -53,31 +33,29 @@ function activate(context) {
     vscode.workspace.onDidSaveTextDocument((document) => {
       if (document.languageId === "abstract") runLint(document);
     }),
-    vscode.languages.registerCompletionItemProvider("abstract", {
-      provideCompletionItems() {
-        return COMPLETIONS.map((label) => {
-          const item = new vscode.CompletionItem(label, vscode.CompletionItemKind.Snippet);
-          item.insertText = label;
-          return item;
-        });
-      }
+    vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
+      if (document.languageId === "abstract" && contentChanges.length) invalidateLint(resolveProjectPath(document), diagnostics);
+    }),
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      if (document.languageId === "abstract") runLint(document);
     }),
     vscode.languages.registerDocumentSemanticTokensProvider(
-      { language: "abstract" },
+      { language: "abstract", scheme: "file" },
       { provideDocumentSemanticTokens },
       SEMANTIC_LEGEND
     ),
     vscode.commands.registerCommand("abstract.lintCurrentProject", async () => {
       const document = vscode.window.activeTextEditor?.document;
       if (!document) return;
-      await runCliCommand(document, "lint");
-      await lintDocument(document, diagnostics);
+      if (await runCliCommand(document, "lint")) await lintDocument(document, diagnostics);
     }),
     vscode.commands.registerCommand("abstract.compileCurrentProject", async () => {
       const document = vscode.window.activeTextEditor?.document;
       if (!document) return;
-      await runCliCommand(document, "compile");
-      await lintDocument(document, diagnostics);
+      if (await runCliCommand(document, "compile")) await lintDocument(document, diagnostics);
+    }),
+    vscode.workspace.onDidGrantWorkspaceTrust(() => {
+      for (const document of vscode.workspace.textDocuments) if (document.languageId === "abstract") runLint(document);
     })
   );
 
@@ -100,14 +78,14 @@ function provideDocumentSemanticTokens(document) {
     // outside the block tracking below.
     addRegexTokens(tokens, line, /^\s*(versions)\b/g, "abstractSchemaKeyword", 1);
 
-    const blockStart = line.match(/\b(schema|logic)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/);
+    const blockStart = line.match(/^\s*(schema|logic)\s+([A-Za-z][A-Za-z0-9_]*)\s*\{/);
     if (!blockKind && blockStart) {
       blockKind = blockStart[1];
       blockDepth = 0;
     }
 
     if (blockStart) {
-      addToken(tokens, blockStart.index, blockStart[1].length,
+      addToken(tokens, blockStart.index + blockStart[0].indexOf(blockStart[1]), blockStart[1].length,
         blockStart[1] === "schema" ? "abstractSchemaKeyword" : "abstractLogicKeyword");
     }
 
@@ -121,11 +99,11 @@ function provideDocumentSemanticTokens(document) {
         "abstractSchemaType"
       );
       addRegexTokens(tokens, line, /@(optional|tag|since|removed)\b/g, "abstractSchemaModifier");
-      addRegexTokens(tokens, line, /^\s*([A-Za-z_][A-Za-z0-9_]*)(?:\[\])?(?=\s*[:{])/g, "abstractSchemaField", 1);
+      addRegexTokens(tokens, line, /^\s*([A-Za-z0-9_][A-Za-z0-9_-]*)(?:\[[^\]]*\])?(?=\s*[:{@])/g, "abstractSchemaField", 1);
     } else if (blockKind === "logic") {
       addRegexTokens(tokens, line, /\b(if|require|else|throw|for|in|derive)\b/g, "abstractLogicKeyword");
       addRegexTokens(tokens, line, /\b(contains|exists|length|and|or|not|in|version)\b|&&|\|\||==|!=|>=|<=|>|</g, "abstractLogicOperator");
-      addRegexTokens(tokens, line, /\.[A-Za-z_][A-Za-z0-9_]*(?:\.(?:[A-Za-z_][A-Za-z0-9_]*|\$[A-Za-z_][A-Za-z0-9_]*))*/g, "abstractLogicPath");
+      addRegexTokens(tokens, line, /\.[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\$[A-Za-z0-9_][A-Za-z0-9_-]*))*/g, "abstractLogicPath");
     }
     addRegexTokens(tokens, line, /\$[A-Za-z_][A-Za-z0-9_]*/g, "abstractInterpolationVariable");
 
@@ -151,23 +129,7 @@ function provideDocumentSemanticTokens(document) {
 }
 
 function maskStringsAndComments(line) {
-  let output = "";
-  let inString = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const ch = line[index];
-    const next = line[index + 1];
-    if (!inString && ch === "/" && next === "/") {
-      output += " ".repeat(line.length - index);
-      break;
-    }
-    if (ch === "\"" && line[index - 1] !== "\\") {
-      inString = !inString;
-      output += " ";
-      continue;
-    }
-    output += inString ? " " : ch;
-  }
-  return output;
+  return scanLine(line).masked;
 }
 
 function braceDelta(line) {
@@ -205,25 +167,44 @@ function runCompiler(compiler, args, cwd) {
     cp.execFile(
       compiler,
       args,
-      { cwd, windowsHide: true, shell: false },
+      { cwd, windowsHide: true, shell: false, timeout: 30000, maxBuffer: 4 * 1024 * 1024 },
       (error, stdout, stderr) => resolve({ error, stdout, stderr })
     );
   });
 }
 
+const lintProjects = new Map();
+
+function invalidateLint(target, diagnostics) {
+  if (!target) return;
+  const previous = lintProjects.get(target) || { generation: 0, files: [] };
+  for (const uri of previous.files) diagnostics.delete(uri);
+  const state = { generation: previous.generation + 1, files: [] };
+  lintProjects.set(target, state);
+  return state;
+}
+
+function hasUnsavedProject(target) {
+  return vscode.workspace.textDocuments.some((d) => d.languageId === "abstract" && d.isDirty && resolveProjectPath(d) === target);
+}
+
 async function lintDocument(document, diagnostics) {
-  const compiler = vscode.workspace.getConfiguration("abstract").get("compilerPath", "abstract");
+  if (!vscode.workspace.isTrusted || document.uri.scheme !== "file") return;
+  const compiler = vscode.workspace.getConfiguration("abstract", document.uri).get("compilerPath", "abstract");
   const target = resolveProjectPath(document);
   if (!target) {
     // A file with no resolvable project is not linted at all: a single .ab
     // file out of project context has no schemas, so every diagnostic it
     // produced would be noise (SPEC Appendix D.3 item 13).
-    diagnostics.clear();
     return;
   }
+  const state = invalidateLint(target, diagnostics);
+  if (hasUnsavedProject(target)) return;
 
   const { error, stdout, stderr } = await runCompiler(compiler, ["lint", target], workspaceRoot(document));
-  diagnostics.clear();
+  // Concurrent runs for one project cannot publish an older result, and a
+  // successful project cannot erase diagnostics belonging to another root.
+  if (lintProjects.get(target) !== state || hasUnsavedProject(target)) return;
   if (!error) return;
 
   const output = `${stderr || ""}\n${stdout || ""}`.trim();
@@ -239,6 +220,7 @@ async function lintDocument(document, diagnostics) {
     );
     diagnostic.source = "abstract";
     diagnostics.set(document.uri, [diagnostic]);
+    state.files.push(document.uri);
     return;
   }
 
@@ -251,6 +233,7 @@ async function lintDocument(document, diagnostics) {
   }
   for (const { uri, items } of byFile.values()) {
     diagnostics.set(uri, items);
+    state.files.push(uri);
   }
 }
 
@@ -269,16 +252,35 @@ const DIAGNOSTIC_LINE =
 
 function parseDiagnostics(output, projectRoot) {
   const results = [];
+  const sources = new Map();
   let current;
+
+  function rangeFor(reported, line, col) {
+    const lineIndex = Math.max(0, Number(line || 1) - 1);
+    const scalarIndex = Math.max(0, Number(col || 1) - 1);
+    const file = reported ? resolveReportedPath(reported, projectRoot) : "";
+    if (!sources.has(file)) {
+      const open = vscode.workspace.textDocuments.find((d) => d.uri.fsPath === file);
+      let text = open?.getText();
+      if (text === undefined && file) { try { text = fs.readFileSync(file, "utf8"); } catch { /* Missing source: keep the reported position. */ } }
+      sources.set(file, text?.split(/\r?\n/));
+    }
+    const text = sources.get(file)?.[lineIndex];
+    if (text === undefined) return new vscode.Range(lineIndex, scalarIndex, lineIndex, scalarIndex + 1);
+    // Compiler columns count Unicode scalars (SPEC 9.8); VS Code counts
+    // UTF-16 code units. A leading BOM is removed by the compiler (SPEC 2.2).
+    const bom = lineIndex === 0 && text.startsWith("\uFEFF") ? 1 : 0;
+    const scalars = Array.from(text.slice(bom));
+    const columnIndex = bom + scalars.slice(0, scalarIndex).join("").length;
+    return new vscode.Range(lineIndex, columnIndex, lineIndex, columnIndex + (scalars[scalarIndex]?.length || 0));
+  }
 
   for (const raw of output.split(/\r?\n/)) {
     const match = raw.match(DIAGNOSTIC_LINE);
     if (match) {
       const { path: reported, line, col, id, message } = match.groups;
-      const lineIndex = Math.max(0, Number(line || 1) - 1);
-      const columnIndex = Math.max(0, Number(col || 1) - 1);
       const diagnostic = new vscode.Diagnostic(
-        new vscode.Range(lineIndex, columnIndex, lineIndex, columnIndex + 1),
+        rangeFor(reported, line, col),
         message,
         vscode.DiagnosticSeverity.Error
       );
@@ -299,11 +301,9 @@ function parseDiagnostics(output, projectRoot) {
     if (note && current) {
       const { path: reported, line, col, text } = note.groups;
       if (reported) {
-        const lineIndex = Math.max(0, Number(line) - 1);
-        const columnIndex = Math.max(0, Number(col || 1) - 1);
         const location = new vscode.Location(
           vscode.Uri.file(resolveReportedPath(reported, projectRoot)),
-          new vscode.Range(lineIndex, columnIndex, lineIndex, columnIndex + 1)
+          rangeFor(reported, line, col)
         );
         current.diagnostic.relatedInformation = [
           ...(current.diagnostic.relatedInformation || []),
@@ -338,7 +338,8 @@ function projectRootOf(target) {
 }
 
 async function runCliCommand(document, commandName) {
-  const compiler = vscode.workspace.getConfiguration("abstract").get("compilerPath", "abstract");
+  if (!vscode.workspace.isTrusted || document.uri.scheme !== "file") return false;
+  const compiler = vscode.workspace.getConfiguration("abstract", document.uri).get("compilerPath", "abstract");
   const target = resolveProjectPath(document);
   const channel = getOutputChannel();
   if (!target) {
@@ -349,10 +350,14 @@ async function runCliCommand(document, commandName) {
     );
     channel.show(true);
     vscode.window.showErrorMessage(`Abstract ${commandName} needs a project.`);
-    return;
+    return false;
+  }
+  if (hasUnsavedProject(target)) {
+    vscode.window.showWarningMessage("Save the Abstract files in this project before running the compiler.");
+    return false;
   }
 
-  const format = vscode.workspace.getConfiguration("abstract").get("outputFormat", "JSON");
+  const format = vscode.workspace.getConfiguration("abstract", document.uri).get("outputFormat", "JSON");
   const args = commandName === "compile" ? [commandName, target, format] : [commandName, target];
 
   const { error, stdout, stderr } = await runCompiler(compiler, args, workspaceRoot(document));
@@ -367,6 +372,7 @@ async function runCliCommand(document, commandName) {
     vscode.window.showInformationMessage(`Abstract ${commandName} completed.`);
   }
   channel.show(true);
+  return true;
 }
 
 let outputChannel;
@@ -391,7 +397,8 @@ function getOutputChannel() {
 //
 // Returns the path to lint, or "" when the document is not in a project.
 function resolveProjectPath(document) {
-  const configured = vscode.workspace.getConfiguration("abstract").get("projectPath", "");
+  if (document.uri.scheme !== "file") return "";
+  const configured = vscode.workspace.getConfiguration("abstract", document.uri).get("projectPath", "");
   if (configured) {
     return expandWorkspacePath(document, configured);
   }
@@ -435,9 +442,11 @@ function workspaceRoot(document) {
 }
 
 function expandWorkspacePath(document, value) {
-  return value
+  const expanded = value
     .replace(/\$\{workspaceFolder\}/g, workspaceRoot(document))
-    .replace(/\$\{workspaceFolder:[^}]+\}/g, workspaceRoot(document));
+    .replace(/\$\{workspaceFolder:([^}]+)\}/g, (_, name) =>
+      vscode.workspace.workspaceFolders?.find((folder) => folder.name === name)?.uri.fsPath || workspaceRoot(document));
+  return path.resolve(workspaceRoot(document), expanded);
 }
 
 function deactivate() {}
