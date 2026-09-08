@@ -1,5 +1,9 @@
 # Abstract Language for VS Code
 
+The optional Abstract file icon theme uses the original MinhoCreates Abstract
+logo for `.ab` and `.abt` files. Version 1.2.1 replaces the preliminary file artwork;
+language and compiler behavior is unchanged from 1.2.0.
+
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
 CLI in Abstract **1.0.1**, plus its optional analysis protocol when advertised.

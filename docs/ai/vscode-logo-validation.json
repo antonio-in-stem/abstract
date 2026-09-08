@@ -1,0 +1,15 @@
+{
+  "date": "2026-09-08",
+  "version": "1.2.1",
+  "scope": "Supplied original Abstract logo in optional file icon theme; no language/compiler changes",
+  "previous_code_revision": "1496c1d",
+  "source_logo_sha256": "2EF7511CC2569D53232F930C141C09BEA60FA54C9E5A71EEACA715BE4BF9FA1B",
+  "vsix_sha256": "BADCD69A5827C888EC68A8D400E9B26BF529499747E5E8B215199CE3028E0BC7",
+  "vsix_bytes": 33351,
+  "checks": [
+    "VSIX contains original SVG bytes",
+    "Both Abstract file extensions reference the supplied logo",
+    "Unused preliminary Abstract icon art is absent from package"
+  ],
+  "real_vscode_host_retested": false
+}
