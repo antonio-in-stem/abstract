@@ -1,0 +1,37 @@
+[
+  {
+    "path": "analysis-cargo-test.log",
+    "bytes": 1454,
+    "sha256": "1F3663EEDC59F6E6645C8BBC8718BB821F91FB1B0A1617F944CDEC44000072E7"
+  },
+  {
+    "path": "analysis-conformance.log",
+    "bytes": 804,
+    "sha256": "40B4D6443E9F3FA96E4D3233506D1DEA4AE28AD13402A232C97AE0FB5E6F1E6E"
+  },
+  {
+    "path": "analysis-node-test.log",
+    "bytes": 2759,
+    "sha256": "7C4405CCA8502C97B423A7CA23B5C9F24EA85B4AB4ED5B530F2C25F9F5ACA2E3"
+  },
+  {
+    "path": "analysis-host-minimum-trusted.log",
+    "bytes": 2051,
+    "sha256": "8F4B0216E89C672BEE5B7347BC7A7C48668412E7D3540AB761895006EA7F8D82"
+  },
+  {
+    "path": "analysis-host-minimum-restricted.log",
+    "bytes": 1394,
+    "sha256": "C687DC9B90374D01BC4FA3BBC7FC6E87DF11E79C7E8D60077C6C790FFCD6C9CC"
+  },
+  {
+    "path": "analysis-host-current-trusted.log",
+    "bytes": 2242,
+    "sha256": "08F3119BBB47E2CF4E2F060388A546794E83DD2722BB371695AFCF9B5E29BF10"
+  },
+  {
+    "path": "analysis-host-current-restricted.log",
+    "bytes": 1780,
+    "sha256": "690458CA1F4A3CF82EEF96E0FFC3B77457578F0D570557887A3B8EED66397421"
+  }
+]

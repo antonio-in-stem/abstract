@@ -2,7 +2,8 @@
 
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
-CLI in Abstract **1.0.1**. Install the compiler separately and set
+CLI in Abstract **1.0.1**, plus its optional analysis protocol when advertised.
+Install the compiler separately and set
 `abstract.compilerPath` if `abstract` is not on your PATH.
 
 ## Authoring
@@ -19,17 +20,23 @@ CLI in Abstract **1.0.1**. Install the compiler separately and set
   block into its equivalent dotted assignment. The edit is previewable and
   undoable. Comments attached to the assignment and version annotations stay
   intact; blocks with comments on their braces are left as written.
-- Compiler diagnostics on opening and saving files, including error codes and
+- Compiler diagnostics while editing, including error codes and
   related locations. Errors stay associated with their project in multi-root
-  workspaces. Compile and Lint commands write compiler output to the Abstract
-  output channel.
+  workspaces. The status bar distinguishes live analysis from legacy saved-file
+  linting. Compile writes compiler output to the Abstract channel.
 
 Completions, navigation and refactoring use current editor buffers, including
-unsaved schemas. The compiler checks **saved project files**. Editing a project
-clears its previous diagnostics until its Abstract buffers are saved; this avoids
-showing errors from an older disk version as if they described the current text.
-Compiler commands require saved buffers and a trusted workspace. Other editing
-features remain available in Restricted Mode.
+unsaved schemas. A compiler advertising **analysis protocol 1** also checks dirty
+file-backed buffers after a 250 ms debounce, using the actual project and assets
+directory without writing source files. Replaced requests are canceled and stale
+results are discarded. The [protocol contract](../../docs/ANALYSIS-PROTOCOL.md)
+defines limits and Unicode ranges.
+
+Older compilers remain usable: the extension explicitly reports **Saved-file
+diagnostics** and waits until every project buffer is saved before invoking
+legacy `lint`. Unsupported analysis is never presented as live validation.
+Analysis and compiler commands require a trusted workspace; Compile also needs
+saved buffers. Other editing features remain available in Restricted Mode.
 
 ## Project layout and settings
 
@@ -54,9 +61,10 @@ index is tolerant of incomplete input; the compiler remains authoritative.
 ## Current boundaries
 
 This release is an authoring increment, not complete language-server coverage.
-It does not provide compiler diagnostics for unsaved buffers, whole-document
-formatting, rename/references, tuple-column or tagged-argument completions,
-asset-path completion, loop-variable inference, or general compression.
+It does not provide whole-document formatting, rename/references,
+tuple-column or tagged-argument completions,
+asset-path completion, loop-variable inference, or general compression. Untitled
+buffers need a filesystem identity before project diagnostics can run.
 Hover displays a resolved declaration; it does not evaluate defaults, logic or
 version applicability. Completion proposals are not a proof that the whole
 document is valid. Ambiguous schema declarations yield no assumed field shape.
@@ -83,10 +91,22 @@ npm run package
 `npm test` includes compiler-backed byte comparisons, so it requires that build
 or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
-VS Code 1.92.2; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
+VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.1.0.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.2.0.vsix`; use **Extensions: Install from VSIX** to
 install it.
+
+Set `ABSTRACT_TEST_RESTRICTED=1` to run the real Restricted Mode branch. Set
+`ABSTRACT_LEGACY_COMPILER_PATH` to a preserved pre-protocol executable to test
+saved-file compatibility; the test reports a skip when that binary is absent.
+The runner launches the official host with explicit profiles and arguments,
+because the test library's `runTests` helper disables Workspace Trust.
+
+For compiler-analysis performance, first run `cargo build --release --bin abstract`
+at the repository root, then `npm run benchmark:analysis` here. It measures client
+membership discovery and request encoding separately from a new compiler process,
+including actual asset checks. The [analysis validation ledger](../../docs/ai/vscode-analysis-validation.md)
+records the fixture, environment, distributions and remaining limits.
 
 The implementation uses the official [VS Code language-provider APIs](https://code.visualstudio.com/api/language-extensions/programmatic-language-features),
 [extension-host testing API](https://code.visualstudio.com/api/working-with-extensions/testing-extension)

@@ -5,6 +5,10 @@ The compiler runtime and language specification are unchanged. This is an
 increment toward complete editor support; the extension README states the
 remaining capabilities.
 
+The follow-up [analysis protocol validation ledger](vscode-analysis-validation.md)
+records the compiler changes and unsaved-diagnostics coverage in extension 1.2.0.
+The observations below remain the historical 1.1.0 baseline.
+
 ## Contracts and evidence
 
 | Boundary | Contract | Verification |

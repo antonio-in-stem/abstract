@@ -2,7 +2,7 @@
   "name": "abstract-language",
   "displayName": "Abstract Language",
   "description": "Schema-aware completions, navigation, refactoring, highlighting, and compiler diagnostics for Abstract 1.x.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "minhocreates",
   "repository": {
     "type": "git",
@@ -33,15 +33,20 @@
     "test": "node --test test/*.test.js",
     "test:integration": "node test/run-integration.js",
     "benchmark": "node test/performance.js",
+    "benchmark:analysis": "node test/analysis-performance.js",
     "package": "vsce package --no-dependencies"
   },
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
       "description": "Editing features are available. Running the configured compiler requires workspace trust.",
-      "restrictedConfigurations": ["abstract.compilerPath"]
+      "restrictedConfigurations": [
+        "abstract.compilerPath"
+      ]
     },
-    "virtualWorkspaces": { "supported": false }
+    "virtualWorkspaces": {
+      "supported": false
+    }
   },
   "contributes": {
     "commands": [
@@ -173,16 +178,19 @@
       "title": "Abstract",
       "properties": {
         "abstract.compilerPath": {
+          "scope": "resource",
           "type": "string",
           "default": "abstract",
           "description": "Path to the abstract compiler binary used for linting."
         },
         "abstract.projectPath": {
+          "scope": "resource",
           "type": "string",
           "default": "",
           "description": "Optional Abstract project path to lint. Empty means the project the open file belongs to: the parent of the nearest ancestor directory named 'data'."
         },
         "abstract.outputFormat": {
+          "scope": "resource",
           "type": "string",
           "default": "JSON",
           "enum": [

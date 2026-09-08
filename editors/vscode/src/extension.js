@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const { scanLine } = require("./language-model");
 const { registerLanguageFeatures } = require("./providers");
+const { registerDiagnostics } = require("./live-diagnostics");
 
 const SEMANTIC_TOKEN_TYPES = [
   "abstractSchemaKeyword",
@@ -22,23 +23,15 @@ function activate(context) {
   const diagnostics = vscode.languages.createDiagnosticCollection("abstract");
   context.subscriptions.push(diagnostics);
 
-  const runLint = (document) => lintDocument(document, diagnostics);
   registerLanguageFeatures(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message));
-  context.subscriptions.push({ dispose() { outputChannel?.dispose(); outputChannel = undefined; lintProjects.clear(); } });
+  const live = registerDiagnostics(context, {
+    diagnostics, resolveProjectPath, workspaceRoot,
+    lintSaved: lintDocument,
+    report: (message) => getOutputChannel().appendLine(message)
+  });
+  context.subscriptions.push({ dispose() { outputChannel?.dispose(); outputChannel = undefined; } });
 
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument((document) => {
-      if (document.languageId === "abstract") runLint(document);
-    }),
-    vscode.workspace.onDidSaveTextDocument((document) => {
-      if (document.languageId === "abstract") runLint(document);
-    }),
-    vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
-      if (document.languageId === "abstract" && contentChanges.length) invalidateLint(resolveProjectPath(document), diagnostics);
-    }),
-    vscode.workspace.onDidCloseTextDocument((document) => {
-      if (document.languageId === "abstract") runLint(document);
-    }),
     vscode.languages.registerDocumentSemanticTokensProvider(
       { language: "abstract", scheme: "file" },
       { provideDocumentSemanticTokens },
@@ -47,21 +40,26 @@ function activate(context) {
     vscode.commands.registerCommand("abstract.lintCurrentProject", async () => {
       const document = vscode.window.activeTextEditor?.document;
       if (!document) return;
-      if (await runCliCommand(document, "lint")) await lintDocument(document, diagnostics);
+      await live.schedule(document, true);
     }),
     vscode.commands.registerCommand("abstract.compileCurrentProject", async () => {
       const document = vscode.window.activeTextEditor?.document;
-      if (!document) return;
-      if (await runCliCommand(document, "compile")) await lintDocument(document, diagnostics);
-    }),
-    vscode.workspace.onDidGrantWorkspaceTrust(() => {
-      for (const document of vscode.workspace.textDocuments) if (document.languageId === "abstract") runLint(document);
+      if (!document || !vscode.workspace.isTrusted || document.uri.scheme !== "file") return false;
+      try {
+        if (await live.hasUnsaved(document)) {
+          vscode.window.showWarningMessage("Save the Abstract files in this project, including linked schemas, before compiling.");
+          return false;
+        }
+      } catch (error) {
+        vscode.window.showWarningMessage(`Cannot verify saved project sources: ${error.message}`);
+        return false;
+      }
+      const ran = await runCliCommand(document, "compile");
+      if (ran) await live.schedule(document, true);
+      return ran;
     })
   );
 
-  for (const document of vscode.workspace.textDocuments) {
-    if (document.languageId === "abstract") runLint(document);
-  }
 }
 
 function provideDocumentSemanticTokens(document) {
@@ -162,33 +160,23 @@ function addToken(tokens, start, length, type) {
 // entries, so a directory named `; rm -rf ~` is a directory name and not a
 // command. There is no quoting to get right because there is no shell to quote
 // for.
-function runCompiler(compiler, args, cwd) {
+function runCompiler(compiler, args, cwd, registerOperation) {
   return new Promise((resolve) => {
-    cp.execFile(
+    const child = cp.execFile(
       compiler,
       args,
       { cwd, windowsHide: true, shell: false, timeout: 30000, maxBuffer: 4 * 1024 * 1024 },
       (error, stdout, stderr) => resolve({ error, stdout, stderr })
     );
+    registerOperation?.({ cancel() { if (child.exitCode === null) child.kill("SIGKILL"); } });
   });
-}
-
-const lintProjects = new Map();
-
-function invalidateLint(target, diagnostics) {
-  if (!target) return;
-  const previous = lintProjects.get(target) || { generation: 0, files: [] };
-  for (const uri of previous.files) diagnostics.delete(uri);
-  const state = { generation: previous.generation + 1, files: [] };
-  lintProjects.set(target, state);
-  return state;
 }
 
 function hasUnsavedProject(target) {
   return vscode.workspace.textDocuments.some((d) => d.languageId === "abstract" && d.isDirty && resolveProjectPath(d) === target);
 }
 
-async function lintDocument(document, diagnostics) {
+async function lintDocument(document, state) {
   if (!vscode.workspace.isTrusted || document.uri.scheme !== "file") return;
   const compiler = vscode.workspace.getConfiguration("abstract", document.uri).get("compilerPath", "abstract");
   const target = resolveProjectPath(document);
@@ -198,13 +186,12 @@ async function lintDocument(document, diagnostics) {
     // produced would be noise (SPEC Appendix D.3 item 13).
     return;
   }
-  const state = invalidateLint(target, diagnostics);
   if (hasUnsavedProject(target)) return;
 
-  const { error, stdout, stderr } = await runCompiler(compiler, ["lint", target], workspaceRoot(document));
+  const { error, stdout, stderr } = await runCompiler(compiler, ["lint", target], workspaceRoot(document), state.setOperation);
   // Concurrent runs for one project cannot publish an older result, and a
   // successful project cannot erase diagnostics belonging to another root.
-  if (lintProjects.get(target) !== state || hasUnsavedProject(target)) return;
+  if (!state.isCurrent() || hasUnsavedProject(target)) return;
   if (!error) return;
 
   const output = `${stderr || ""}\n${stdout || ""}`.trim();
@@ -219,8 +206,7 @@ async function lintDocument(document, diagnostics) {
       vscode.DiagnosticSeverity.Error
     );
     diagnostic.source = "abstract";
-    diagnostics.set(document.uri, [diagnostic]);
-    state.files.push(document.uri);
+    state.publish(document.uri, [diagnostic]);
     return;
   }
 
@@ -232,8 +218,7 @@ async function lintDocument(document, diagnostics) {
     byFile.get(key).items.push(item.diagnostic);
   }
   for (const { uri, items } of byFile.values()) {
-    diagnostics.set(uri, items);
-    state.files.push(uri);
+    state.publish(uri, items);
   }
 }
 

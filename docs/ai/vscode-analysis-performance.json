@@ -1,0 +1,156 @@
+{
+  "node": "v24.13.1",
+  "platform": "win32 10.0.26200 x64",
+  "cpu": "AMD Ryzen 5 7600 6-Core Processor",
+  "compiler": "C:\\Users\\PC\\Repositories\\abstract-vscode\\target\\release\\abstract.exe",
+  "compilerSha256": "e26e22c2b521e461442a8b5e4062b282a0b5e44247bcec891f35021dd8a97437",
+  "revision": "0ebfcdba96c34cf9f57d9aa627f08919f96de724",
+  "workingTreeDirty": true,
+  "recordedAt": "2026-09-08T00:20:13.060Z",
+  "fixture": {
+    "sources": 501,
+    "instances": 500,
+    "assets": 1,
+    "overlays": 1
+  },
+  "warmup": 5,
+  "samples": 20,
+  "clientPreparationMs": {
+    "p50": 64.11,
+    "p95": 74.756,
+    "max": 74.788
+  },
+  "compilerRoundTripMs": {
+    "p50": 112.677,
+    "p95": 162.415,
+    "max": 181.358
+  },
+  "completeRequestMs": {
+    "p50": 178.6,
+    "p95": 234.902,
+    "max": 241.698
+  },
+  "rawSamplesMs": [
+    {
+      "sample": 1,
+      "clientPreparationMs": 64.10979999999972,
+      "compilerRoundTripMs": 124.0024000000003,
+      "completeRequestMs": 188.11220000000003
+    },
+    {
+      "sample": 2,
+      "clientPreparationMs": 60.339500000000044,
+      "compilerRoundTripMs": 181.35849999999982,
+      "completeRequestMs": 241.69799999999987
+    },
+    {
+      "sample": 3,
+      "clientPreparationMs": 72.42280000000028,
+      "compilerRoundTripMs": 134.84519999999975,
+      "completeRequestMs": 207.26800000000003
+    },
+    {
+      "sample": 4,
+      "clientPreparationMs": 71.01560000000018,
+      "compilerRoundTripMs": 148.1034999999997,
+      "completeRequestMs": 219.1190999999999
+    },
+    {
+      "sample": 5,
+      "clientPreparationMs": 72.48739999999998,
+      "compilerRoundTripMs": 162.41460000000006,
+      "completeRequestMs": 234.90200000000004
+    },
+    {
+      "sample": 6,
+      "clientPreparationMs": 74.78780000000006,
+      "compilerRoundTripMs": 121.34119999999984,
+      "completeRequestMs": 196.1289999999999
+    },
+    {
+      "sample": 7,
+      "clientPreparationMs": 74.7556999999997,
+      "compilerRoundTripMs": 115.53940000000011,
+      "completeRequestMs": 190.29509999999982
+    },
+    {
+      "sample": 8,
+      "clientPreparationMs": 68.62670000000026,
+      "compilerRoundTripMs": 121.89929999999958,
+      "completeRequestMs": 190.52599999999984
+    },
+    {
+      "sample": 9,
+      "clientPreparationMs": 66.97199999999975,
+      "compilerRoundTripMs": 112.67659999999978,
+      "completeRequestMs": 179.64859999999953
+    },
+    {
+      "sample": 10,
+      "clientPreparationMs": 66.20359999999982,
+      "compilerRoundTripMs": 133.04620000000068,
+      "completeRequestMs": 199.2498000000005
+    },
+    {
+      "sample": 11,
+      "clientPreparationMs": 71.13619999999992,
+      "compilerRoundTripMs": 106.08280000000013,
+      "completeRequestMs": 177.21900000000005
+    },
+    {
+      "sample": 12,
+      "clientPreparationMs": 62.65970000000016,
+      "compilerRoundTripMs": 100.15159999999923,
+      "completeRequestMs": 162.8112999999994
+    },
+    {
+      "sample": 13,
+      "clientPreparationMs": 61.1216000000004,
+      "compilerRoundTripMs": 96.38369999999941,
+      "completeRequestMs": 157.5052999999998
+    },
+    {
+      "sample": 14,
+      "clientPreparationMs": 59.01289999999972,
+      "compilerRoundTripMs": 102.45809999999983,
+      "completeRequestMs": 161.47099999999955
+    },
+    {
+      "sample": 15,
+      "clientPreparationMs": 60.464100000000144,
+      "compilerRoundTripMs": 101.58140000000003,
+      "completeRequestMs": 162.04550000000017
+    },
+    {
+      "sample": 16,
+      "clientPreparationMs": 60.07300000000032,
+      "compilerRoundTripMs": 108.55320000000029,
+      "completeRequestMs": 168.6262000000006
+    },
+    {
+      "sample": 17,
+      "clientPreparationMs": 64.72469999999976,
+      "compilerRoundTripMs": 113.8753999999999,
+      "completeRequestMs": 178.60009999999966
+    },
+    {
+      "sample": 18,
+      "clientPreparationMs": 58.523699999999735,
+      "compilerRoundTripMs": 99.51569999999992,
+      "completeRequestMs": 158.03939999999966
+    },
+    {
+      "sample": 19,
+      "clientPreparationMs": 58.1246000000001,
+      "compilerRoundTripMs": 95.92849999999999,
+      "completeRequestMs": 154.0531000000001
+    },
+    {
+      "sample": 20,
+      "clientPreparationMs": 57.95679999999993,
+      "compilerRoundTripMs": 94.4382000000005,
+      "completeRequestMs": 152.39500000000044
+    }
+  ],
+  "scope": "Client canonical membership discovery/encoding + release compiler startup/full discovery/compile/assets + response parsing; warm OS cache. Excludes 250 ms debounce, capability negotiation, VS Code document snapshot/RPC/rendering. Percentiles use nearest rank. Sequential observations are not independent trials or a population estimate."
+}

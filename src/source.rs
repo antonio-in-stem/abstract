@@ -26,6 +26,8 @@ pub struct SourceFile {
     pub text: String,
     /// Absolute path on disk, when the file was read from one.
     origin: Option<PathBuf>,
+    /// Whether the original text starts with the stripped BOM.
+    leading_bom: bool,
     /// Byte offsets at which each line starts, including line 1 at offset 0.
     line_starts: Vec<usize>,
 }
@@ -34,12 +36,14 @@ impl SourceFile {
     /// Builds an in-memory source file. A leading BOM is stripped.
     pub fn new(path: impl Into<String>, text: impl Into<String>) -> Self {
         let text: String = text.into();
+        let leading_bom = text.starts_with(BOM);
         let text = strip_bom(&text).to_string();
         let line_starts = line_starts(&text);
         Self {
             path: normalise_display_path(&path.into()),
             text,
             origin: None,
+            leading_bom,
             line_starts,
         }
     }
@@ -74,6 +78,13 @@ impl SourceFile {
     /// The absolute path this file was read from, when there is one.
     pub fn origin(&self) -> Option<&Path> {
         self.origin.as_deref()
+    }
+
+    /// Whether constructing this source removed a leading BOM. Language
+    /// positions omit it; editor analysis distinguishes disk encoding metadata
+    /// from a BOM inserted into an exact buffer overlay.
+    pub fn has_leading_bom(&self) -> bool {
+        self.leading_bom
     }
 
     /// Records where this file lives on disk.

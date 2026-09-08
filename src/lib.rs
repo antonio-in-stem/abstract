@@ -21,6 +21,7 @@
 
 use std::path::{Path, PathBuf};
 
+pub mod analysis;
 pub mod ast;
 pub mod bundle;
 pub mod crypto;

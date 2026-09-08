@@ -51,6 +51,7 @@ Flags:
   --max-errors <n>    report at most n diagnostics (1 to 10000; default 20)
 
 Optional tooling, outside the language specification:
+  analyze --capabilities | analyze <project> --stdio
   bundle <path>... [--key <k> | --plain] [--out <file>]
   unbundle <file.abx> [--key <k>] [--out <file>]";
 
@@ -104,6 +105,7 @@ fn dispatch(args: &[String]) -> Result<i32, Failure> {
         "init" => command_init(rest),
         "bundle" => command_bundle(rest),
         "unbundle" => command_unbundle(rest),
+        "analyze" => command_analyze(rest),
         "--help" | "-h" | "help" => {
             expect_no_arguments(rest)?;
             write_stdout(&format!("{USAGE}\n"))
@@ -114,6 +116,30 @@ fn dispatch(args: &[String]) -> Result<i32, Failure> {
         }
         other => Err(unknown_command(other).into()),
     }
+}
+
+fn command_analyze(args: &[String]) -> Result<i32, Failure> {
+    let plain = |message: String| Failure::Plain {
+        message,
+        code: EXIT_USAGE,
+    };
+    let response = match args {
+        [capabilities] if capabilities == "--capabilities" => {
+            abstract_lang::analysis::capabilities().map_err(plain)?
+        }
+        [root, mode] if mode == "--stdio" && !root.starts_with('-') => {
+            let request =
+                abstract_lang::analysis::read_request(io::stdin().lock()).map_err(plain)?;
+            abstract_lang::analysis::analyze(Path::new(root), request).map_err(plain)?
+        }
+        _ => {
+            return Err(plain(
+                "Usage: abstract analyze --capabilities | abstract analyze <project> --stdio"
+                    .into(),
+            ))
+        }
+    };
+    write_stdout(&response)
 }
 
 fn unknown_command(text: &str) -> Diagnostic {

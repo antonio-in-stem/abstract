@@ -5,7 +5,7 @@
 //! walked recursively, skipping dot-directories and the four vendor names,
 //! resolving links and de-duplicating by canonical path.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -95,6 +95,15 @@ struct RootLayout {
 /// mixing them, or naming paths that resolve to different project roots, is
 /// E807 (SPEC §9.2).
 pub fn resolve(roots: &[PathBuf]) -> Result<ProjectLayout, Diagnostics> {
+    resolve_with_overlays(roots, &HashMap::new())
+}
+
+/// Editor analysis substitutes source bytes at discovery time, before disk
+/// UTF-8 decoding. Keys are canonical paths validated by `analysis`.
+pub(crate) fn resolve_with_overlays(
+    roots: &[PathBuf],
+    overlays: &HashMap<PathBuf, String>,
+) -> Result<ProjectLayout, Diagnostics> {
     if roots.is_empty() {
         return Err(Diagnostics::one(Diagnostic::new(
             ErrorId::E806,
@@ -173,7 +182,8 @@ pub fn resolve(roots: &[PathBuf]) -> Result<ProjectLayout, Diagnostics> {
     }
 
     let (root_written, resolved) = layout.expect("at least one root");
-    let mut sources = discover(&resolved.project_root, &resolved.discovery_root)?;
+    let mut sources =
+        discover_with_overlays(&resolved.project_root, &resolved.discovery_root, overlays)?;
 
     // A named file is always a source, even when the walk skipped the
     // directory that holds it: discovery collects the project, the named
@@ -183,7 +193,7 @@ pub fn resolve(roots: &[PathBuf]) -> Result<ProjectLayout, Diagnostics> {
     for (_, path) in &files {
         let display = display_path(&resolved.project_root, &canonical_or_self(path));
         if !contains_file(&sources, path) {
-            match SourceFile::read(path, display.clone()) {
+            match read_source(path, &canonical_or_self(path), display.clone(), overlays) {
                 Ok(source) => sources.push(source),
                 Err(diagnostic) => errors.push(diagnostic),
             }
@@ -325,6 +335,14 @@ pub fn discover(
     project_root: &Path,
     discovery_root: &Path,
 ) -> Result<Vec<SourceFile>, Diagnostics> {
+    discover_with_overlays(project_root, discovery_root, &HashMap::new())
+}
+
+fn discover_with_overlays(
+    project_root: &Path,
+    discovery_root: &Path,
+    overlays: &HashMap<PathBuf, String>,
+) -> Result<Vec<SourceFile>, Diagnostics> {
     let mut sources = Vec::new();
     let mut errors = Diagnostics::new();
     let mut visited: HashSet<PathBuf> = HashSet::new();
@@ -373,10 +391,16 @@ pub fn discover(
             if !is_source_file_name(&name) {
                 continue;
             }
-            if !collected.insert(canonical_or_self(&path)) {
+            let canonical = canonical_or_self(&path);
+            if !collected.insert(canonical.clone()) {
                 continue;
             }
-            match SourceFile::read(&path, display_path(project_root, &path)) {
+            match read_source(
+                &path,
+                &canonical,
+                display_path(project_root, &path),
+                overlays,
+            ) {
                 Ok(source) => sources.push(source),
                 Err(diagnostic) => errors.push(diagnostic),
             }
@@ -386,12 +410,57 @@ pub fn discover(
         }
     }
 
+    // An editor can introduce an unsaved source in an existing directory.
+    // Existing ignored files are never smuggled back into discovery. A new
+    // source's canonical parent must be inside this discovery root; following
+    // a junction outside it is not a way to add a foreign project overlay.
+    for (origin, text) in overlays {
+        if collected.contains(origin)
+            || origin.exists()
+            || !eligible_new_source(origin, discovery_root)
+        {
+            continue;
+        }
+        let mut source = SourceFile::new(display_path(project_root, origin), text.clone());
+        source.set_origin(origin);
+        sources.push(source);
+    }
     if errors.is_empty() {
         sort_sources(&mut sources);
         Ok(sources)
     } else {
         Err(errors)
     }
+}
+
+fn read_source(
+    origin: &Path,
+    canonical: &Path,
+    display: String,
+    overlays: &HashMap<PathBuf, String>,
+) -> Result<SourceFile, Diagnostic> {
+    if let Some(text) = overlays.get(canonical) {
+        let mut source = SourceFile::new(display, text.clone());
+        source.set_origin(canonical);
+        Ok(source)
+    } else {
+        SourceFile::read(origin, display)
+    }
+}
+
+fn eligible_new_source(origin: &Path, discovery_root: &Path) -> bool {
+    let Ok(relative) = origin.strip_prefix(canonical_or_self(discovery_root)) else {
+        return false;
+    };
+    let Some(name) = relative.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    if !is_source_file_name(name) {
+        return false;
+    }
+    relative.parent().map(|parent| parent.components().all(|component| {
+        matches!(component, std::path::Component::Normal(name) if !is_ignored_directory(&name.to_string_lossy()))
+    })).unwrap_or(false)
 }
 
 fn canonical_or_self(path: &Path) -> PathBuf {
