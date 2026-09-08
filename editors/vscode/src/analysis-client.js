@@ -58,7 +58,7 @@ function capability(result) {
   if (value.protocol !== "abstract-analysis" || value.version !== 1 || value.positionEncoding !== "utf-16") {
     return { supported: false, reason: "This compiler's analysis protocol is unsupported. Diagnostics use saved files; save all Abstract buffers to validate." };
   }
-  return { supported: true, compiler: value.compiler, schemaBindings: value.schemaBindings === 1 };
+  return { supported: true, compiler: value.compiler, schemaBindings: value.schemaBindings === 1, publicInventory: value.publicInventory === 1 };
 }
 
 function response(result, expectedId) {

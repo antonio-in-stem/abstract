@@ -13,6 +13,7 @@ use crate::project;
 use crate::source::{normalise_display_path, SourceFile};
 use crate::{compile_layout, CompileOptions, COMPILER_VERSION};
 
+mod public_inventory;
 mod symbols;
 
 pub const MAGIC: &[u8; 8] = b"ABANLZ01";
@@ -143,6 +144,7 @@ pub fn capabilities() -> Result<String, String> {
         ("compiler", text(COMPILER_VERSION)),
         ("positionEncoding", text("utf-16")),
         ("schemaBindings", number(1)),
+        ("publicInventory", number(1)),
         ("maxRequestBytes", number(MAX_REQUEST_BYTES)),
         ("maxTextBytes", number(MAX_TEXT_BYTES)),
         ("maxPathBytes", number(MAX_PATH_BYTES)),
@@ -155,15 +157,28 @@ pub fn capabilities() -> Result<String, String> {
 /// `lint`. A syntactically valid request returns protocol JSON even when source
 /// diagnostics exist; invalid transport/overlay contracts return an error.
 pub fn analyze(root: &Path, request: Request) -> Result<String, String> {
-    analyze_mode(root, request, false)
+    analyze_mode(root, request, Mode::Diagnostics)
 }
 
 /// Optional complete schema bindings, requiring a valid compilation snapshot.
 pub fn analyze_symbols(root: &Path, request: Request) -> Result<String, String> {
-    analyze_mode(root, request, true)
+    analyze_mode(root, request, Mode::Symbols)
 }
 
-fn analyze_mode(root: &Path, request: Request, bindings: bool) -> Result<String, String> {
+/// Optional author inventory and export admission from the same dirty-buffer compile.
+/// The editor receives no private compiled document or runtime authorization.
+pub fn analyze_public(root: &Path, request: Request) -> Result<String, String> {
+    analyze_mode(root, request, Mode::Public)
+}
+
+#[derive(Clone, Copy)]
+enum Mode {
+    Diagnostics,
+    Symbols,
+    Public,
+}
+
+fn analyze_mode(root: &Path, request: Request, mode: Mode) -> Result<String, String> {
     if !root.is_dir() {
         return Err("Analysis requires an existing project or data directory.".into());
     }
@@ -176,7 +191,18 @@ fn analyze_mode(root: &Path, request: Request, bindings: bool) -> Result<String,
                 &[],
                 &request.overlays,
                 false,
-                bindings.then(|| symbols::unavailable("Project discovery failed.")),
+                match mode {
+                    Mode::Diagnostics => None,
+                    Mode::Symbols => Some((
+                        "bindings",
+                        symbols::unavailable("Project discovery failed."),
+                    )),
+                    Mode::Public => Some((
+                        "publicInventory",
+                        public_inventory::unavailable("Project discovery failed."),
+                    )),
+                },
+                false,
             )
         }
     };
@@ -193,6 +219,9 @@ fn analyze_mode(root: &Path, request: Request, bindings: bool) -> Result<String,
     {
         return Err("An overlay does not belong to this project's discovered source set or an eligible new source.".into());
     }
+    if matches!(mode, Mode::Public) {
+        return public_inventory::analyze(&layout, &request);
+    }
     let diagnostics = compile_layout(&layout, CompileOptions::default())
         .err()
         .unwrap_or_default();
@@ -202,15 +231,18 @@ fn analyze_mode(root: &Path, request: Request, bindings: bool) -> Result<String,
         &layout.sources,
         &request.overlays,
         true,
-        bindings.then(|| {
-            if diagnostics.is_empty() {
-                symbols::collect(&layout.sources, &request.overlays)
-            } else {
-                symbols::unavailable(
-                    "Fix compiler diagnostics before requesting schema references or rename.",
-                )
-            }
+        matches!(mode, Mode::Symbols).then(|| {
+            ("bindings", {
+                if diagnostics.is_empty() {
+                    symbols::collect(&layout.sources, &request.overlays)
+                } else {
+                    symbols::unavailable(
+                        "Fix compiler diagnostics before requesting schema references or rename.",
+                    )
+                }
+            })
         }),
+        false,
     )
 }
 
@@ -220,9 +252,10 @@ fn response(
     sources: &[SourceFile],
     overlays: &HashMap<PathBuf, String>,
     analyzed: bool,
-    bindings: Option<Value>,
+    extra: Option<(&str, Value)>,
+    extra_truncated: bool,
 ) -> Result<String, String> {
-    let mut truncated = diagnostics.len() > MAX_DIAGNOSTICS;
+    let mut truncated = extra_truncated || diagnostics.len() > MAX_DIAGNOSTICS;
     let mut entries = Vec::new();
     let mut bytes = 0;
     for diagnostic in diagnostics.iter().take(MAX_DIAGNOSTICS) {
@@ -246,8 +279,8 @@ fn response(
         ("truncated", Value::Bool(truncated)),
         ("diagnostics", Value::List(entries)),
     ];
-    if let Some(bindings) = bindings {
-        fields.push(("bindings", bindings));
+    if let Some(extra) = extra {
+        fields.push(extra);
     }
     let rendered = json(object(fields))?;
     if rendered.len() > MAX_RESPONSE_BYTES {

@@ -1,9 +1,9 @@
 # Abstract Language for VS Code
 
 The optional Abstract file icon theme uses a neutral document glyph for `.ab`
-and `.abt` files. Version 1.3.0 adds `@public` nomination highlighting,
-completion and field hover explanations; compiler-backed schema references and rename
-remain available. The icon attribution correction from 1.2.2 remains in place.
+and `.abt` files. Version 1.4.0 adds **Abstract: Inspect Public Fields**: a compiler-backed
+inventory with unsaved-source support, export diagnostics and declaration navigation.
+Nomination highlighting, completion, field hover, schema references and rename remain available.
 
 The SVG supplied for version 1.2.1 belongs to Covenant and has been removed.
 The replacement glyph is extension UI artwork under [LICENSE.txt](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/editors/vscode/LICENSE.txt),
@@ -11,7 +11,7 @@ not an official Abstract logo.
 
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
-CLI in Abstract **1.1.0**, plus its optional analysis protocol when advertised.
+CLI in Abstract **1.2.0**, plus its optional analysis protocol when advertised.
 Install the compiler separately and set
 `abstract.compilerPath` if `abstract` is not on your PATH.
 
@@ -20,8 +20,15 @@ Install the compiler separately and set
 - `@public` field nominations have contextual completion, highlighting and a
   hover explanation. They require compiler 1.1 or newer. Completion is static
   authoring assistance; dependency admission belongs to the separate
-  [public compilation command](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/docs/PUBLIC-CONTRACT.md). This release does
-  not preview an expanded public inventory or install runtime overrides.
+  [public compilation command](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/docs/PUBLIC-CONTRACT.md).
+- **Abstract: Inspect Public Fields** analyzes the current project, including unsaved
+  file-backed sources. The native list shows nominations, unused declarations and
+  resolved values/version windows; select a nomination to open its declaration or
+  an occurrence to open its root instance. Public export failures appear separately
+  as `abstract-public` diagnostics with related locations. This requires the negotiated
+  `publicInventory: 1` capability; an older compiler does not fall back to saved files.
+  Export admission remains unbound: it does not install runtime overrides or authorize
+  a Covenant consumer. A rejected export never becomes a partially admitted list.
 - Syntax and semantic highlighting for `.ab` instances and `.abt` templates,
   plus optional Abstract Orbit Dark and file icon themes.
 - Contextual completion from the project's schemas: root fields, dotted paths,
@@ -57,6 +64,10 @@ diagnostics** and waits until every project buffer is saved before invoking
 legacy `lint`. Unsupported analysis is never presented as live validation.
 Analysis and compiler commands require a trusted workspace; Compile also needs
 saved buffers. Schema references and rename also require Workspace Trust.
+Public inventory requires Workspace Trust and runs only when explicitly requested.
+Closing its selector releases the captured source text. Export diagnostics retain
+only bounded source identities and diagnostic text for up to 16 projects; inspecting
+more projects may evict older public diagnostics. Ordinary diagnostics are separate.
 Static completion, navigation and the dotted-path action remain available in
 Restricted Mode.
 
@@ -140,6 +151,7 @@ cd editors/vscode
 npm ci
 npm test
 npm run test:integration
+npm run test:integration:public
 npm run benchmark
 npm run package
 ```
@@ -149,8 +161,14 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.3.0.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.4.0.vsix`; use **Extensions: Install from VSIX** to
 install it.
+
+The public-inventory host tests also use a temporary profile. Set
+`ABSTRACT_TEST_VSCODE_VERSION` to select a released version, and
+`ABSTRACT_PUBLIC_OLD_COMPILER` to an actual previous compiler without that capability.
+This compatibility fixture is required for the public host gate; it is never rebuilt
+from the new sources and labelled as an old compiler.
 
 Set `ABSTRACT_TEST_RESTRICTED=1` to run the real Restricted Mode branch. Set
 `ABSTRACT_LEGACY_COMPILER_PATH` to a preserved pre-protocol executable to test

@@ -6,6 +6,31 @@ and by the `abstract.format` number in every compiled document.
 
 ---
 
+## 1.2.0
+
+- Added the negotiated `publicInventory: 1` editor capability and
+  `analyze <project> --stdio --public`. The existing compilation pipeline supplies
+  nominated declarations, exact source provenance and the complete unbound scalar
+  export. Unused nominations remain visible; export failures retain declarations
+  and separate diagnostics without a partial admitted fragment. Private compiled
+  documents are not sent through this editor response.
+- Fixed unannotated existence windows at version `4294967295`. An omitted removal
+  bound now includes the project's maximum directly; it no longer loses the last
+  version through saturating addition. An explicit `@removed(n)` remains exclusive.
+- VS Code extension 1.4.0 adds **Abstract: Inspect Public Fields**, with a native
+  list, dirty-source analysis, exact declaration/root navigation and separate
+  export diagnostics. Source changes invalidate results before navigation.
+  The feature requires its advertised capability and Workspace Trust.
+
+## 1.1.0
+
+- Added argument-free `@public` field nominations and the opt-in
+  `public-contract` compilation envelope. Its independent scalar profile preserves
+  exact types, domains, defaults, optional absence and version windows; unsupported
+  dependencies reject the export. Nominations do not grant runtime authorization.
+- VS Code extension 1.3.0 adds nomination highlighting, completion and field hover
+  explanations alongside existing compiler-backed schema references and rename.
+
 ## 1.0.1
 
 Five specification questions that the 1.0 freeze recorded as open are settled.

@@ -11,6 +11,7 @@ assets into a temporary project. The crate remains dependency-free.
 abstract analyze --capabilities
 abstract analyze <project-or-data-directory> --stdio
 abstract analyze <project-or-data-directory> --stdio --symbols
+abstract analyze <project-or-data-directory> --stdio --public
 ```
 
 The capability command returns JSON with `protocol: "abstract-analysis"`,
@@ -246,6 +247,97 @@ buffers. Saving every buffer enables legacy `lint` again. Missing executables,
 malformed responses and timeouts are tooling failures, not successful fallback.
 Configuration changes reprobe capabilities; absolute executable mtime/size also
 participate in capability-cache identity.
+
+## Optional public inventory 1
+
+Negotiate `publicInventory: 1` in `analyze --capabilities` before invoking
+`analyze <root> --stdio --public`. This mode uses the unchanged `ABANLZ01` frame;
+it cannot be combined with `--symbols`. Compiler versions alone are not a
+capability test. Ordinary analysis and schema bindings keep their existing
+contracts. A client must bind the response compiler to its capability probe.
+
+Discovery applies overlays once, retaining the actual assets root. One P1–P5
+compilation supplies both validated declaration metadata and the inputs to the
+existing public exporter. The projection does not run a second compilation or
+duplicate the export profile's dependency decisions. It catalogues nominated
+fields in every schema and syntactic group, including unused schemas and types
+that the export profile would refuse if instantiated. Nested schemas are
+catalogued at their own declarations, not recursively expanded for the catalogue.
+
+The ordinary response gains `publicInventory` with these exact fields:
+
+| Field | Contract |
+| --- | --- |
+| `version` | Integer `1` |
+| `status` | `unavailable`, `export-rejected`, or `export-admitted` |
+| `reason` | Tooling explanation on `unavailable` only |
+| `catalogComplete` | False only when unavailable |
+| `projectVersions` | Required `{min,max}` on admitted/rejected; omitted on unavailable |
+| `sources` | Canonical absolute `{path,sha256}` entries, sorted by path |
+| `declarations` | Sorted by `(declaringSchema, declaringPath)`; see below |
+| `roots` | Successful fragment's unique `(rootSchema, rootInstanceId)` pairs, sorted |
+| `exportDiagnostics` | Existing diagnostic shape, including UTF-16 locations and notes |
+| `fragment` | Exact public-fragment value, present only on complete export success |
+
+Each declaration has `declaringSchema`, `declaringPath` (normalized path segments
+inside that schema), `spelling` (authored field name), `type`, booleans `list`,
+`optional`, `tag`, and `versions`. Types are `text`, `int`, `float`, `bool`, `enum`,
+`file`, `image`, `ref`, `nested`, or `group`; listness is separate. `versions` is
+always a nonempty `{min,max}`: the field's own annotations resolved against the
+project, before ancestor or instance intersection. P3 already rejects empty
+declaration windows, even in unused schemas. An unannotated project is `1..1`.
+Version integers remain u32 values, safely representable as JSON numbers.
+
+`declaration: {path,range}` selects the exact authored field-name token.
+`nomination: {path,range}` selects the exact `@public` tokens;
+`nominationSpelling` is that captured source slice. The lexer enforces adjacency:
+`@ public` remains E210, not new syntax. Locations are derived from AST positions
+and matching lexer spans. Every successful fragment entry's
+`(declaringSchema,declaringPath)` resolves to exactly one catalogue entry.
+Each root has `rootSchema`, `rootInstanceId`, and `declaration: {path,range}`;
+its range selects the schema-name token at the actual instance header. This is
+navigation provenance, not an instance-ID or assignment-reference graph.
+
+Hashes cover the editor-visible UTF-8 source snapshot. A disk BOM is omitted;
+a BOM in an exact overlay is retained in both its hash and UTF-16 ranges.
+All locations refer to inventoried sources. Declaration tuples are schema-local;
+source ranges and enumeration order never become stable runtime identities.
+
+Ordinary compilation failure returns its diagnostics at the response top level
+and an unavailable inventory. Discovery failure also sets `analyzed: false`.
+Unavailable means `catalogComplete: false`, empty sources/declarations/roots/
+exportDiagnostics, and no fragment or projectVersions. Catalogue admission or
+complete-response budget failures use this same state with a tooling reason,
+without inventing a language error.
+
+An export failure leaves a complete declaration catalogue and separate export
+diagnostics, but empty roots and no fragment. The exporter is fail-fast; fields
+not named by its first error are not individually approved. Success includes
+the entire fragment, even for zero targets. An unused nomination is not thereby
+proved admissible for future instances. Effective target windows, optional
+absence and typed defaults remain the exporter's exact values: i64 decimal
+strings and binary64 bit strings are not converted to floating JSON numbers.
+The ordinary `truncated` flag also records shortened export diagnostics.
+
+The added catalogue admits 1,024 sources, 4 MiB per source and 16 MiB aggregate
+editor text; paths are limited to 32,768 UTF-8 bytes. It allows 16,384 declarations,
+262,144 field visits, existing group depth, and 4 MiB cumulative copied path
+bytes, charged before qualified path copies. Private scalar leaves do not copy
+their group prefixes. Catalogue pieces and the complete response are bounded;
+the final analysis envelope remains at most 4 MiB. A valid build export can
+therefore have an unavailable editor preview. No partial fragment is published.
+
+These are added-work and wire limits, not bounds on discovery/P1–P5 memory or
+wall time. Provenance tokenization works on captured sources; the existing
+exporter still constructs its bounded private document/envelope internally.
+Only the fragment and editor metadata reach this response: no `documentJson`,
+private body or build envelope is sent. Source directories/assets/compiler must
+remain stable during analysis; hashes and client revalidation are not filesystem
+transactions. Missing capability does not trigger saved-file public export.
+
+The inventory remains unbound. It neither authorizes runtime overrides nor
+implements field Rename, complete field references, consumer effects, YAML
+activation, or downstream product/migration policy.
 
 ## Primary references
 

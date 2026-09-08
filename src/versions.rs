@@ -122,11 +122,14 @@ impl Window {
     /// (SPEC §4.12). `None` means the annotations select no version.
     pub fn resolve(self, project: VersionRange) -> Option<VersionRange> {
         let since = self.since.unwrap_or(project.min);
-        let removed = self.removed.unwrap_or(project.max.saturating_add(1));
-        if removed == 0 {
-            return None;
-        }
-        VersionRange::new(since, removed - 1)?.intersect(project)
+        // An omitted exclusive upper bound includes project.max, even when
+        // max + 1 cannot be represented by u32. An explicit removal stays
+        // exclusive and zero still describes no applicable version.
+        let end = match self.removed {
+            Some(removed) => removed.checked_sub(1)?,
+            None => project.max,
+        };
+        VersionRange::new(since, end)?.intersect(project)
     }
 }
 

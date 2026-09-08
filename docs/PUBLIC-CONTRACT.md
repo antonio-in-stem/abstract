@@ -33,8 +33,13 @@ abstract public-contract <file.ab>... [--out <file>] [--skip-assets] [--max-erro
 Negotiate this command independently from the editor analysis protocol. Its
 capability response has protocol `abstract-public-compilation`, version `1`,
 supported profiles, producer version, and `bindingStatus: "unbound"`. It does
-not advertise public field references or dirty-buffer inventory through
-`analyze --symbols`; that protocol still describes schema names only.
+not advertise public field references through `analyze --symbols`; that mode
+still describes schema names only. The separate optional analysis capability
+`publicInventory: 1` enables `analyze <root> --stdio --public`: a dirty-buffer
+declaration catalogue, export diagnostics and complete unbound fragment with
+editor provenance. See [the analysis protocol](ANALYSIS-PROTOCOL.md#optional-public-inventory-1).
+Negotiate that capability independently; public build export support does not
+imply editor inventory support.
 
 The command discovers sources once, runs the same P1–P5 compiler pipeline, and
 projects the resolved declarations and every selected version materialization
