@@ -13,6 +13,8 @@ use crate::project;
 use crate::source::{normalise_display_path, SourceFile};
 use crate::{compile_layout, CompileOptions, COMPILER_VERSION};
 
+mod symbols;
+
 pub const MAGIC: &[u8; 8] = b"ABANLZ01";
 pub const MAX_REQUEST_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_TEXT_BYTES: usize = 4 * 1024 * 1024;
@@ -140,6 +142,7 @@ pub fn capabilities() -> Result<String, String> {
         ("version", number(1)),
         ("compiler", text(COMPILER_VERSION)),
         ("positionEncoding", text("utf-16")),
+        ("schemaBindings", number(1)),
         ("maxRequestBytes", number(MAX_REQUEST_BYTES)),
         ("maxTextBytes", number(MAX_TEXT_BYTES)),
         ("maxPathBytes", number(MAX_PATH_BYTES)),
@@ -152,13 +155,29 @@ pub fn capabilities() -> Result<String, String> {
 /// `lint`. A syntactically valid request returns protocol JSON even when source
 /// diagnostics exist; invalid transport/overlay contracts return an error.
 pub fn analyze(root: &Path, request: Request) -> Result<String, String> {
+    analyze_mode(root, request, false)
+}
+
+/// Optional complete schema bindings, requiring a valid compilation snapshot.
+pub fn analyze_symbols(root: &Path, request: Request) -> Result<String, String> {
+    analyze_mode(root, request, true)
+}
+
+fn analyze_mode(root: &Path, request: Request, bindings: bool) -> Result<String, String> {
     if !root.is_dir() {
         return Err("Analysis requires an existing project or data directory.".into());
     }
     let layout = match project::resolve_with_overlays(&[root.to_path_buf()], &request.overlays) {
         Ok(layout) => layout,
         Err(diagnostics) => {
-            return response(request.id, &diagnostics, &[], &request.overlays, false)
+            return response(
+                request.id,
+                &diagnostics,
+                &[],
+                &request.overlays,
+                false,
+                bindings.then(|| symbols::unavailable("Project discovery failed.")),
+            )
         }
     };
     let origins: HashSet<PathBuf> = layout
@@ -183,6 +202,15 @@ pub fn analyze(root: &Path, request: Request) -> Result<String, String> {
         &layout.sources,
         &request.overlays,
         true,
+        bindings.then(|| {
+            if diagnostics.is_empty() {
+                symbols::collect(&layout.sources, &request.overlays)
+            } else {
+                symbols::unavailable(
+                    "Fix compiler diagnostics before requesting schema references or rename.",
+                )
+            }
+        }),
     )
 }
 
@@ -192,6 +220,7 @@ fn response(
     sources: &[SourceFile],
     overlays: &HashMap<PathBuf, String>,
     analyzed: bool,
+    bindings: Option<Value>,
 ) -> Result<String, String> {
     let mut truncated = diagnostics.len() > MAX_DIAGNOSTICS;
     let mut entries = Vec::new();
@@ -207,7 +236,7 @@ fn response(
         bytes += size;
         entries.push(entry);
     }
-    let rendered = json(object(vec![
+    let mut fields = vec![
         ("protocol", text("abstract-analysis")),
         ("version", number(1)),
         ("requestId", number(id as usize)),
@@ -216,7 +245,11 @@ fn response(
         ("analyzed", Value::Bool(analyzed)),
         ("truncated", Value::Bool(truncated)),
         ("diagnostics", Value::List(entries)),
-    ]))?;
+    ];
+    if let Some(bindings) = bindings {
+        fields.push(("bindings", bindings));
+    }
+    let rendered = json(object(fields))?;
     if rendered.len() > MAX_RESPONSE_BYTES {
         return Err("Analysis response exceeds protocol limit.".into());
     }

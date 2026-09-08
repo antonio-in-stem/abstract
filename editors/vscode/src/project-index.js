@@ -5,7 +5,18 @@ const { createIndex } = require("./language-model");
 const isSource = (file) => /\.abt?$/i.test(file);
 const ignored = (name) => name.startsWith(".") || ["node_modules", "target", "build", "out"].includes(name.toLowerCase());
 
-async function discoveryRoot(target) {
+async function* directoryEntries(directory, limits, visited) {
+  if (!limits) { yield* await fs.readdir(directory, { withFileTypes: true }); return; }
+  const handle = await fs.opendir(directory, { bufferSize: 32 });
+  // The async iterator closes its directory handle on completion or rejection.
+  for await (const entry of handle) {
+    limits.check?.();
+    if (++visited.entries > limits.maxEntries) throw new Error("Schema discovery exceeds its directory-entry admission limit.");
+    yield entry;
+  }
+}
+
+async function discoveryRoot(target, limits) {
   const absolute = await fs.realpath(target);
   const stat = await fs.stat(absolute);
   const directory = stat.isDirectory() ? absolute : path.dirname(absolute);
@@ -14,9 +25,9 @@ async function discoveryRoot(target) {
     if (path.dirname(current) === current) break;
   }
   if (stat.isDirectory()) {
-    const entries = await fs.readdir(directory, { withFileTypes: true });
     const data = [];
-    for (const entry of entries.filter((e) => e.name.toLowerCase() === "data")) {
+    for await (const entry of directoryEntries(directory, limits, { entries: 0 })) {
+      if (entry.name.toLowerCase() !== "data") continue;
       const full = path.join(directory, entry.name);
       if ((await fs.stat(full)).isDirectory()) data.push(full);
     }
@@ -26,20 +37,26 @@ async function discoveryRoot(target) {
   return directory;
 }
 
-async function discover(root) {
+async function discover(root, limits) {
   const directories = new Set();
   const files = new Set();
-  async function walk(directory) {
+  const visited = { entries: 0 };
+  async function walk(directory, depth = 0) {
+    limits?.check?.();
+    if (limits && depth > limits.maxDepth) throw new Error("Schema discovery exceeds its directory-depth admission limit.");
     const canonical = await fs.realpath(directory);
     if (directories.has(canonical)) return;
     directories.add(canonical);
-    const entries = await fs.readdir(directory, { withFileTypes: true });
-    for (const entry of entries) {
+    if (limits && directories.size > limits.maxDirectories) throw new Error("Schema discovery exceeds its directory-count admission limit.");
+    for await (const entry of directoryEntries(directory, limits, visited)) {
       const full = path.join(directory, entry.name);
       const stat = entry.isSymbolicLink() ? await fs.stat(full) : entry;
       if (stat.isDirectory()) {
-        if (!ignored(entry.name)) await walk(full);
-      } else if (stat.isFile() && isSource(entry.name)) files.add(await fs.realpath(full));
+        if (!ignored(entry.name)) await walk(full, depth + 1);
+      } else if (stat.isFile() && isSource(entry.name)) {
+        files.add(await fs.realpath(full));
+        if (limits && files.size > limits.maxSources) throw new Error("Schema project exceeds the 1,024-source admission limit.");
+      }
     }
   }
   await walk(root);

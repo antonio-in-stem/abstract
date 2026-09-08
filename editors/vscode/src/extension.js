@@ -5,6 +5,7 @@ const fs = require("fs");
 const { scanLine } = require("./language-model");
 const { registerLanguageFeatures } = require("./providers");
 const { registerDiagnostics } = require("./live-diagnostics");
+const { registerSchemaFeatures } = require("./schema-providers");
 
 const SEMANTIC_TOKEN_TYPES = [
   "abstractSchemaKeyword",
@@ -24,6 +25,7 @@ function activate(context) {
   context.subscriptions.push(diagnostics);
 
   registerLanguageFeatures(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message));
+  registerSchemaFeatures(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message), workspaceRoot);
   const live = registerDiagnostics(context, {
     diagnostics, resolveProjectPath, workspaceRoot,
     lintSaved: lintDocument,

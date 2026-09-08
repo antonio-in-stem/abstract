@@ -30,7 +30,8 @@ async function run() {
     await new Promise((resolve) => setTimeout(resolve, 700));
     assert.deepEqual(vscode.languages.getDiagnostics(uri), []);
     assert.deepEqual(vscode.languages.getDiagnostics(otherUri), []);
-    console.log("PASS: Restricted Mode keeps completions and suppresses compiler diagnostics/commands");
+    await assert.rejects(vscode.commands.executeCommand("vscode.prepareRename", uri, new vscode.Position(0, 2)), /Workspace Trust/);
+    console.log("PASS: Restricted Mode keeps completions and suppresses compiler diagnostics/commands and semantic rename");
     return;
   }
 
@@ -154,6 +155,7 @@ async function run() {
     await eventually(() => vscode.languages.getDiagnostics(liveUri).some((d) => d.code === "E421"), "Real old compiler fallback did not validate saved files.");
     console.log("PASS: real legacy compiler fallback validates saved sources and refuses unsaved claims");
   } else console.log("SKIP: real legacy compiler compatibility (set ABSTRACT_LEGACY_COMPILER_PATH)");
+  await require("./schema-integration").runSchemaIntegration(root);
 }
 
 module.exports = { run };

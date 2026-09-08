@@ -16,6 +16,9 @@ async function main() {
     await workspace.write("one/data/live.abt", "schema Asset {\nlabel: text\nicon: file(txt)\n}\n");
     await workspace.write("one/data/live.ab", "Asset :: @id.asset\nlabel: Disk\nicon: ./note.txt\n");
     await workspace.write("one/assets/note.txt", "actual project asset");
+    await workspace.write("symbols/data/model.abt", 'schema Offer {\nvalue: int\ndetail: $(Detail) @optional\npeer: ref(Detail) @optional\n}\nlogic Offer {\nrequire .value >= 0 else throw "Offer"\n}\n// Offer is text\n');
+    await workspace.write("symbols/data/detail.abt", "schema Detail {\nlabel: text\n}\n");
+    await workspace.write("symbols/data/item.ab", "Offer :: @id.x\nvalue: 2\n");
     await workspace.write("unicode/data/schema.abt", "\uFEFFschema Unicode { 😀: text }\r\n");
     await workspace.write("shared/schema.abt", "schema Shared {\nvalue: int\n}\n");
     for (const project of ["one", "two"]) {
@@ -26,7 +29,7 @@ async function main() {
       "security.workspace.trust.enabled": true, "security.workspace.trust.startupPrompt": "never"
     }));
     const file = await workspace.write("test.code-workspace", JSON.stringify({
-      folders: [{ path: "one", name: "one" }, { path: "two", name: "two" }],
+      folders: [{ path: "one", name: "one" }, { path: "two", name: "two" }, { path: "symbols", name: "symbols" }],
       settings: { "abstract.compilerPath": compiler }
     }));
     const executable = process.env.ABSTRACT_VSCODE_PATH || await downloadAndUnzipVSCode({ version: "1.92.0", cachePath: path.resolve(__dirname, "../.vscode-test") });

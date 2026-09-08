@@ -1,8 +1,8 @@
 # Abstract Language for VS Code
 
 The optional Abstract file icon theme uses a neutral document glyph for `.ab`
-and `.abt` files. Version 1.2.2 corrects the icon attribution; language and
-compiler behavior is unchanged from 1.2.0.
+and `.abt` files. Version 1.2.3 adds compiler-backed schema references and rename;
+the icon attribution correction from 1.2.2 remains in place.
 
 The SVG supplied for version 1.2.1 belongs to Covenant and has been removed.
 The replacement glyph is extension UI artwork under [LICENSE.txt](LICENSE.txt),
@@ -28,6 +28,12 @@ Install the compiler separately and set
   block into its equivalent dotted assignment. The edit is previewable and
   undoable. Comments attached to the assignment and version annotations stay
   intact; blocks with comments on their braces are left as written.
+- **Find All References** and **Rename Symbol** for schema names, using compiler
+  identities across declarations, `logic`, instance headers, `$(Name)` and
+  `ref(Name)`. Rename includes unsaved buffers, rejects name collisions, preserves
+  homonymous comments/value strings, and validates the proposed changes with the
+  compiler before offering the edit. This requires the optional
+  `schemaBindings: 1` compiler capability; the release number alone is insufficient.
 - Compiler diagnostics while editing, including error codes and
   related locations. Errors stay associated with their project in multi-root
   workspaces. The status bar distinguishes live analysis from legacy saved-file
@@ -44,7 +50,9 @@ Older compilers remain usable: the extension explicitly reports **Saved-file
 diagnostics** and waits until every project buffer is saved before invoking
 legacy `lint`. Unsupported analysis is never presented as live validation.
 Analysis and compiler commands require a trusted workspace; Compile also needs
-saved buffers. Other editing features remain available in Restricted Mode.
+saved buffers. Schema references and rename also require Workspace Trust.
+Static completion, navigation and the dotted-path action remain available in
+Restricted Mode.
 
 ## Project layout and settings
 
@@ -69,13 +77,47 @@ index is tolerant of incomplete input; the compiler remains authoritative.
 ## Current boundaries
 
 This release is an authoring increment, not complete language-server coverage.
-It does not provide whole-document formatting, rename/references,
+It does not provide whole-document formatting, rename/references for fields,
+instance IDs or local loop variables,
 tuple-column or tagged-argument completions,
 asset-path completion, loop-variable inference, or general compression. Untitled
 buffers need a filesystem identity before project diagnostics can run.
 Hover displays a resolved declaration; it does not evaluate defaults, logic or
 version applicability. Completion proposals are not a proof that the whole
 document is valid. Ambiguous schema declarations yield no assumed field shape.
+
+Schema operations require a valid compiler snapshot and reject incomplete,
+truncated or stale binding results. They are scoped to one discovered project.
+Rename refuses edits to linked canonical files outside its discovery root;
+Find References still shows their occurrences in this project's context. Other
+project roots and external consumers are not part of that reference graph.
+Renaming an emitted schema changes its `template` identity, which can require
+updates in downstream readers. Source snapshots are checked again before the
+edit is returned, but they are not filesystem transactions.
+Multiple open URI aliases of a file to edit must be closed before Rename; a
+retargeted open alias also cancels the operation. The public VS Code 1.92 Rename
+API does not carry our captured versions through a later F2 preview/application,
+so edits made after the provider returns are outside this checked snapshot.
+
+Schema references/rename admit at most 1,024 canonical sources, 4 MiB per source
+and 16 MiB of aggregate UTF-8 source bytes (including dirty/new buffers). Saved
+and open sources are checked before reading/joining full text; open documents
+use line-count and UTF-16 length preflight followed by actual UTF-8 admission.
+Saved reads use handles and enforce actual byte limits even if a file grows. Discovery
+rejects scans above 32,768 entries, 4,096 directories or 128 levels; it never
+silently omits project sources. Candidate Rename expansion is checked before
+constructing edited text. These are limits of this feature's source capture,
+not compiler heap limits or restrictions newly imposed on the tolerant index.
+The existing 128-overlay/request-frame limits also apply.
+
+The next semantic-symbol increments remain necessary: loop declarations/usages
+need scope-aware compiler identities, including separate sibling loops and
+interpolated uses; nested loop shadowing is forbidden by E516, not an accepted
+language feature. Fields require resolution through groups, nested-schema types,
+tuple/tag forms and dynamic logic paths. Instance IDs require the compiler's
+normalization, version and clone/reference rules. These cannot be implemented
+by replacing matching text. Abstract 1.x has no import syntax; project discovery
+defines the source set. This first schema increment does not complete those goals.
 
 The dotted-path action covers one existing SPEC 5.4 equivalence. It does not
 remove defaults, merge repeated values, introduce wildcards or rewrite clones;
@@ -101,7 +143,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.2.2.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.2.3.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 Set `ABSTRACT_TEST_RESTRICTED=1` to run the real Restricted Mode branch. Set

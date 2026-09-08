@@ -10,6 +10,7 @@ assets into a temporary project. The crate remains dependency-free.
 ```text
 abstract analyze --capabilities
 abstract analyze <project-or-data-directory> --stdio
+abstract analyze <project-or-data-directory> --stdio --symbols
 ```
 
 The capability command returns JSON with `protocol: "abstract-analysis"`,
@@ -112,6 +113,106 @@ per message and 4 KiB per note. Truncation preserves UTF-8 character boundaries.
 The response is bounded to **4 MiB**. `truncated: true` signals omitted entries
 or shortened text; clients must not present that list as exhaustive.
 
+## Optional schema bindings, feature version 1
+
+The capability response advertises `schemaBindings: 1` for the opt-in
+`--stdio --symbols` mode. Absence or another value does not enable semantic
+references or rename, even if ordinary diagnostic protocol 1 is supported.
+The request frame and normal `--stdio` response are unchanged. No compiler
+version string substitutes for this feature negotiation.
+
+The symbols response adds `bindings` with `version: 1`, `complete`, `sources`
+and `symbols`. A complete graph is emitted only after the normal compilation
+pipeline succeeds with no diagnostics. It resolves the real lexer's
+`SchemaName` tokens against parsed project schema declarations and checks their
+declaration locations. Covered occurrences are `schema Name`, `logic Name`,
+instance headers, `$(Name)` and `ref(Name)`, including types nested in groups.
+These names are case-sensitive. Comments and ordinary value strings do not
+become references because they contain the same spelling. Abstract 1.x has no
+imports: references span the project's discovered source set.
+
+Each source has canonical absolute `path` and `sha256` of the UTF-8 encoding of
+its editor text: disk BOM metadata is omitted, an overlay's typed BOM remains.
+Each symbol has a snapshot-local `id`, `name`, `kind: "schema"`, a `declaration`
+location and `occurrences`. Each occurrence has `path`, an exact token `range`
+using the UTF-16 conventions above, and `role: "declaration" | "reference"`.
+Exactly one occurrence is the declaration. IDs must not be reused across
+snapshots; the declaration and source hashes establish the current identity.
+
+The complete graph is limited to 1024 sources, 16384 occurrences and the existing
+4 MiB response budget. Failure, ambiguity or exhaustion returns
+`complete: false`, a `reason`, and empty source/symbol arrays; it never publishes
+a partial graph as exhaustive. Discovery failures and source diagnostics also
+disable bindings. The client rejects incomplete/truncated graphs, malformed
+identities/ranges, overlapping occurrences and hashes that disagree with its
+captured source text. Existing request limits still apply to dirty or proposed
+overlays, including the 128-file and 16 MiB aggregate limits.
+
+Before launching any compiler process, the editor's schema feature admits
+at most **1,024 distinct canonical sources**, **4 MiB per source** and **16 MiB
+of aggregate source bytes**, including open/dirty and newly created buffers.
+Open documents first pass a line-count lower bound and a public `offsetAt`
+UTF-16 length check before `getText()` can join their full text. The line-count
+check also bounds the host's offset-index work; this does not claim that
+`offsetAt` itself allocates nothing. Actual UTF-8 byte admission follows.
+Saved files are read through an opened file handle: a regular-file size check
+precedes allocation, and fixed-size reads enforce the actual byte allowance
+plus one sentinel byte if a file grows. Every handle closes on failure. UTF-8
+bytes determine the limits; a saved BOM also counts towards disk admission.
+Revalidation uses the same bounded reads. Rename checks the projected byte
+growth before constructing candidates, then admits their actual UTF-8 text
+before candidate compilation.
+
+Schema discovery uses incremental directory iteration with rejection limits of
+**32,768 entries per traversal**, **4,096 distinct directories**, and **128
+directory levels** below the selected root. Root selection has the same entry
+budget for its immediate-child scan. Exceeding any limit rejects the entire
+operation; it never silently removes sources from the project. The optional
+discovery limits do not change other callers' default discovery or bound the
+tolerant completion index. These controls bound provider source capture and
+read sizes, not universal extension/OS/compiler heap, CPU, or concurrent writes
+after validation. The existing 128-overlay/request-frame limits still apply.
+Filesystem cancellation is cooperative between awaited operations: it does not
+abort an `open`, `read`, `realpath` or directory read already pending in the OS,
+and these checks are not an I/O deadline.
+
+The editor's schema operations capture project membership, source text and open
+document versions. They negotiate on each operation, check source hashes, and
+discard cancelled or superseded work. Rename rejects malformed names and exact
+name collisions, constructs edits only at bound occurrences, and asks the real
+compiler to validate the complete proposed overlay set before returning a
+`WorkspaceEdit`. It checks saved source bytes and discovered membership again
+before returning. Preparation records also bind the document version and project
+source hashes. Applying a rename can intentionally change the emitted `template`
+identity; it is not a promise of unchanged compiler output.
+
+Open URI-to-canonical-file bindings are re-resolved before return. A retargeted
+alias invalidates the operation. Rename also rejects multiple open URI aliases
+of an edited source, even when their buffers agree, because one URI edit does
+not establish that every other buffer will be changed. Opening another source
+document while analysis is pending also invalidates the operation. The provider
+does not open source documents as a side effect of computing the edit.
+
+References are contextual to one project. Rename refuses any change to a
+canonical source outside that project's discovery root, even when discovery
+reaches it through a link. It cannot discover unknown consumers in other project
+roots or external data readers. Source checks are not filesystem transactions;
+changes after the final check or to external assets remain outside that snapshot
+guarantee. The provider returns an edit for VS Code to apply; it never writes
+source files itself. Fields, instance IDs and loop variables are outside this
+first semantic-symbol increment, and remain explicit future work.
+
+In VS Code 1.92.0, the F2 Rename adapter converts the provider's edit without
+`versionInfo`; the public `WorkspaceEdit` API cannot attach our source-snapshot
+versions. The checks above therefore end at provider return. They do not promise
+that changes made during a later F2 preview will be rejected by the host.
+Programmatic tests that obtain an edit and call `workspace.applyEdit` exercise a
+different host path, which attaches versions at application time, not at our
+original calculation. See the primary
+[Rename adapter](https://github.com/microsoft/vscode/blob/1.92.0/src/vs/workbench/api/common/extHostLanguageFeatures.ts#L736),
+[edit conversion](https://github.com/microsoft/vscode/blob/1.92.0/src/vs/workbench/api/common/extHostTypeConverters.ts#L592)
+and [bulk edit application](https://github.com/microsoft/vscode/blob/1.92.0/src/vs/workbench/api/common/extHostBulkEdits.ts#L26).
+
 ## Client cancellation, trust and compatibility
 
 The VS Code client waits 250 ms after an edit, then sends all dirty file-backed
@@ -134,7 +235,8 @@ directly; stale-result checks remain in force even if process exit is delayed.
 
 Probing, analysis and compiler commands require Workspace Trust. Compiler
 configuration is resource-scoped and trust-restricted; entry points also check
-trust when called programmatically. Static authoring features remain available
+trust when called programmatically. Schema references and rename also require
+trust and their negotiated compiler feature. Static authoring features remain available
 in Restricted Mode. Compile commands still require saved source files.
 
 A legacy compiler's real E801 rejection of `analyze`, or an unsupported
