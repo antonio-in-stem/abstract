@@ -1,8 +1,12 @@
 # Abstract Language for VS Code
 
-The optional Abstract file icon theme uses the original MinhoCreates Abstract
-logo for `.ab` and `.abt` files. Version 1.2.1 replaces the preliminary file artwork;
-language and compiler behavior is unchanged from 1.2.0.
+The optional Abstract file icon theme uses a neutral document glyph for `.ab`
+and `.abt` files. Version 1.2.2 corrects the icon attribution; language and
+compiler behavior is unchanged from 1.2.0.
+
+The SVG supplied for version 1.2.1 belongs to Covenant and has been removed.
+The replacement glyph is extension UI artwork under [LICENSE.txt](LICENSE.txt),
+not an official Abstract logo.
 
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
@@ -97,7 +101,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.2.0.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.2.2.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 Set `ABSTRACT_TEST_RESTRICTED=1` to run the real Restricted Mode branch. Set

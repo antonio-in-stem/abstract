@@ -1,15 +1,33 @@
 {
   "date": "2026-09-08",
-  "version": "1.2.1",
-  "scope": "Supplied original Abstract logo in optional file icon theme; no language/compiler changes",
+  "version": "1.2.2",
+  "scope": "Remove Covenant logo from the optional Abstract file icon theme; use a neutral document glyph. No language/compiler behavior changes.",
   "previous_code_revision": "1496c1d",
-  "source_logo_sha256": "2EF7511CC2569D53232F930C141C09BEA60FA54C9E5A71EEACA715BE4BF9FA1B",
-  "vsix_sha256": "BADCD69A5827C888EC68A8D400E9B26BF529499747E5E8B215199CE3028E0BC7",
-  "vsix_bytes": 33351,
+  "attribution_correction": "The owner identified the SVG supplied for 1.2.1 as the Covenant logo, not an Abstract logo.",
+  "glyph": {
+    "path": "editors/vscode/icons/source-file.svg",
+    "sha256": "12C0B9530694899D469101EB972FC54B53207B4480439BAB3795C88D798B6BBA",
+    "attribution": "Neutral extension UI artwork under editors/vscode/LICENSE.txt; not an official Abstract logo"
+  },
+  "previous_release": {
+    "version": "1.2.1",
+    "vsix_sha256": "BADCD69A5827C888EC68A8D400E9B26BF529499747E5E8B215199CE3028E0BC7",
+    "covenant_logo_sha256": "2EF7511CC2569D53232F930C141C09BEA60FA54C9E5A71EEACA715BE4BF9FA1B",
+    "previous_vsix_preserved": true
+  },
+  "vsix_sha256": "F59C7C6A42D3D123025D6F28849C4F984DE988615591D17173D2D78C1C5DAF86",
+  "vsix_bytes": 33227,
+  "vsix_entry_count": 19,
   "checks": [
-    "VSIX contains original SVG bytes",
-    "Both Abstract file extensions reference the supplied logo",
-    "Unused preliminary Abstract icon art is absent from package"
+    "npm run package completed successfully using existing dependencies",
+    "Every VSIX entry checked: removed Covenant asset path and exact SHA-256 are absent",
+    "Packaged neutral SVG matches source bytes and parses as XML without external resources or gradients",
+    "Packaged .ab and .abt mappings use the neutral glyph; compatibility IDs are unchanged",
+    "package.json changed only its version; package-lock.json changed only its two root version fields",
+    "Existing 1.2.1 VSIX hash is unchanged; earlier validation evidence was not edited",
+    "git diff --check passed"
   ],
-  "real_vscode_host_retested": false
+  "real_vscode_host_retested": false,
+  "rust_or_compiler_tests_repeated": false,
+  "validation_scope": "Asset, package contents, manifest and lockfile checks only; previous behavioral validation remains separate."
 }
