@@ -1,21 +1,27 @@
 # Abstract Language for VS Code
 
 The optional Abstract file icon theme uses a neutral document glyph for `.ab`
-and `.abt` files. Version 1.2.3 adds compiler-backed schema references and rename;
-the icon attribution correction from 1.2.2 remains in place.
+and `.abt` files. Version 1.3.0 adds `@public` nomination highlighting,
+completion and field hover explanations; compiler-backed schema references and rename
+remain available. The icon attribution correction from 1.2.2 remains in place.
 
 The SVG supplied for version 1.2.1 belongs to Covenant and has been removed.
-The replacement glyph is extension UI artwork under [LICENSE.txt](LICENSE.txt),
+The replacement glyph is extension UI artwork under [LICENSE.txt](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/editors/vscode/LICENSE.txt),
 not an official Abstract logo.
 
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
-CLI in Abstract **1.0.1**, plus its optional analysis protocol when advertised.
+CLI in Abstract **1.1.0**, plus its optional analysis protocol when advertised.
 Install the compiler separately and set
 `abstract.compilerPath` if `abstract` is not on your PATH.
 
 ## Authoring
 
+- `@public` field nominations have contextual completion, highlighting and a
+  hover explanation. They require compiler 1.1 or newer. Completion is static
+  authoring assistance; dependency admission belongs to the separate
+  [public compilation command](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/docs/PUBLIC-CONTRACT.md). This release does
+  not preview an expanded public inventory or install runtime overrides.
 - Syntax and semantic highlighting for `.ab` instances and `.abt` templates,
   plus optional Abstract Orbit Dark and file icon themes.
 - Contextual completion from the project's schemas: root fields, dotted paths,
@@ -43,7 +49,7 @@ Completions, navigation and refactoring use current editor buffers, including
 unsaved schemas. A compiler advertising **analysis protocol 1** also checks dirty
 file-backed buffers after a 250 ms debounce, using the actual project and assets
 directory without writing source files. Replaced requests are canceled and stale
-results are discarded. The [protocol contract](../../docs/ANALYSIS-PROTOCOL.md)
+results are discarded. The [protocol contract](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/docs/ANALYSIS-PROTOCOL.md)
 defines limits and Unicode ranges.
 
 Older compilers remain usable: the extension explicitly reports **Saved-file
@@ -143,7 +149,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.2.3.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.3.0.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 Set `ABSTRACT_TEST_RESTRICTED=1` to run the real Restricted Mode branch. Set
@@ -155,7 +161,7 @@ because the test library's `runTests` helper disables Workspace Trust.
 For compiler-analysis performance, first run `cargo build --release --bin abstract`
 at the repository root, then `npm run benchmark:analysis` here. It measures client
 membership discovery and request encoding separately from a new compiler process,
-including actual asset checks. The [analysis validation ledger](../../docs/ai/vscode-analysis-validation.md)
+including actual asset checks. The [analysis validation ledger](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/docs/ai/vscode-analysis-validation.md)
 records the fixture, environment, distributions and remaining limits.
 
 The implementation uses the official [VS Code language-provider APIs](https://code.visualstudio.com/api/language-extensions/programmatic-language-features),

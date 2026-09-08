@@ -109,6 +109,23 @@ test("type and modifier completion does not invent callable primitive syntax", (
   assert.ok(!labels(fixture("schema New {\nx: text @|\n}", "", "schema.abt")).includes("tag"));
 });
 
+test("public nomination is contextual, non-recursive and distinct from runtime eligibility", () => {
+  const marked = fixture("schema New {\nfield: text @pu|\n}", "", "schema.abt");
+  const item = model.completions(marked.index, marked.file, marked.offset).find((entry) => entry.label === "public");
+  assert.equal(item.insert, "public");
+  assert.match(item.detail, /Runtime bindings are still required/);
+  assert.ok(!labels(fixture("schema New {\nfield: text @public @|\n}", "", "schema.abt")).includes("public"));
+  for (const source of ['schema New {\nfield: text = "@pu|"\n}', "schema New {\n// @pu|\n}", "Product :: @id.x\nlabel: @pu|"])
+    assert.ok(!labels(fixture(source, "", source.startsWith("schema") ? "schema.abt" : "product.ab")).includes("public"));
+  const text = 'schema New {\ngroup @public {\nchild: text\n}\nlabel: text @public = "@public"\nprivate: text = @public\nquoted: text = "@public"\ncomment: text // @public\n}\n';
+  const index = model.createIndex([source("schema.abt", text)]);
+  assert.equal(model.resolveField(index, "New", ["group"]).public, true);
+  assert.equal(model.resolveField(index, "New", ["group", "child"]).public, false);
+  assert.equal(model.resolveField(index, "New", ["label"]).public, true);
+  for (const field of ["private", "quoted", "comment"])
+    assert.equal(model.resolveField(index, "New", [field]).public, false, field);
+});
+
 test("nested logic and else bodies keep the schema context for dotted paths", () => {
   const f = fixture("logic Product {\n if .enabled {\n  derive .status: active\n } else {\n  require .owner.|\n }\n}\n", schema, "logic.abt");
   assert.deepEqual(labels(f), ["team", "07"]);

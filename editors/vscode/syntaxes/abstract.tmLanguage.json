@@ -227,7 +227,7 @@
       "patterns": [
         {
           "name": "storage.modifier.schema.abstract",
-          "match": "@(optional|tag)\\b"
+          "match": "@(optional|public|tag)\\b"
         }
       ]
     },

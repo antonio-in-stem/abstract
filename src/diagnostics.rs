@@ -137,6 +137,8 @@ pub enum ErrorId {
 
     // §10.7 E7xx — output
     E701,
+    E702,
+    E703,
 
     // §10.8 E8xx — command line
     E801,
@@ -267,6 +269,8 @@ impl ErrorId {
         ErrorId::E604,
         ErrorId::E605,
         ErrorId::E701,
+        ErrorId::E702,
+        ErrorId::E703,
         ErrorId::E801,
         ErrorId::E802,
         ErrorId::E803,
@@ -395,6 +399,8 @@ impl ErrorId {
             ErrorId::E604 => "E604",
             ErrorId::E605 => "E605",
             ErrorId::E701 => "E701",
+            ErrorId::E702 => "E702",
+            ErrorId::E703 => "E703",
             ErrorId::E801 => "E801",
             ErrorId::E802 => "E802",
             ErrorId::E803 => "E803",
@@ -637,6 +643,8 @@ impl ErrorId {
             ErrorId::E605 => &["{schema}.{field} exists in no version: {reason}."],
 
             ErrorId::E701 => &["Value at {context}.{field} cannot be represented in {format}."],
+            ErrorId::E702 => &["Public contract profile cannot admit {target}: {reason}."],
+            ErrorId::E703 => &["Public contract export rejected: {reason}."],
 
             ErrorId::E801 => {
                 &["Unknown command '{text}'; expected compile, lint, templates or init."]
@@ -975,7 +983,7 @@ mod tests {
             assert!(!id.templates().is_empty());
             assert!(id.template().ends_with('.') || id.template().ends_with('}'));
         }
-        assert_eq!(seen.len(), 123);
+        assert_eq!(seen.len(), 125);
         assert_eq!(ErrorId::from_code("E000"), None);
         assert_eq!(ErrorId::from_code("E809"), None);
     }

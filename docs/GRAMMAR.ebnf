@@ -1,5 +1,5 @@
 (* ============================================================================
-   Abstract 1.0 - grammar for .abt (template) and .ab (instance) files.
+   Abstract 1.1 - grammar for .abt (template) and .ab (instance) files.
 
    Normative reference: SPEC.md. Every rule name defined here is referenced
    from SPEC.md by the name used below.
@@ -259,7 +259,13 @@ field_head          = identifier , [ "[" , [ cardinality ] , "]" ] ;
 (* Any other bracket content - "[3]", "[..4]", "[4..2]" - is E323. *)
 cardinality         = uint , ".." , [ uint ] ;
 
-field_modifier      = "@optional" | "@tag" | version_annotation ;
+field_modifier      = "@optional" | "@tag" | "@public" | version_annotation ;
+
+(* @public is an argument-free author nomination, at most once per field
+   (repeat E303). It does not change type, presence, value or version semantics,
+   and a group nomination does not nominate its children. Export profiles and
+   runtime consumers require a separate contract; nomination alone is not
+   acceptance by either. Existing reserved envelope rules still apply (SPEC 4.3). *)
 
 (* Every field_modifier precedes the "=". A modifier after a default is E303
    (SPEC 4.3). A default that is a list on a non-list field is E313. *)

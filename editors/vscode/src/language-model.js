@@ -6,6 +6,7 @@ const ID = "[A-Za-z0-9_][A-Za-z0-9_-]*";
 const SCHEMA = "[A-Za-z][A-Za-z0-9_]*";
 const PATH = `${ID}(?:\\.${ID})*`;
 const normalize = (name) => name.replace(/[A-Z-]/g, (c) => c === "-" ? "_" : c.toLowerCase());
+const PUBLIC_NOMINATION_DETAIL = "Author nomination for public values; requires Abstract 1.1+. Export checks dependencies separately. Runtime bindings are still required.";
 
 // Strings end on their physical line. Escapes consume the next character;
 // testing only the immediately preceding slash gets even-length runs wrong.
@@ -47,7 +48,7 @@ function logicalLines(text) {
     mask += scan.masked.padEnd(physical[i].length, " ");
     // A block opener is a last-token brace on a declaration/path line. All
     // other braces are value braces (multipaths, patterns, interpolation).
-    const block = new RegExp(`^\\s*(?:(?:schema|logic)\\s+${SCHEMA}|${PATH}(?:\\[[^\\]]*\\])?(?:\\s+@(?:optional|tag|since\\(\\d+\\)|removed\\(\\d+\\)))*)\\s*\\{\\s*$`).test(mask)
+    const block = new RegExp(`^\\s*(?:(?:schema|logic)\\s+${SCHEMA}|${PATH}(?:\\[[^\\]]*\\])?(?:\\s+@(?:optional|public|tag|since\\(\\d+\\)|removed\\(\\d+\\)))*)\\s*\\{\\s*$`).test(mask)
       || /^\s*(?:if\b|for\b|(?:}\s*)?else\b)[\s\S]*\{\s*$/.test(mask);
     for (let j = 0; j < scan.masked.length; j += 1) {
       const c = scan.masked[j];
@@ -111,6 +112,8 @@ function parseSource(file, text) {
       entry.cardinality = field[2] || "";
       entry.optional = /@optional\b/.test(field[3]);
       entry.tag = /@tag\b/.test(field[3]);
+      // Tolerant declaration metadata only: no eligibility or dependency claim.
+      entry.public = /@public(?![A-Za-z0-9_-])/.test(field[3].split("=", 1)[0]);
       const tail = statement.text.slice(statement.mask.indexOf(field[3]));
       const type = field[3].match(/^:\s*(\$\([A-Za-z][A-Za-z0-9_]*\)|[a-z]+(?:\([^)]*\))?)/);
       entry.type = entry.fields ? "group" : type?.[1]?.replace(/\s+/g, " ") || "unknown";
@@ -235,8 +238,10 @@ function completions(index, file, offset) {
         ...schemas.map((s) => ({ ...s, label: `$(${s.label})`, insert: `$(${s.label})` }))]);
     }
     if (/@[A-Za-z]*$/.test(before) && !/=/.test(before)) {
-      return result(["optional", "since", "removed", ...(context.schemaDepth ? ["tag"] : [])]
-        .map((label) => ({ label, kind: "Keyword", insert: ["since", "removed"].includes(label) ? `${label}(\${1:2})` : label, snippet: true })));
+      const alreadyPublic = /@public(?![A-Za-z0-9_-])/.test(before.replace(/@[A-Za-z]*$/, ""));
+      return result(["optional", ...(!alreadyPublic ? ["public"] : []), "since", "removed", ...(context.schemaDepth ? ["tag"] : [])]
+        .map((label) => ({ label, kind: "Keyword", insert: ["since", "removed"].includes(label) ? `${label}(\${1:2})` : label,
+          snippet: true, ...(label === "public" ? { detail: PUBLIC_NOMINATION_DETAIL } : {}) })));
     }
     return [];
   }
@@ -363,5 +368,5 @@ function abbreviations(index, file) {
   });
 }
 
-module.exports = { normalize, scanLine, logicalLines, parseSource, createIndex, schemaFields,
+module.exports = { normalize, scanLine, logicalLines, parseSource, createIndex, schemaFields, PUBLIC_NOMINATION_DETAIL,
   children, resolveField, contextAt, completions, definitions, abbreviations };

@@ -1,8 +1,8 @@
 [package]
 name = "abstract-lang"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2021"
-description = "Abstract 1.0: a schema-backed data language compiler with zero dependencies."
+description = "Abstract: a schema-backed data language compiler with zero dependencies."
 license = "MIT"
 
 [lib]

@@ -99,6 +99,9 @@ function provideDocumentSemanticTokens(document) {
         "abstractSchemaType"
       );
       addRegexTokens(tokens, line, /@(optional|tag|since|removed)\b/g, "abstractSchemaModifier");
+      const declarationEnd = line.indexOf("=");
+      addRegexTokens(tokens, declarationEnd < 0 ? line : line.slice(0, declarationEnd),
+        /@public(?![A-Za-z0-9_-])/g, "abstractSchemaModifier");
       addRegexTokens(tokens, line, /^\s*([A-Za-z0-9_][A-Za-z0-9_-]*)(?:\[[^\]]*\])?(?=\s*[:{@])/g, "abstractSchemaField", 1);
     } else if (blockKind === "logic") {
       addRegexTokens(tokens, line, /\b(if|require|else|throw|for|in|derive)\b/g, "abstractLogicKeyword");

@@ -9,7 +9,7 @@ async function main() {
   const compiler = process.env.ABSTRACT_COMPILER_PATH || path.resolve(__dirname, "../../../target/debug", process.platform === "win32" ? "abstract.exe" : "abstract");
   const restricted = process.env.ABSTRACT_TEST_RESTRICTED === "1";
   try {
-    await workspace.write("one/data/schema.abt", "schema Owner {\nteam: text\n}\nschema Product {\nowner: $(Owner)\nstatus: enum(draft, active)\n}\n");
+    await workspace.write("one/data/schema.abt", "schema Owner {\nteam: text @public\n}\nschema Product {\nowner: $(Owner)\nstatus: enum(draft, active)\n}\n");
     await workspace.write("one/data/product.ab", "Product :: @id.x\nowner {\nteam: Example\n}\nstatus: draft\n");
     await workspace.write("two/data/schema.abt", "schema Other {\nflag: bool\n}\n");
     await workspace.write("two/data/other.ab", "Other :: @id.other\nflag: invalid\n");

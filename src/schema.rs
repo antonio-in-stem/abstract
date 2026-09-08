@@ -108,6 +108,11 @@ impl FieldDecl {
         self.modifiers.tag
     }
 
+    /// Author nomination only; this does not establish an exported or runtime contract.
+    pub fn is_public(&self) -> bool {
+        self.modifiers.public_
+    }
+
     /// The declared default, when the field has one.
     pub fn default(&self) -> Option<&DefaultValue> {
         match &self.kind {
@@ -220,9 +225,13 @@ impl Cardinality {
 pub struct Modifiers {
     pub optional: bool,
     pub tag: bool,
+    /// Whether the author nominated this field with `@public` (SPEC §4.3).
+    pub public_: bool,
     pub window: Window,
     /// Where `@tag` was written, for E310 and E322.
     pub tag_at: Option<Position>,
+    /// Where the first `@public` was written; the owning field supplies its file.
+    pub public_at: Option<Position>,
     /// Where `@since(n)` was written, for E603 and E604.
     pub since_at: Option<Position>,
     /// Where `@removed(n)` was written, for E603 and E604.
@@ -1229,7 +1238,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// `{ "@optional" | "@tag" | "@since(n)" | "@removed(n)" }` (SPEC §4.3).
+    /// `{ "@optional" | "@tag" | "@public" | "@since(n)" | "@removed(n)" }` (SPEC §4.3).
     fn parse_modifiers(&mut self, modifiers: &mut Modifiers) {
         while self.at_punctuation("@") {
             let sign = self.bump();
@@ -1261,6 +1270,17 @@ impl<'a> Parser<'a> {
                     }
                     modifiers.tag = true;
                     modifiers.tag_at = Some(at.position);
+                }
+                "public" => {
+                    if modifiers.public_ {
+                        self.error(
+                            ErrorId::E303,
+                            &at,
+                            "Modifier '@public' is repeated.".to_string(),
+                        );
+                    }
+                    modifiers.public_ = true;
+                    modifiers.public_at.get_or_insert(at.position);
                 }
                 "since" | "removed" => {
                     let Some(number) = self.parse_annotation_argument(&text) else {
@@ -2229,6 +2249,7 @@ impl<'a> Parser<'a> {
         let plain = field.list.is_none()
             && !field.modifiers.optional
             && !field.modifiers.tag
+            && !field.modifiers.public_
             && !field.modifiers.window.is_annotated();
         match ranges {
             Some(ranges) if plain => {

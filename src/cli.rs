@@ -52,6 +52,7 @@ Flags:
 
 Optional tooling, outside the language specification:
   analyze --capabilities | analyze <project> --stdio [--symbols]
+  public-contract --capabilities | public-contract <path>... [--out <file>] [--skip-assets]
   bundle <path>... [--key <k> | --plain] [--out <file>]
   unbundle <file.abx> [--key <k>] [--out <file>]";
 
@@ -106,6 +107,7 @@ fn dispatch(args: &[String]) -> Result<i32, Failure> {
         "bundle" => command_bundle(rest),
         "unbundle" => command_unbundle(rest),
         "analyze" => command_analyze(rest),
+        "public-contract" => command_public_contract(rest),
         "--help" | "-h" | "help" => {
             expect_no_arguments(rest)?;
             write_stdout(&format!("{USAGE}\n"))
@@ -470,6 +472,56 @@ fn command_compile(args: &[String]) -> Result<i32, Failure> {
         Some(destination) => {
             write_output_file(destination, rendered.as_bytes())?;
             note_written(destination, format.name());
+            Ok(0)
+        }
+        None => write_stdout(&rendered),
+    }
+}
+
+/// One private interchange envelope from the same discovered build snapshot.
+/// This command never installs overrides or turns an unbound fragment into grants.
+fn command_public_contract(args: &[String]) -> Result<i32, Failure> {
+    if matches!(args, [flag] if flag == "--capabilities") {
+        let capability = abstract_lang::Value::Object(vec![
+            (
+                "protocol".into(),
+                abstract_lang::Value::Text("abstract-public-compilation".into()),
+            ),
+            ("version".into(), abstract_lang::Value::Int(1)),
+            (
+                "compiler".into(),
+                abstract_lang::Value::Text(abstract_lang::COMPILER_VERSION.into()),
+            ),
+            (
+                "profiles".into(),
+                abstract_lang::Value::List(vec![abstract_lang::Value::Text(
+                    "independent-scalars-v1".into(),
+                )]),
+            ),
+            (
+                "bindingStatus".into(),
+                abstract_lang::Value::Text("unbound".into()),
+            ),
+        ]);
+        return write_stdout(&abstract_lang::output::render(&capability, Format::Json)?);
+    }
+    let invocation = parse_args(args, FlagSet::COMPILE)?;
+    let paths = input_paths(&invocation.positionals)?;
+    let options = invocation.options();
+    let layout = resolve_project(&paths)?;
+    if let Some(destination) = &invocation.out {
+        refuse_unsafe_destination(destination, &layout)?;
+        check_destination_parent(destination)?;
+    }
+    let compilation = abstract_lang::compile_public_layout(&layout, options)
+        .map_err(|errors| limit(errors, options.max_errors))?;
+    let rendered = compilation
+        .render()
+        .map_err(|errors| limit(errors, options.max_errors))?;
+    match &invocation.out {
+        Some(destination) => {
+            write_output_file(destination, rendered.as_bytes())?;
+            note_written(destination, "public compilation JSON");
             Ok(0)
         }
         None => write_stdout(&rendered),

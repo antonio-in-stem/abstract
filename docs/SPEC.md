@@ -1,6 +1,9 @@
-# Abstract 1.0 — Language Specification
+# Abstract 1.1 — Language Specification
 
-Status: normative. This document defines the Abstract data language, version 1.0.
+Status: normative. This document defines the Abstract data language, version 1.1.
+Version 1.1 adds the `@public` nomination modifier; existing data semantics and
+document format remain unchanged. Its optional export profile is specified in
+[PUBLIC-CONTRACT.md](PUBLIC-CONTRACT.md).
 
 The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY and OPTIONAL in this document are to be interpreted as described in RFC 2119.
 
@@ -390,8 +393,37 @@ or a **group field**
 
 - `<name>` is an `identifier` and is normalised (§3.3). Two fields in the same block whose names normalise to the same text are E302, reported at the second declaration, **regardless of their version annotations** (§4.12).
 - `[]` immediately after the name marks a **list field** (§4.6), optionally carrying a cardinality (`[1..]`, `[2..4]`). Exactly one bracket pair is permitted; `name[][]` is E315.
-- Modifiers are `@optional`, `@tag`, `@since(n)` and `@removed(n)`. Each modifier MAY appear at most once per field (a repeat is E303). An unknown `@word` is E303.
+- Modifiers are `@optional`, `@tag`, `@public`, `@since(n)` and `@removed(n)`. Each modifier MAY appear at most once per field (a repeat is E303). An unknown `@word` is E303.
 - Modifiers appear after the type expression (or, for a group field, after the field head) and **before** the `=` of a default. They MUST NOT appear before the `:`; the left of `:` is exactly the field head. A modifier after a default is E303: `glow: bool = false @since(2)` is rejected, because a bare default value would otherwise be distinguishable from a trailing annotation only by look-ahead. Write `glow: bool @since(2) = false`.
+
+**Public nomination.** `@public` records the author's nomination of exactly the
+declared field. It takes no arguments: `value: text @public(1)` is E210. The
+compiler retains the nomination and its source position in schema metadata;
+absence of the modifier leaves the field un-nominated. `public` is not a new
+reserved word and remains valid as an ordinary field name or enum member.
+
+Nomination is permitted on all existing field types, lists and groups, subject
+to their existing declaration rules. A group or nested-object field marked
+`@public` does **not** implicitly nominate its children. Root envelope `id` and
+`template` retain the restrictions of §4.11; `id: text @public` is E314.
+The modifier does not alter requiredness, defaults, type/range validation,
+cloning, interpolation, logic, version windows or compiled data/overlay bytes.
+It is neither a data value nor an instruction to remove or conceal other data.
+
+An exporter may apply an explicit, versioned public-contract profile to these
+nominations. Ordinary parsing/compilation does not establish that a nominated
+field is exportable, has an authorized consumer, or can be changed at runtime.
+It does not skip `derive`/`require` checks or supply a runtime configuration API.
+
+```abstract
+schema DisplaySettings {
+    caption: text(1..80) @public = "Welcome"
+    scale: float(0.5..2.0) @public = 1.0
+    quota: int(1..1000) @public = 64
+    show_preview: bool @public = true
+    tone: enum(quiet, bright) @public = quiet
+}
+```
 
 ### 4.4 Types
 
@@ -2231,11 +2263,17 @@ error[E422]: Image content mismatch at frost.icon: 'a.bmp' is unreadable, not bm
 | E604 | `@removed` not after `@since` | `@removed({r}) must be greater than @since({s}).` | `@since(3) @removed(2)` |
 | E605 | Empty existence set | `{schema}.{field} exists in no version: {reason}.` | child outlives its group |
 
-### 10.7 E7xx — output
+### 10.7 E7xx — output and public-contract export
 
 | ID | Condition | Message template | Example |
 |---|---|---|---|
 | E701 | A value cannot be rendered | `Value at {context}.{field} cannot be represented in {format}.` | a non-finite float (unreachable) |
+| E702 | A nominated field cannot be admitted by the requested public-contract profile or its dependency independence cannot be established | `Public contract profile cannot admit {target}: {reason}.` | a nominated field observed by an unsupported `require` dependency |
+| E703 | Public-contract export exceeds a stated budget or receives inconsistent validated compilation inputs | `Public contract export rejected: {reason}.` | target/version expansion exceeds the export budget |
+
+E702 and E703 belong to explicit public-contract export. They do not change
+ordinary compile admission merely because `@public` is present. Export failure
+returns no successful partial contract; the command exits with status 1.
 
 ### 10.8 E8xx — command line
 

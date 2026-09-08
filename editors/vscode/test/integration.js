@@ -45,6 +45,10 @@ async function run() {
   assert.ok((definitions[0].uri || definitions[0].targetUri).fsPath.endsWith("schema.abt"));
   const hovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", uri, new vscode.Position(2, 2));
   assert.ok(hovers.some((hover) => hover.contents.some((content) => content.value.includes("team: text"))));
+  assert.ok(hovers.some((hover) => hover.contents.some((content) => content.value.includes("Runtime bindings are still required"))));
+  const publicCompletion = await vscode.commands.executeCommand("vscode.executeCompletionItemProvider",
+    vscode.Uri.file(path.join(root, "one/data/schema.abt")), new vscode.Position(1, 13));
+  assert.ok(publicCompletion.items.some((item) => item.label === "public" && item.detail.includes("Author nomination")));
   const symbols = await vscode.commands.executeCommand("vscode.executeDocumentSymbolProvider", uri);
   assert.equal(symbols[0].name, "x");
   const semantic = await vscode.commands.executeCommand("vscode.provideDocumentSemanticTokens", vscode.Uri.file(path.join(root, "one/data/schema.abt")));

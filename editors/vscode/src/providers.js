@@ -61,7 +61,11 @@ function registerLanguageFeatures(context, resolveProjectPath, reportError) {
         if (!state) return undefined;
         const entries = model.definitions(state.index, state.file, document.offsetAt(position));
         if (!entries.length) return undefined;
-        return new vscode.Hover(entries.map((entry) => new vscode.MarkdownString().appendCodeblock(entry.declaration, "abstract")));
+        return new vscode.Hover(entries.map((entry) => {
+          const content = new vscode.MarkdownString().appendCodeblock(entry.declaration, "abstract");
+          if (entry.public) content.appendMarkdown(`\n\n${model.PUBLIC_NOMINATION_DETAIL}`);
+          return content;
+        }));
       }
     }),
     vscode.languages.registerDocumentSymbolProvider(selector, {

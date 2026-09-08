@@ -2,7 +2,7 @@
   "name": "abstract-language",
   "displayName": "Abstract Language",
   "description": "Schema-aware completions, navigation, refactoring, highlighting, and compiler diagnostics for Abstract 1.x.",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "publisher": "minhocreates",
   "repository": {
     "type": "git",

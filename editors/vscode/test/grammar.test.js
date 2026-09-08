@@ -21,6 +21,10 @@ test("TextMate highlights legal numeric/hyphen fields and recovers after an unte
       const tokens = tokenize(line);
       assert.ok(tokens.some((token) => token.scopes.includes("variable.other.field.schema.abstract")));
     }
+    const publicTokens = tokenize('  caption: text @public = "@public" // @public');
+    const publicModifiers = publicTokens.filter((token) => token.scopes.includes("storage.modifier.schema.abstract"));
+    assert.equal(publicModifiers.length, 1, "the declaration marker, not its quoted value or comment");
+    assert.equal(publicModifiers[0].startIndex, 16);
     tokenize("}");
     const url = tokenize("link: https://example.com // actual comment");
     assert.equal(url.find((t) => t.scopes.includes("comment.line.double-slash.abstract")).startIndex, 26);

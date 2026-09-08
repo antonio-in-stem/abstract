@@ -1,4 +1,4 @@
-//! Abstract 1.0 — a schema-backed data language compiler.
+//! Abstract 1.x — a schema-backed data language compiler.
 //!
 //! A project is a set of template files (`.abt`) declaring schemas, logic
 //! blocks and at most one `versions` range, and instance files (`.ab`)
@@ -32,6 +32,7 @@ pub mod logic;
 pub mod media;
 pub mod output;
 pub mod project;
+pub mod public_contract;
 pub mod resolve;
 pub mod schema;
 pub mod source;
@@ -259,6 +260,58 @@ pub fn compile_sources(
     )
 }
 
+/// Compiles the selected paths and exports an unbound public-data fragment.
+/// The fragment is not an authorization to modify a runtime document.
+pub fn compile_public_paths(
+    paths: &[PathBuf],
+    options: CompileOptions,
+) -> Result<public_contract::PublicCompilation, Diagnostics> {
+    let layout = project::resolve(paths)?;
+    compile_public_layout(&layout, options)
+}
+
+/// Uses one discovered source snapshot for compilation and public export.
+/// Asset checks still access the layout's assets directory as ordinary compilation does.
+pub fn compile_public_layout(
+    layout: &project::ProjectLayout,
+    options: CompileOptions,
+) -> Result<public_contract::PublicCompilation, Diagnostics> {
+    let checks = if options.skip_asset_checks {
+        validate::AssetChecks::Skipped
+    } else {
+        validate::AssetChecks::Enabled
+    };
+    on_compiler_stack(
+        compile_public_phases,
+        (
+            &layout.sources,
+            layout.selected.as_deref(),
+            &layout.assets_dir,
+            checks,
+            options,
+        ),
+    )
+}
+
+/// In-memory counterpart of [`compile_public_paths`], with the same asset
+/// behavior as [`compile_sources`]. Public export never evaluates a second build.
+pub fn compile_public_sources(
+    mut sources: Vec<SourceFile>,
+    options: CompileOptions,
+) -> Result<public_contract::PublicCompilation, Diagnostics> {
+    project::sort_sources(&mut sources);
+    on_compiler_stack(
+        compile_public_phases,
+        (
+            &sources,
+            None,
+            Path::new(project::ASSETS_DIR),
+            validate::AssetChecks::Skipped,
+            options,
+        ),
+    )
+}
+
 /// Phases P1 to P5 over a resolved project layout (SPEC §7.1).
 fn compile_layout(
     layout: &project::ProjectLayout,
@@ -337,9 +390,28 @@ where
     })
 }
 
-fn compile_phases(
+fn compile_phases(args: CompileArgs<'_>) -> Result<CompiledDocument, Diagnostics> {
+    compile_with_projection(args, |_, _, _, _, document| Ok(document))
+}
+
+fn compile_public_phases(
+    args: CompileArgs<'_>,
+) -> Result<public_contract::PublicCompilation, Diagnostics> {
+    compile_with_projection(args, public_contract::export)
+}
+
+/// Both products use the same P1–P5 result. The public projection sees every
+/// materialized version before overlay reduction discards equal versions.
+fn compile_with_projection<T>(
     (sources, selected, assets_dir, asset_checks, _options): CompileArgs<'_>,
-) -> Result<CompiledDocument, Diagnostics> {
+    finish: impl FnOnce(
+        &schema::TemplateTables,
+        &resolve::InstanceTable<'_>,
+        Option<&[String]>,
+        &[Vec<Value>],
+        CompiledDocument,
+    ) -> Result<T, Diagnostics>,
+) -> Result<T, Diagnostics> {
     // P1: lex and parse every source.
     let (templates, instance_files) = parse_sources(sources)?;
 
@@ -366,7 +438,13 @@ fn compile_phases(
     // P5: the base document plus the overlays that differ from it.
     let overlays = versions::reduce_overlays(tables.versions, &documents);
     let base = documents.last().cloned().unwrap_or_default();
-    Ok(CompiledDocument::new(tables.versions, base, overlays))
+    finish(
+        &tables,
+        &instances,
+        emitted.as_deref(),
+        &documents,
+        CompiledDocument::new(tables.versions, base, overlays),
+    )
 }
 
 /// The ids of the instances declared in the selected files (SPEC §2.5).

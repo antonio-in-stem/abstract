@@ -104,6 +104,100 @@ fn sample_project(name: &str) -> PathBuf {
     root
 }
 
+#[test]
+fn public_capability_is_explicit_and_does_not_accept_extra_arguments() {
+    let root = temp_dir("public_capability");
+    let run = run_in(&root, &["public-contract", "--capabilities"]);
+    run.assert_code(0);
+    assert!(run.stdout.contains("abstract-public-compilation"));
+    assert!(run.stdout.contains("independent-scalars-v1"));
+    assert!(run.stdout.contains("unbound"));
+    assert!(run.stderr.is_empty());
+    run_in(&root, &["public-contract", "--capabilities", "."])
+        .assert_error("E802")
+        .assert_code(2);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn public_output_is_one_private_envelope_and_file_matches_stdout() {
+    let root = temp_dir("public_output");
+    write(
+        &root,
+        "data/model.abt",
+        "schema Model {\ncount: int @public = 9007199254740993\n}\n",
+    );
+    write(&root, "data/item.ab", "Model :: @id.item\n");
+    let run = run_in(&root, &["public-contract", "."]);
+    run.assert_code(0);
+    assert!(run.stderr.is_empty());
+    for key in [
+        "documentJson",
+        "documentSha256",
+        "publicFragment",
+        "unbound",
+    ] {
+        assert!(run.stdout.contains(key), "missing {key}");
+    }
+    let saved = run_in(
+        &root,
+        &["public-contract", ".", "--out", "public contract.json"],
+    );
+    saved.assert_code(0);
+    assert!(saved.stdout.is_empty());
+    assert_eq!(
+        fs::read_to_string(root.join("public contract.json")).unwrap(),
+        run.stdout
+    );
+    let before = fs::read(root.join("data/model.abt")).unwrap();
+    run_in(&root, &["public-contract", ".", "--out", "data/model.abt"])
+        .assert_error("E808")
+        .assert_code(2);
+    assert_eq!(fs::read(root.join("data/model.abt")).unwrap(), before);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn unsupported_public_dependency_emits_no_partial_contract_and_preserves_output() {
+    let root = temp_dir("public_dependency");
+    write(&root, "data/model.abt", "schema Model {\ncount: int @public = 5\n}\nlogic Model {\nrequire .count > 0 else throw \"positive\"\n}\n");
+    write(&root, "data/item.ab", "Model :: @id.item\n");
+    write(&root, "existing.json", "previous successful output\n");
+    run_in(&root, &["compile", "."]).assert_code(0);
+    run_in(&root, &["public-contract", ".", "--out", "existing.json"])
+        .assert_error("E702")
+        .assert_code(1);
+    assert_eq!(
+        fs::read_to_string(root.join("existing.json")).unwrap(),
+        "previous successful output\n"
+    );
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn public_file_selection_emits_only_selected_targets_but_validates_the_project() {
+    let root = temp_dir("public_selection");
+    write(&root, "data/model.abt", "schema Good {\ncount: int @public = 5\n}\nschema Bad {\ncounts[]: int @public = [1, 2]\n}\n");
+    write(&root, "data/good.ab", "Good :: @id.chosen\n");
+    write(&root, "data/bad.ab", "Bad :: @id.excluded\n");
+    let chosen = run_in(&root, &["public-contract", "data/good.ab"]);
+    chosen.assert_code(0);
+    assert!(chosen.stdout.contains("chosen"));
+    assert!(!chosen.stdout.contains("excluded"));
+    run_in(&root, &["public-contract", "."])
+        .assert_error("E702")
+        .assert_code(1);
+    write(
+        &root,
+        "data/bad.ab",
+        "Bad :: @id.excluded\ncounts: [invalid]\n",
+    );
+    run_in(&root, &["public-contract", "data/good.ab"])
+        .assert_error("E412")
+        .assert_code(1);
+    let _ = fs::remove_dir_all(root);
+}
+
 // ---------------------------------------------------------------------------
 // help and version (SPEC §9.2)
 // ---------------------------------------------------------------------------
