@@ -111,7 +111,8 @@ Product :: @id.atlas
 The id is project-wide and normalised. If `@id` is omitted, the source file
 stem becomes the id. Never write `id:` or `template:` in the body.
 
-Assignments may use dotted paths or equivalent body blocks:
+For a schema that declares `owner.name` and `owner.email`, choose either dotted
+paths or an equivalent body block:
 
 ```abstract
     owner.name: Ada
@@ -144,9 +145,11 @@ comma:
 
 ```abstract
 caption: "Hello, world"
-tags: core, featured
-tags: [core, featured]   // equivalent list spelling
+tags: [core, featured]
 ```
+
+The list can also be written as `tags: core, featured`. Choose one spelling;
+do not assign `tags` twice.
 
 Quote text that begins with `[`, `#`, `"` or `//`. Quoted strings support only
 `\"`, `\\`, `\n`, `\r` and `\t` escapes. A spaced `//` begins a comment outside
@@ -207,7 +210,7 @@ field with a default. Guard a write to a versioned field so it cannot execute
 when the field is absent.
 
 Arithmetic is available only through explicit `calc(...)` expressions in
-logic:
+logic. For a `Line` schema that declares the three numeric fields below:
 
 ```abstract
 logic Line {

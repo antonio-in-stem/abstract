@@ -95,6 +95,9 @@ Start with [six small exercises](docs/learn/README.md), each with a prompt, hint
 starter and separately explained solution. Then try the
 [intermediate library and advanced automotive examples](examples/README.md).
 
+Using an AI assistant to write `.ab` and `.abt` files? Give it the
+[AI authoring guide](docs/ai/README.md).
+
 ## Visual Studio Code
 
 Install `abstract-language-1.7.2.vsix` using **Extensions: Install from VSIX**.

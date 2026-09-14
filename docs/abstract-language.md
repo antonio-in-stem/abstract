@@ -1162,7 +1162,7 @@ and is stable across 1.x releases.
 - [`technical-reference.md`](technical-reference.md) — a lookup-oriented
   reference for `.ab` and `.abt` files.
 - [`raw-data.md`](raw-data.md) — the compiled-document contract for consumers.
-- [`ai-primer.md`](ai-primer.md) — how to write correct Abstract on the first
-  try, with a checklist and every reserved word.
+- [AI authoring guide](ai/README.md) — rules and examples for generating and
+  validating `.ab` and `.abt` files.
 - [`examples/`](examples/README.md) — every example in these documents as a
   compilable project.
