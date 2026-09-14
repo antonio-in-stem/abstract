@@ -1,0 +1,36 @@
+name: Verify downloaded release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to verify
+        required: true
+        default: v1.4.0
+
+permissions:
+  contents: read
+
+jobs:
+  linux-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - name: Download and verify shipped artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --dir release-check
+          cd release-check
+          sha256sum --check SHA256SUMS.txt
+      - name: Run shipped Linux compiler against the reference project
+        run: |
+          chmod +x release-check/abstract-linux-x64
+          test "$(release-check/abstract-linux-x64 --version)" = "abstract 1.4.0"
+          release-check/abstract-linux-x64 lint examples/automotive
+          release-check/abstract-linux-x64 compile examples/automotive JSON | cmp - examples/automotive/expected.json
