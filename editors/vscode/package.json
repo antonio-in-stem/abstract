@@ -30,7 +30,6 @@
     "syntaxes/**",
     "themes/**",
     "src/**",
-    "BRAND.md",
     "CHANGELOG.md",
     "docs/**"
   ],

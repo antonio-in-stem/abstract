@@ -4,8 +4,8 @@ import java.security.MessageDigest;
 
 /**
  * Zero-dependency ChaCha20-Poly1305 AEAD (RFC 8439) for opening Abstract
- * bundles. Runs on Java 8 and newer, so it works in every Minecraft server
- * or standalone JVM without extra libraries.
+ * bundles. Runs on Java 8 and newer in any standalone JVM without extra
+ * libraries.
  *
  * <p>The implementation mirrors the Rust encoder shipped with the Abstract
  * CLI and is verified against the official RFC 8439 test vectors (see

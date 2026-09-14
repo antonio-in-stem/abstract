@@ -154,7 +154,7 @@ Total cases: 301
 | docs-tests-examples | DTE-17 | major | undecided | Quoting a value does NOT keep it as text for int/float/bool fields — contradicting the compiler's own error message and NEW-FEATURES.md's migration advice |
 | docs-tests-examples | DTE-18 | minor | undecided | Three doc surfaces claim PNG validation reads 26 header bytes; the probe accepts a 24-byte file |
 | docs-tests-examples | DTE-19 | minor | undecided | A truncated PNG with a valid signature is reported as 'unrecognized image signature' |
-| docs-tests-examples | DTE-20 | minor | undecided | The shipped `example/` project is byte-identical to v0.1 and exercises none of the 0.2 features docs tell collaborators to demo with it |
+| docs-tests-examples | DTE-20 | minor | undecided | Historical finding: the shipped catalogue (now `examples/product-catalog/`) was byte-identical to v0.1 and exercised none of the 0.2 features |
 | docs-tests-examples | DTE-21 | minor | undecided | NEW-FEATURES.md contradicts itself about v0.1 compatibility |
 | docs-tests-examples | DTE-22 | minor | undecided | A misspelled `$variable` is silently left as literal text instead of being reported |
 | docs-tests-examples | DTE-23 | minor | error | Multi-path braces only support a single-segment prefix: `a.b.{c, d}` builds a field literally named `a.b` |

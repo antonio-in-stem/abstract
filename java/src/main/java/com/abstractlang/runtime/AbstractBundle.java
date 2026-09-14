@@ -12,9 +12,9 @@ import java.security.NoSuchAlgorithmException;
  *
  * <pre>{@code
  * byte[] key = AbstractKeys.combine(Keys.PART_A, Keys.PART_B);
- * AbstractData data = AbstractBundle.loadResource(MyPlugin.class, "/stickers.abx", key);
- * for (AbstractObject sticker : data.byTemplate("Sticker")) {
- *     registry.register(sticker.id(), sticker.getString("rarity"));
+ * AbstractData data = AbstractBundle.loadResource(AppResources.class, "/catalog.abx", key);
+ * for (AbstractObject record : data.byTemplate("Record")) {
+ *     registry.register(record.id(), record.getString("category"));
  * }
  * }</pre>
  *
@@ -54,7 +54,7 @@ public final class AbstractBundle {
 
     /**
      * Loads a bundle embedded in the application jar, for example
-     * {@code loadResource(MyPlugin.class, "/data/stickers.abx", key)}.
+     * {@code loadResource(AppResources.class, "/data/catalog.abx", key)}.
      */
     public static AbstractData loadResource(Class<?> owner, String resource, byte[] key) {
         InputStream stream = owner.getResourceAsStream(resource);

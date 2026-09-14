@@ -16,6 +16,9 @@ its `.ab` data. Compile the unchanged project once before trying an edit.
 `expected.json`, `expected.yml` and `expected.raw` are reference outputs, not
 files that update automatically when you type.
 
+Also available: [a product catalogue](product-catalog/README.md), combining
+product variants, capabilities, release policy and catalogue metadata.
+
 ## Why there are negative cases
 
 A negative case is a small project that is intentionally invalid. Its test
