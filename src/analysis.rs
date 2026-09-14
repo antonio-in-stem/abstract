@@ -145,6 +145,7 @@ pub fn capabilities() -> Result<String, String> {
         ("positionEncoding", text("utf-16")),
         ("schemaBindings", number(1)),
         ("publicInventory", number(1)),
+        ("values", number(1)),
         ("maxRequestBytes", number(MAX_REQUEST_BYTES)),
         ("maxTextBytes", number(MAX_TEXT_BYTES)),
         ("maxPathBytes", number(MAX_PATH_BYTES)),
@@ -171,11 +172,34 @@ pub fn analyze_public(root: &Path, request: Request) -> Result<String, String> {
     analyze_mode(root, request, Mode::Public)
 }
 
+/// Optional effective values from the same validated compilation used by the CLI.
+/// The document is the canonical base-plus-overlays envelope of SPEC chapter 8.
+pub fn analyze_values(root: &Path, request: Request) -> Result<String, String> {
+    analyze_mode(root, request, Mode::Values)
+}
+
 #[derive(Clone, Copy)]
 enum Mode {
     Diagnostics,
     Symbols,
     Public,
+    Values,
+}
+
+fn values_unavailable(reason: &str) -> Value {
+    object(vec![
+        ("version", number(1)),
+        ("complete", Value::Bool(false)),
+        ("reason", text(reason)),
+    ])
+}
+
+fn values_complete(document: crate::CompiledDocument) -> Value {
+    object(vec![
+        ("version", number(1)),
+        ("complete", Value::Bool(true)),
+        ("document", document.envelope()),
+    ])
 }
 
 fn analyze_mode(root: &Path, request: Request, mode: Mode) -> Result<String, String> {
@@ -201,6 +225,9 @@ fn analyze_mode(root: &Path, request: Request, mode: Mode) -> Result<String, Str
                         "publicInventory",
                         public_inventory::unavailable("Project discovery failed."),
                     )),
+                    Mode::Values => {
+                        Some(("values", values_unavailable("Project discovery failed.")))
+                    }
                 },
                 false,
             )
@@ -222,28 +249,70 @@ fn analyze_mode(root: &Path, request: Request, mode: Mode) -> Result<String, Str
     if matches!(mode, Mode::Public) {
         return public_inventory::analyze(&layout, &request);
     }
-    let diagnostics = compile_layout(&layout, CompileOptions::default())
-        .err()
-        .unwrap_or_default();
-    response(
+    let compiled = compile_layout(&layout, CompileOptions::default());
+    let (diagnostics, extra) = match compiled {
+        Ok(document) if matches!(mode, Mode::Values) => (
+            Diagnostics::default(),
+            Some(("values", values_complete(document))),
+        ),
+        Ok(_) => (
+            Diagnostics::default(),
+            matches!(mode, Mode::Symbols).then(|| {
+                (
+                    "bindings",
+                    symbols::collect(&layout.sources, &request.overlays),
+                )
+            }),
+        ),
+        Err(diagnostics) => {
+            let extra = match mode {
+                Mode::Diagnostics => None,
+                Mode::Symbols => Some((
+                    "bindings",
+                    symbols::unavailable(
+                        "Fix compiler diagnostics before requesting schema references or rename.",
+                    ),
+                )),
+                Mode::Values => Some((
+                    "values",
+                    values_unavailable(
+                        "Fix compiler diagnostics before requesting evaluated values.",
+                    ),
+                )),
+                Mode::Public => unreachable!(),
+            };
+            (diagnostics, extra)
+        }
+    };
+    let rendered = response(
         request.id,
         &diagnostics,
         &layout.sources,
         &request.overlays,
         true,
-        matches!(mode, Mode::Symbols).then(|| {
-            ("bindings", {
-                if diagnostics.is_empty() {
-                    symbols::collect(&layout.sources, &request.overlays)
-                } else {
-                    symbols::unavailable(
-                        "Fix compiler diagnostics before requesting schema references or rename.",
-                    )
-                }
-            })
-        }),
+        extra,
         false,
-    )
+    );
+    if matches!(mode, Mode::Values)
+        && rendered
+            .as_ref()
+            .is_err_and(|error| error == "Analysis response exceeds protocol limit.")
+    {
+        response(
+            request.id,
+            &diagnostics,
+            &layout.sources,
+            &request.overlays,
+            true,
+            Some((
+                "values",
+                values_unavailable("Compiled values exceed the complete analysis response budget."),
+            )),
+            false,
+        )
+    } else {
+        rendered
+    }
 }
 
 fn response(

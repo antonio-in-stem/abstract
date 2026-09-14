@@ -12,6 +12,7 @@ function registerDiagnostics(context, { diagnostics, resolveProjectPath, workspa
   let disposed = false;
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 25);
   status.name = "Abstract diagnostics";
+  status.command = "abstract.showDiagnosticStatus";
 
   function rootOf(document) {
     const target = resolveProjectPath(document);
@@ -191,7 +192,24 @@ function registerDiagnostics(context, { diagnostics, resolveProjectPath, workspa
     { dispose() { disposed = true; for (const state of states.values()) cancel(state); states.clear(); } }
   );
   for (const document of vscode.workspace.textDocuments) schedule(document);
-  return { schedule, hasUnsaved };
+  function readiness(document) {
+    if (document?.isUntitled && document.languageId === "abstract") {
+      return { ready: false, label: "Abstract: Save required",
+        detail: "Save this source inside an Abstract project to enable compiler diagnostics." };
+    }
+    if (!document || document.uri.scheme !== "file" || !/\.abt?$/i.test(document.uri.fsPath)) {
+      return { ready: false, label: "Abstract: No source selected", detail: "Open an Abstract .ab or .abt source." };
+    }
+    if (document.languageId !== "abstract") return { ready: false, label: "Abstract: Language association conflict",
+      detail: `VS Code opened this file as '${document.languageId}'. Run 'Abstract: Use for .ab and .abt in This Workspace'.` };
+    if (!vscode.workspace.isTrusted) return { ready: false, label: "Abstract: Restricted Mode", detail: "Trust this workspace to run compiler diagnostics." };
+    const root = rootOf(document);
+    if (!root) return { ready: false, label: "Abstract: No project", detail: "Open a project with a data directory or configure abstract.projectPath." };
+    const state = states.get(root);
+    return { ready: Boolean(state && !/unavailable|No project|Restricted|Checking/.test(state.label || "")),
+      label: state?.label || "Abstract: Checking…", detail: state?.detail || "Waiting for the compiler capability check." };
+  }
+  return { schedule, hasUnsaved, readiness };
 }
 
 module.exports = { registerDiagnostics };

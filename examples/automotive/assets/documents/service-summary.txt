@@ -1,0 +1,2 @@
+Synthetic demonstration service summary. No real vehicle, owner, VIN, plate,
+brand, certification, performance test, or engineering measurement is represented.

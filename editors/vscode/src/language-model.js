@@ -85,7 +85,10 @@ function parseSource(file, text) {
   let stack = [];
   for (const statement of logicalLines(text)) {
     const prefix = stack.filter((s) => s.kind === "body").flatMap((s) => s.path);
-    contexts.push({ ...statement, mode, schema, instance, prefix, schemaDepth: mode === "schema" ? stack.length - 1 : 0 });
+    contexts.push({ ...statement, mode, schema, instance, prefix,
+      schemaPrefix: stack.filter((entry) => entry.kind === "group").map((entry) => entry.symbol.key),
+      schemaDepth: mode === "schema" ? stack.length - 1 : 0,
+      loops: stack.filter((entry) => entry.loop).map((entry) => entry.loop) });
     const declaration = statement.mask.match(new RegExp(`^\\s*(schema|logic)\\s+(${SCHEMA})\\s*\\{\\s*$`));
     if (!mode && declaration) {
       mode = declaration[1]; schema = declaration[2];
@@ -127,7 +130,9 @@ function parseSource(file, text) {
       continue;
     }
     if (mode === "logic") {
-      if (/\{\s*$/.test(statement.mask)) stack.push({ kind: "logicBody" });
+      const loop = statement.mask.match(new RegExp(`^\\s*for\\s+\\$(${ID})\\s+in\\s+(.+?)\\s*\\{\\s*$`));
+      if (/\{\s*$/.test(statement.mask)) stack.push({ kind: "logicBody",
+        ...(loop ? { loop: { name: normalize(loop[1]), iterable: loop[2].trim() } } : {}) });
       continue;
     }
     const header = statement.mask.match(new RegExp(`^\\s*(${SCHEMA})\\s*::`));
@@ -213,7 +218,43 @@ function values(index, field) {
   if (field.type === "bool") return ["true", "false"].map((label) => ({ label, kind: "Value", detail: "bool" }));
   if (field.type.startsWith("ref(")) return index.instances.filter((i) => i.schema === field.target)
     .map((i) => ({ label: i.name, kind: "Reference", detail: i.declaration, symbol: i }));
+  if (/^(?:file|image)\(/.test(field.type)) {
+    const allowed = new Set((field.type.match(/^[^(]+\(([^)]*)/)?.[1] || "").split(",")
+      .map((part) => part.trim().split(/\s+/)[0].toLowerCase()).filter(Boolean));
+    return (index.assets || []).filter((asset) => !allowed.size || allowed.has(path.extname(asset).slice(1).toLowerCase()))
+      .map((label) => ({ label, kind: "File", detail: field.type }));
+  }
   return [];
+}
+
+function fieldsAt(index, rootFields, segments) {
+  let fields = rootFields;
+  let field;
+  for (const segment of segments.filter(Boolean)) {
+    const matches = fields.filter((entry) => entry.key === normalize(segment));
+    if (matches.length !== 1) return undefined;
+    field = matches[0]; fields = children(index, field);
+  }
+  return { field, fields };
+}
+
+function fieldItems(index, fields, prefix, assign) {
+  const resolved = fieldsAt(index, fields, prefix);
+  if (!resolved || resolved.field?.list) return [];
+  return resolved.fields.map((field) => ({
+    label: field.key, kind: children(index, field).length ? "Struct" : "Property", detail: field.declaration,
+    insert: field.key + (assign ? (!field.list && children(index, field).length ? "." : ": ") : ""), symbol: field
+  }));
+}
+
+function loopValue(index, schema, loops, name) {
+  const loop = [...loops].reverse().find((entry) => entry.name === normalize(name));
+  if (!loop) return undefined;
+  if (loop.iterable.startsWith(".")) return resolveField(index, schema,
+    loop.iterable.slice(1).replace(/\[\d+\]/g, "").split("."));
+  const parent = loop.iterable.match(new RegExp(`^\\$(${ID})\\.(.+)$`));
+  const base = parent && loopValue(index, schema, loops, parent[1]);
+  return base ? fieldsAt(index, children(index, base), parent[2].replace(/\[\d+\]/g, "").split("."))?.field : undefined;
 }
 
 function completions(index, file, offset) {
@@ -259,21 +300,68 @@ function completions(index, file, offset) {
     return [];
   }
   if (context.mode === "logic") {
+    const loopPath = before.match(new RegExp(`\\$(${ID})(?:\\.(${PATH}\\.?|))?$`));
+    if (loopPath) {
+      const bound = loopValue(index, schema, context.loops || [], loopPath[1]);
+      if (loopPath[2] !== undefined && bound) return result(fieldItems(index, children(index, bound), loopPath[2].split(".").slice(0, -1), false));
+      if (loopPath[2] === undefined) return result((context.loops || []).map((entry) => ({ label: entry.name, kind: "Variable", detail: `loop variable $${entry.name}` })));
+    }
     const logicPath = before.match(new RegExp(`\\.(${PATH}\\.?|)$`));
     if (!logicPath) return result(["require", "if", "for", "derive", "derive?", "exists", "length", "contains", "version"]
       .map((label) => ({ label, kind: "Keyword" })));
-    return result(fieldCompletions(index, schema, logicPath[1].split(".").slice(0, -1), false));
+    return result(fieldItems(index, schemaFields(index, schema), logicPath[1].split(".").slice(0, -1), false));
   }
   if (context.mode === "instance") {
     const clone = before.match(new RegExp(`^\\s*&(${ID})?$`));
     if (clone && !context.prefix.length) return result(index.instances.filter((i) => i.schema === schema && i !== context.instance)
       .map((i) => ({ label: i.name, insert: `${i.name}.*`, kind: "Reference", detail: i.declaration, symbol: i })));
-    const assignment = before.match(new RegExp(`^\\s*(${PATH})\\s*:\\s*([\\s\\S]*)$`));
+    const tupleColumns = before.match(new RegExp(`^\\s*(${PATH})\\(([^)]*)$`));
+    if (tupleColumns) {
+      const field = resolveField(index, schema, [...context.prefix, ...tupleColumns[1].split(".")]);
+      const current = tupleColumns[2].split(",").at(-1).trim();
+      const used = new Set(tupleColumns[2].split(",").slice(0, -1).map((value) => normalize(value.trim())));
+      const items = children(index, field).filter((entry) => !used.has(entry.key));
+      return result(items.map((entry) => ({ label: entry.key, kind: "Field", detail: entry.declaration })),
+        { from: offset - current.length, to: offset + document.text.slice(offset).match(/^[A-Za-z0-9_-]*/)[0].length });
+    }
+    const assignment = before.match(new RegExp(`^\\s*(${PATH})(?:\\(([^)]*)\\))?\\s*:\\s*([\\s\\S]*)$`));
     if (assignment) {
       const field = resolveField(index, schema, [...context.prefix, ...assignment[1].split(".")]);
-      const value = assignment[2];
+      const columns = assignment[2]?.split(",").map((value) => normalize(value.trim())).filter(Boolean);
+      const value = assignment[3];
+      if (columns) {
+        const row = value.match(/\(([^()]*)$/);
+        if (row) {
+          const cell = row[1].split(",").at(-1).trim();
+          const column = children(index, field).find((entry) => entry.key === columns[row[1].split(",").length - 1]);
+          return result(values(index, column), { from: offset - cell.length,
+            to: offset + document.text.slice(offset).match(/^[A-Za-z0-9_./\\-]*/)[0].length });
+        }
+      }
+      const tag = value.match(new RegExp(`#${ID}\\(([^()]*)$`));
+      if (tag) {
+        const parts = tag[1].split(",");
+        const argument = parts.at(-1).trimStart();
+        const used = new Set(parts.slice(0, -1).map((part) => normalize(part.trim().split(/[:.]/)[0])));
+        const assigned = argument.match(new RegExp(`^(${PATH})\\s*:\\s*([\\s\\S]*)$`));
+        if (assigned) {
+          const argumentField = fieldsAt(index, children(index, field), assigned[1].split("."))?.field;
+          const token = assigned[2].trimStart();
+          return result(values(index, argumentField), { from: offset - token.length,
+            to: offset + document.text.slice(offset).match(/^[A-Za-z0-9_./\\-]*/)[0].length });
+        }
+        const prefix = argument.split("."); const word = prefix.pop() || "";
+        return result(fieldItems(index, children(index, field), prefix, true)
+          .filter((entry) => prefix.length || (!entry.symbol.tag && !used.has(entry.symbol.key))), { from: offset - word.length,
+          to: offset + document.text.slice(offset).match(/^[A-Za-z0-9_-]*/)[0].length });
+      }
       if (/^(?:[A-Za-z0-9_-]*|\[?\s*(?:[A-Za-z0-9_-]+\s*,\s*)*[A-Za-z0-9_-]*)$/.test(value.replace(/\n/g, " "))) return result(values(index, field));
       if (/#([A-Za-z0-9_-]*)$/.test(value)) return result(values(index, children(index, field).find((f) => f.tag)));
+      if (/^(?:file|image)\(/.test(field?.type || "")) {
+        const token = value.match(/[A-Za-z0-9_./\\-]*$/)?.[0] || "";
+        return result(values(index, field), { from: offset - token.length,
+          to: offset + document.text.slice(offset).match(/^[A-Za-z0-9_./\\-]*/)[0].length });
+      }
       return [];
     }
     const fieldPath = before.match(new RegExp(`^\\s*(${PATH}\\.?|)$`));
@@ -292,13 +380,8 @@ function completions(index, file, offset) {
 }
 
 function fieldCompletions(index, schema, prefix, assign) {
-  const parent = prefix.length ? resolveField(index, schema, prefix) : undefined;
-  if (parent?.list) return [];
-  const fields = prefix.length ? children(index, parent) : schemaFields(index, schema);
-  return fields.filter((f) => prefix.length || !["id", "template"].includes(f.key)).map((f) => ({
-    label: f.key, kind: f.fields || f.type.startsWith("$(") ? "Struct" : "Property", detail: f.declaration,
-    insert: f.key + (assign ? (!f.list && children(index, f).length ? "." : ": ") : ""), symbol: f
-  }));
+  return fieldItems(index, schemaFields(index, schema), prefix, assign)
+    .filter((field) => prefix.length || !["id", "template"].includes(field.label));
 }
 
 function definitions(index, file, offset) {
@@ -332,6 +415,16 @@ function definitions(index, file, offset) {
       return index.instances.filter((i) => i.schema === field.target && i.name === normalize(word));
     }
   }
+  if (context.mode === "schema") {
+    const declaration = context.mask.match(new RegExp(`^\\s*(${ID})(?:\\[[^\\]]*\\])?\\s*(?::|@|\\{)`));
+    if (declaration) {
+      const start = context.mask.indexOf(declaration[1]);
+      if (local >= start && local <= start + declaration[1].length) {
+        const field = resolveField(index, context.schema, [...(context.schemaPrefix || []), declaration[1]]);
+        return field ? [field] : [];
+      }
+    }
+  }
   const clone = context.mask.match(new RegExp(`^\\s*&(${ID})`));
   if (clone) return index.instances.filter((i) => i.schema === context.schema && i.name === normalize(clone[1]));
   return [];
@@ -343,30 +436,57 @@ function wordAt(text, offset) {
   return left + right;
 }
 
+function instanceFieldTarget(index, file, offset) {
+  const document = index.documents.find((entry) => entry.file === file);
+  const context = document && contextAt(document, offset);
+  if (!context || context.mode !== "instance" || !context.instance) return undefined;
+  const match = context.mask.match(new RegExp(`^\\s*(${PATH})\\s*(?:[:{(])`));
+  if (!match) return undefined;
+  const local = offset - context.start;
+  const start = context.mask.indexOf(match[1]);
+  if (local < start || local > start + match[1].length) return undefined;
+  const segments = match[1].split(".");
+  let end = start;
+  for (let index = 0; index < segments.length; index += 1) {
+    end += segments[index].length;
+    if (local <= end) return { id: context.instance.name,
+      path: [...context.prefix, ...segments.slice(0, index + 1)].map(normalize) };
+    end += 1;
+  }
+  return undefined;
+}
+
 // SPEC 5.4 gives an exact syntactic equivalence. Keep this deliberately narrow:
-// a single scalar/path assignment, no comments removed, no multiline values,
-// no list traversal, no annotations on the block, and no other statements.
+// direct assignments, no comments on braces, no list traversal and no nested
+// block in the selected replacement. SPEC 5.4 defines this path-prefix rewrite.
 function abbreviations(index, file) {
   const document = index.documents.find((d) => d.file === file);
   if (!document) return [];
   return document.blocks.flatMap((block) => {
-    const body = document.text.slice(block.statement.end + 1, block.close.start);
-    const lines = body.split(/\r?\n/).filter((line) => line.trim());
-    if (lines.length !== 1) return [];
-    const line = lines[0];
-    const assignment = scanLine(line).masked.match(new RegExp(`^\\s*(${PATH})\\s*:\\s*.+$`));
-    if (!assignment) return [];
     const prefix = [...block.prefix, ...block.path];
-    if (!resolveField(index, block.schema, [...prefix, ...assignment[1].split(".")])) return [];
     const openRaw = document.text.slice(block.statement.start, block.statement.end);
     const closeRaw = document.text.slice(block.close.start, block.close.end);
     if (scanLine(openRaw).comment < openRaw.length || scanLine(closeRaw).comment < closeRaw.length) return [];
     const indent = openRaw.match(/^[ \t]*/)[0];
-    const replacement = `${indent}${block.path.join(".")}.${line.trimStart()}`;
+    const eol = document.text.slice(block.statement.end, block.statement.end + 2) === "\r\n" ? "\r\n" : "\n";
+    const body = document.text.slice(block.statement.end + eol.length, block.close.start);
+    const statements = logicalLines(body);
+    let cursor = 0; const rewritten = [];
+    for (const statement of statements) {
+      const raw = body.slice(cursor, statement.end + (body[statement.end] === "\r" ? 1 : 0));
+      cursor = statement.end + 1;
+      if (!raw.trim() || /^\s*\/\//.test(raw)) { rewritten.push(raw); continue; }
+      const assignment = statement.mask.match(new RegExp(`^\\s*(${PATH})\\s*:\\s*.+$`));
+      if (!assignment || !resolveField(index, block.schema, [...prefix, ...assignment[1].split(".")])) return [];
+      const leading = raw.match(/^[ \t]*/)[0];
+      rewritten.push(`${indent}${block.path.join(".")}.${raw.slice(leading.length)}`);
+    }
+    if (!rewritten.some((line) => line.trim() && !/^\s*\/\//.test(line))) return [];
+    const replacement = rewritten.join(eol).replace(/\r?\n$/, "");
     return [{ start: block.statement.start, end: block.end, replacement,
-      title: "Use a dotted path (same assignment, fewer lines)", detail: "SPEC 5.4: body blocks are path prefixes." }];
+      title: "Flatten body block to dotted paths", detail: "SPEC 5.4: body blocks are path prefixes." }];
   });
 }
 
 module.exports = { normalize, scanLine, logicalLines, parseSource, createIndex, schemaFields, PUBLIC_NOMINATION_DETAIL,
-  children, resolveField, contextAt, completions, definitions, abbreviations };
+  children, resolveField, contextAt, completions, definitions, instanceFieldTarget, abbreviations, values, loopValue };

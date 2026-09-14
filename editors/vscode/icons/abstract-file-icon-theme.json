@@ -10,10 +10,10 @@
       "iconPath": "./folder-open.svg"
     },
     "_abstract_instance": {
-      "iconPath": "./source-file.svg"
+      "iconPath": "./abstract-data.svg"
     },
     "_abstract_template": {
-      "iconPath": "./source-file.svg"
+      "iconPath": "./abstract-template.svg"
     }
   },
   "file": "_file",

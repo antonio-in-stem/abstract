@@ -36,6 +36,25 @@ function activate(context) {
   context.subscriptions.push({ dispose() { outputChannel?.dispose(); outputChannel = undefined; } });
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("abstract.useForWorkspace", async (resource) => {
+      const document = resource ? await vscode.workspace.openTextDocument(resource) : vscode.window.activeTextEditor?.document;
+      if (!document || document.uri.scheme !== "file" || !/\.abt?$/i.test(document.uri.fsPath) || !resolveProjectPath(document)) return false;
+      const configuration = vscode.workspace.getConfiguration("files", document.uri);
+      const associations = configuration.inspect("associations")?.workspaceValue || {};
+      await configuration.update("associations", { ...associations, "*.ab": "abstract", "*.abt": "abstract" },
+        vscode.ConfigurationTarget.Workspace);
+      for (const open of vscode.workspace.textDocuments) {
+        if (open.uri.scheme === "file" && /\.abt?$/i.test(open.uri.fsPath) && resolveProjectPath(open) && open.languageId !== "abstract") {
+          await vscode.languages.setTextDocumentLanguage(open, "abstract");
+        }
+      }
+      return true;
+    }),
+    vscode.commands.registerCommand("abstract.showDiagnosticStatus", () => {
+      const state = live.readiness(vscode.window.activeTextEditor?.document);
+      const message = `${state.label}: ${state.detail}`;
+      return state.ready ? vscode.window.showInformationMessage(message) : vscode.window.showWarningMessage(message);
+    }),
     vscode.languages.registerDocumentSemanticTokensProvider(
       { language: "abstract", scheme: "file" },
       { provideDocumentSemanticTokens },
@@ -63,6 +82,42 @@ function activate(context) {
       return ran;
     })
   );
+
+  const associationWarnings = new Set();
+  const untitledWarnings = new Set();
+  function reportUntitled(document) {
+    if (!document?.isUntitled || document.languageId !== "abstract") return;
+    const key = document.uri.toString();
+    if (untitledWarnings.has(key)) return;
+    untitledWarnings.add(key);
+    vscode.window.showWarningMessage(
+      "Save this Abstract document inside a project to enable compiler diagnostics.",
+      "Save As…"
+    ).then((choice) => {
+      if (choice === "Save As…") vscode.commands.executeCommand("workbench.action.files.saveAs");
+    });
+  }
+  function reportLanguageConflict(document) {
+    if (document.uri.scheme !== "file" || document.languageId === "abstract" || !/\.abt?$/i.test(document.uri.fsPath)
+        || !resolveProjectPath(document)) return;
+    const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+    const key = folder?.uri.toString() || path.dirname(document.uri.fsPath);
+    if (associationWarnings.has(key)) return;
+    associationWarnings.add(key);
+    vscode.window.showWarningMessage(
+      `Abstract cannot provide diagnostics for ${path.basename(document.uri.fsPath)} because VS Code opened it as '${document.languageId}'.`,
+      "Use Abstract for This Workspace"
+    ).then((choice) => {
+      if (choice === "Use Abstract for This Workspace") vscode.commands.executeCommand("abstract.useForWorkspace", document.uri);
+    });
+  }
+  const reportDocument = (document) => { reportLanguageConflict(document); reportUntitled(document); };
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(reportDocument),
+    vscode.window.onDidChangeActiveTextEditor((editor) => reportDocument(editor?.document)),
+    vscode.workspace.onDidCloseTextDocument((document) => untitledWarnings.delete(document.uri.toString()))
+  );
+  for (const document of vscode.workspace.textDocuments) reportDocument(document);
 
 }
 

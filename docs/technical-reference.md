@@ -1,4 +1,4 @@
-# Abstract 1.0 technical reference
+# Abstract 1.1 technical reference
 
 A lookup table for people editing `.ab` and `.abt` files. Every entry names the
 section of [`SPEC.md`](SPEC.md) that defines it; the specification is normative

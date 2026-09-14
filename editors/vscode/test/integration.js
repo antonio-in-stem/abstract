@@ -15,10 +15,15 @@ async function eventually(check, message) {
 async function run() {
   const root = process.env.ABSTRACT_TEST_ROOT;
   const uri = vscode.Uri.file(path.join(root, "one/data/product.ab"));
-  const document = await vscode.workspace.openTextDocument(uri);
+  let document = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(document);
-  await vscode.extensions.getExtension("minhocreates.abstract-language").activate();
+  await vscode.extensions.getExtension("antonio-in-stem.abstract-language").activate();
   console.log(`Testing Abstract in VS Code ${vscode.version}`);
+
+  assert.equal(document.languageId, "swift", "conflicting user association fixture did not apply");
+  assert.equal(await vscode.commands.executeCommand("abstract.useForWorkspace", uri), true);
+  document = await vscode.workspace.openTextDocument(uri);
+  assert.equal(document.languageId, "abstract", "workspace recovery command did not select Abstract");
 
   if (process.env.ABSTRACT_TEST_RESTRICTED === "1") {
     assert.equal(vscode.workspace.isTrusted, false);
@@ -55,7 +60,7 @@ async function run() {
   assert.ok(semantic.data.length > 0);
 
   const actions = await vscode.commands.executeCommand("vscode.executeCodeActionProvider", uri, new vscode.Range(1, 0, 3, 1), "refactor.rewrite");
-  const dotted = actions.find((action) => action.title.startsWith("Use a dotted path"));
+  const dotted = actions.find((action) => action.title.startsWith("Flatten body block"));
   assert.ok(dotted?.edit);
   await vscode.workspace.applyEdit(dotted.edit);
   assert.ok(document.getText().includes("owner.team: Example"));
@@ -111,6 +116,16 @@ async function run() {
   assert.equal(await fs.readFile(path.join(root, "one/assets/note.txt"), "utf8"), "actual project asset");
   console.log("PASS: unsaved schema + instance diagnostics, real relative assets, superseded snapshots, two-project isolation, no disk writes");
 
+  const powerUri = vscode.Uri.file(path.join(root, "one/data/power.ab"));
+  const powerDocument = await vscode.workspace.openTextDocument(powerUri);
+  const powerDisk = await fs.readFile(powerUri.fsPath, "utf8");
+  await replace(powerDocument, powerDisk.replace("100", "101"));
+  await eventually(() => vscode.languages.getDiagnostics(powerUri).some((d) => d.code === "E413"),
+    "Dirty power=101 did not publish E413 in the real VS Code host.");
+  assert.equal(powerDocument.isDirty, true);
+  assert.equal(await fs.readFile(powerUri.fsPath, "utf8"), powerDisk);
+  console.log("PASS: conflicting language association recovery and dirty power=101 live diagnostic");
+
   // The editor opens the canonical file outside both project directories;
   // both compilers discover it through their own junctions.
   const sharedUri = vscode.Uri.file(path.join(root, "shared/schema.abt"));
@@ -145,6 +160,19 @@ async function run() {
   assert.equal(await fs.readFile(unicodeUri.fsPath, "utf8"), unicodeDisk);
   console.log("PASS: real editor UTF-16 ranges handle disk BOM, typed BOM, supplementary scalar and CRLF");
 
+  const hoverUri = vscode.Uri.file(path.join(root, "hover/data/car.ab"));
+  const hoverSchemaUri = vscode.Uri.file(path.join(root, "hover/data/car.abt"));
+  const compiledHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", hoverUri, new vscode.Position(2, 3));
+  const compiledText = compiledHovers.flatMap((hover) => hover.contents).map((content) => content.value || content).join("\n");
+  assert.match(compiledText, /Effective compiled value/); assert.match(compiledText, /"standard"/);
+  const versionHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", hoverUri, new vscode.Position(3, 3));
+  const versionText = versionHovers.flatMap((hover) => hover.contents).map((content) => content.value || content).join("\n");
+  assert.match(versionText, /versions 1–2.*7/); assert.match(versionText, /version 3.*field absent/);
+  const schemaHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", hoverSchemaUri, new vscode.Position(3, 3));
+  const schemaText = schemaHovers.flatMap((hover) => hover.contents).map((content) => content.value || content).join("\n");
+  assert.match(schemaText, /Declared default/); assert.match(schemaText, /10/);
+  console.log("PASS: compiler-backed hover shows derived values and version projections; schema hover shows declared defaults");
+
   if (process.env.ABSTRACT_LEGACY_COMPILER_PATH) {
     // Use a real pre-protocol compiler, not a mock claiming compatibility.
     await vscode.workspace.getConfiguration("abstract", liveUri).update("compilerPath", process.env.ABSTRACT_LEGACY_COMPILER_PATH, vscode.ConfigurationTarget.WorkspaceFolder);
@@ -160,6 +188,7 @@ async function run() {
     console.log("PASS: real legacy compiler fallback validates saved sources and refuses unsaved claims");
   } else console.log("SKIP: real legacy compiler compatibility (set ABSTRACT_LEGACY_COMPILER_PATH)");
   await require("./schema-integration").runSchemaIntegration(root);
+  await require("./semantic-integration").runSemanticIntegration(root);
 }
 
 module.exports = { run };

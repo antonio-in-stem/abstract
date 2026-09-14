@@ -1,9 +1,13 @@
 {
   "name": "abstract-language",
   "displayName": "Abstract Language",
-  "description": "Schema-aware completions, navigation, refactoring, highlighting, and compiler diagnostics for Abstract 1.x.",
-  "version": "1.4.0",
-  "publisher": "minhocreates",
+  "description": "Formatting, semantic refactoring, completions, navigation, highlighting, and compiler diagnostics for Abstract 1.x.",
+  "version": "1.5.0",
+  "publisher": "antonio-in-stem",
+  "icon": "icons/abstract-logo.png",
+  "author": {
+    "name": "Antonio M."
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/antonio-in-stem/abstract"
@@ -19,14 +23,18 @@
   "files": [
     "package.json",
     "LICENSE.txt",
-    "icons/**",
+    "icons/*.json",
+    "icons/*.svg",
+    "icons/abstract-logo.png",
     "language-configuration.json",
     "syntaxes/**",
     "themes/**",
     "src/**"
   ],
   "activationEvents": [
-    "onLanguage:abstract"
+    "onLanguage:abstract",
+    "workspaceContains:**/*.ab",
+    "workspaceContains:**/*.abt"
   ],
   "main": "./src/extension.js",
   "scripts": {
@@ -65,6 +73,14 @@
         "command": "abstract.lintCurrentProject",
         "title": "Abstract: Lint Current Project",
         "enablement": "isWorkspaceTrusted && editorLangId == abstract"
+      },
+      {
+        "command": "abstract.useForWorkspace",
+        "title": "Abstract: Use for .ab and .abt in This Workspace"
+      },
+      {
+        "command": "abstract.showDiagnosticStatus",
+        "title": "Abstract: Show Diagnostic Status"
       }
     ],
     "languages": [
@@ -170,7 +186,8 @@
     ],
     "configurationDefaults": {
       "[abstract]": {
-        "editor.semanticHighlighting.enabled": true
+        "editor.semanticHighlighting.enabled": true,
+        "editor.defaultFormatter": "antonio-in-stem.abstract-language"
       }
     },
     "iconThemes": [

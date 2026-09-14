@@ -1,0 +1,8 @@
+schema PerformanceBounds {
+    minimum_speed_kmh: int(0..500)
+    maximum_speed_kmh: int(0..500)
+}
+
+logic PerformanceBounds {
+    require .minimum_speed_kmh < .maximum_speed_kmh else throw "Minimum speed must be below maximum speed."
+}

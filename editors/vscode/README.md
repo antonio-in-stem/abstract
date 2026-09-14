@@ -1,17 +1,24 @@
 # Abstract Language for VS Code
 
-The optional Abstract file icon theme uses a neutral document glyph for `.ab`
-and `.abt` files. Version 1.4.0 adds **Abstract: Inspect Public Fields**: a compiler-backed
+Version 1.5.0 adds the planned missing authoring features: formatting,
+compiler-bound rename/references, tuple, tagged-object and asset completion,
+loop element inference, and broader safe dotted-path rewriting. The optional
+file icon theme distinguishes `.ab` data files from `.abt` template files.
+Version 1.4.0 added **Abstract: Inspect Public Fields**: a compiler-backed
 inventory with unsaved-source support, export diagnostics and declaration navigation.
-Nomination highlighting, completion, field hover, schema references and rename remain available.
+Nomination highlighting, completion, field hover, semantic references and rename remain available.
 
-The SVG supplied for version 1.2.1 belongs to Covenant and has been removed.
-The replacement glyph is extension UI artwork under [LICENSE.txt](https://github.com/antonio-in-stem/abstract/blob/antonio-in-stem/abstract-vscode-intelligence/editors/vscode/LICENSE.txt),
-not an official Abstract logo.
+The `.ab` glyph is a diamond with a round cutout. The `.abt` glyph uses three
+stacked chevrons so data and template files remain distinct at 16 pixels.
+
+The extension is authored by Antonio M. The local VSIX uses
+`antonio-in-stem.abstract-language`, matching the owner's repository namespace;
+this does not claim that a Visual Studio Marketplace publisher account exists.
+The visual assets are extension UI artwork under [LICENSE.txt](https://github.com/antonio-in-stem/abstract/blob/main/editors/vscode/LICENSE.txt).
 
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
-CLI in Abstract **1.2.0**, plus its optional analysis protocol when advertised.
+CLI in Abstract **1.3.0**, plus its optional analysis protocol when advertised.
 Install the compiler separately and set
 `abstract.compilerPath` if `abstract` is not on your PATH.
 
@@ -31,26 +38,39 @@ Install the compiler separately and set
   a Covenant consumer. A rejected export never becomes a partially admitted list.
 - Syntax and semantic highlighting for `.ab` instances and `.abt` templates,
   plus optional Abstract Orbit Dark and file icon themes.
+- Whole-document formatting through **Format Document**. Formatting changes
+  indentation only and preserves authored tokens, strings, comments, line endings
+  and compiler meaning.
 - Contextual completion from the project's schemas: root fields, dotted paths,
   body blocks, scalar enum/boolean values, `ref(Schema)` instance IDs, header
-  tags, enum `#tag` members, schema names and type/modifier snippets.
+  tags, enum `#tag` members and arguments, tuple columns/cells, matching asset
+  paths, inferred loop element fields, schema names and type/modifier snippets.
 - Go to Definition and hover for instance schemas, assigned fields, nested
-  `$(Schema)` fields and unquoted reference values. The Outline lists schemas,
-  fields and instance IDs.
-- **Refactor → Rewrite → Use a dotted path** turns a single-assignment body
-  block into its equivalent dotted assignment. The edit is previewable and
+  `$(Schema)` fields and unquoted reference values. Schema field hover identifies
+  declared defaults and version windows. With the optional `values: 1` capability,
+  instance field hover also shows compiler-evaluated values after defaults and
+  logic for each base/overlay version range. The Outline lists schemas, fields
+  and instance IDs.
+- **Refactor → Rewrite → Flatten body block to dotted paths** turns one or more
+  direct assignments into equivalent dotted assignments. The edit is previewable and
   undoable. Comments attached to the assignment and version annotations stay
   intact; blocks with comments on their braces are left as written.
-- **Find All References** and **Rename Symbol** for schema names, using compiler
-  identities across declarations, `logic`, instance headers, `$(Name)` and
-  `ref(Name)`. Rename includes unsaved buffers, rejects name collisions, preserves
-  homonymous comments/value strings, and validates the proposed changes with the
-  compiler before offering the edit. This requires the optional
+- **Find All References** and **Rename Symbol** for schema names, fields, explicit
+  instance IDs and local loop variables, using compiler identities across every
+  declaration and resolved use. Rename includes unsaved buffers, respects field
+  and loop scope, rejects collisions, preserves homonymous comments/value strings,
+  and validates the proposed changes with the compiler before offering the edit.
+  File-stem instance IDs navigate and participate in references but are not renamed
+  as token edits; add an explicit `@id` first. This requires the optional
   `schemaBindings: 1` compiler capability; the release number alone is insufficient.
 - Compiler diagnostics while editing, including error codes and
   related locations. Errors stay associated with their project in multi-root
   workspaces. The status bar distinguishes live analysis from legacy saved-file
   linting. Compile writes compiler output to the Abstract channel.
+- If another `files.associations` rule opens `.ab`/`.abt` under a different
+  language, the extension reports the conflict. Run **Abstract: Use for .ab and
+  .abt in This Workspace** to fix only that workspace. **Abstract: Show Diagnostic
+  Status** explains trust, project and compiler readiness from the status bar.
 
 Completions, navigation and refactoring use current editor buffers, including
 unsaved schemas. A compiler advertising **analysis protocol 1** also checks dirty
@@ -63,7 +83,7 @@ Older compilers remain usable: the extension explicitly reports **Saved-file
 diagnostics** and waits until every project buffer is saved before invoking
 legacy `lint`. Unsupported analysis is never presented as live validation.
 Analysis and compiler commands require a trusted workspace; Compile also needs
-saved buffers. Schema references and rename also require Workspace Trust.
+saved buffers. Semantic references and rename also require Workspace Trust.
 Public inventory requires Workspace Trust and runs only when explicitly requested.
 Closing its selector releases the captured source text. Export diagnostics retain
 only bounded source identities and diagnostic text for up to 16 projects; inspecting
@@ -93,15 +113,13 @@ index is tolerant of incomplete input; the compiler remains authoritative.
 
 ## Current boundaries
 
-This release is an authoring increment, not complete language-server coverage.
-It does not provide whole-document formatting, rename/references for fields,
-instance IDs or local loop variables,
-tuple-column or tagged-argument completions,
-asset-path completion, loop-variable inference, or general compression. Untitled
-buffers need a filesystem identity before project diagnostics can run.
-Hover displays a resolved declaration; it does not evaluate defaults, logic or
-version applicability. Completion proposals are not a proof that the whole
-document is valid. Ambiguous schema declarations yield no assumed field shape.
+Untitled Abstract buffers show a Save As prompt and **Abstract: Show Diagnostic
+Status** reports **Save required** until the file has a project identity.
+Compiler-evaluated hover requires a valid whole-project snapshot and the optional
+`values: 1` capability. With an older compiler or a project error, hover keeps the
+resolved declaration and declared metadata without presenting a partial effective
+value. Completion proposals are not a proof that the whole document is valid.
+Ambiguous schema declarations yield no assumed field shape.
 
 Schema operations require a valid compiler snapshot and reject incomplete,
 truncated or stale binding results. They are scoped to one discovered project.
@@ -116,7 +134,7 @@ retargeted open alias also cancels the operation. The public VS Code 1.92 Rename
 API does not carry our captured versions through a later F2 preview/application,
 so edits made after the provider returns are outside this checked snapshot.
 
-Schema references/rename admit at most 1,024 canonical sources, 4 MiB per source
+Semantic references/rename admit at most 1,024 canonical sources, 4 MiB per source
 and 16 MiB of aggregate UTF-8 source bytes (including dirty/new buffers). Saved
 and open sources are checked before reading/joining full text; open documents
 use line-count and UTF-16 length preflight followed by actual UTF-8 admission.
@@ -127,16 +145,13 @@ constructing edited text. These are limits of this feature's source capture,
 not compiler heap limits or restrictions newly imposed on the tolerant index.
 The existing 128-overlay/request-frame limits also apply.
 
-The next semantic-symbol increments remain necessary: loop declarations/usages
-need scope-aware compiler identities, including separate sibling loops and
-interpolated uses; nested loop shadowing is forbidden by E516, not an accepted
-language feature. Fields require resolution through groups, nested-schema types,
-tuple/tag forms and dynamic logic paths. Instance IDs require the compiler's
-normalization, version and clone/reference rules. These cannot be implemented
-by replacing matching text. Abstract 1.x has no import syntax; project discovery
-defines the source set. This first schema increment does not complete those goals.
+Compiler-bound names use the compiler's normalization, version, clone/reference,
+tuple/tag, nested-schema and loop-scope rules; the tolerant editor index remains
+responsible only for assistance while a document is incomplete. Abstract 1.x has
+no import syntax, so project discovery defines the reference graph.
 
-The dotted-path action covers one existing SPEC 5.4 equivalence. It does not
+The dotted-path action flattens one or several assignments in a body block using
+the SPEC 5.4 path-prefix equivalence. It does not
 remove defaults, merge repeated values, introduce wildcards or rewrite clones;
 those transformations need separate semantic equivalence checks. No compiler
 binary, background server or Node runtime dependency is bundled.
@@ -161,7 +176,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.4.0.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.5.0.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 The public-inventory host tests also use a temporary profile. Set

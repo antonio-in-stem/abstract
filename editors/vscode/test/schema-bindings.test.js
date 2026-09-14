@@ -152,3 +152,30 @@ test("feature negotiation requires schemaBindings v1, even when older diagnostic
     assert.equal(value.supported, true); assert.equal(value.schemaBindings, false);
   }
 });
+
+test("binding reader preserves normalized field/loop spelling and rejects implicit instance rename", () => {
+  const file = path.resolve("semantic-fixture.abt");
+  const text = "Max-Count\nmax_count\nLoop-Var\nloop_var\nanchor\nfile-id\n";
+  const at = (line, spelling, role) => ({ path: file, spelling, role,
+    range: { start: { line, character: 0 }, end: { line, character: spelling.length } } });
+  const declaration = (line, spelling) => ({ path: file, spelling,
+    range: { start: { line, character: 0 }, end: { line, character: spelling.length } } });
+  const graph = {
+    version: 1, complete: true, sources: [{ path: file, sha256: model.hash(text) }], symbols: [
+      { id: "f", kind: "field", name: "max_count", ownerId: "schema", declaration: declaration(0, "Max-Count"),
+        occurrences: [at(0, "Max-Count", "declaration"), at(1, "max_count", "reference")] },
+      { id: "l", kind: "loop", name: "loop_var", scopeId: "logic", declaration: declaration(2, "Loop-Var"),
+        occurrences: [at(2, "Loop-Var", "declaration"), at(3, "loop_var", "reference")] },
+      { id: "i", kind: "instance", name: "file_id", implicit: true, renamable: false,
+        declaration: declaration(4, ""), occurrences: [at(4, "", "declaration"), at(5, "file-id", "reference")] }
+    ]
+  };
+  const response = { analyzed: true, truncated: false, diagnostics: [], bindings: graph };
+  const parsed = model.readBindings(response); const texts = new Map([[model.key(file), text]]);
+  model.validateSnapshot(parsed, texts);
+  const changed = model.rename(parsed, parsed.symbols[0], "total-value", texts).get(model.key(file));
+  assert.ok(changed.startsWith("total-value\ntotal-value\n"));
+  assert.throws(() => model.rename(parsed, parsed.symbols[2], "other", texts), /file stem/);
+  parsed.symbols[0].renamable = false;
+  assert.throws(() => model.rename(parsed, parsed.symbols[0], "other", texts), /prove.*every use/);
+});

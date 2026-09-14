@@ -1,6 +1,8 @@
 const vscode = require("vscode");
 const fs = require("fs/promises");
+const path = require("path");
 const model = require("./language-model");
+const { formatDocument } = require("./formatter");
 const { ProjectIndex, isSource } = require("./project-index");
 
 function registerLanguageFeatures(context, resolveProjectPath, reportError) {
@@ -8,7 +10,9 @@ function registerLanguageFeatures(context, resolveProjectPath, reportError) {
   const projects = new ProjectIndex();
   let revision = 0;
   const watcher = vscode.workspace.createFileSystemWatcher("**/*");
-  const invalidate = (uri) => { if (isSource(uri.fsPath)) projects.invalidate(); };
+  const invalidate = (uri) => {
+    if (isSource(uri.fsPath) || uri.fsPath.split(path.sep).some((segment) => segment.toLowerCase() === "assets")) projects.invalidate();
+  };
   context.subscriptions.push(watcher, watcher.onDidCreate(invalidate), watcher.onDidChange(invalidate), watcher.onDidDelete(invalidate),
     vscode.workspace.onDidChangeTextDocument(({ document }) => { if (isSource(document.uri.fsPath)) revision += 1; }),
     vscode.workspace.onDidSaveTextDocument((d) => invalidate(d.uri)),
@@ -48,7 +52,7 @@ function registerLanguageFeatures(context, resolveProjectPath, reportError) {
           return item;
         });
       }
-    }, ".", ":", "@", "#", "&", "(", ","),
+    }, ".", ":", "@", "#", "&", "(", ",", "/", "\\"),
     vscode.languages.registerDefinitionProvider(selector, {
       async provideDefinition(document, position, token) {
         const state = await snapshot(document, token);
@@ -64,6 +68,11 @@ function registerLanguageFeatures(context, resolveProjectPath, reportError) {
         return new vscode.Hover(entries.map((entry) => {
           const content = new vscode.MarkdownString().appendCodeblock(entry.declaration, "abstract");
           if (entry.public) content.appendMarkdown(`\n\n${model.PUBLIC_NOMINATION_DETAIL}`);
+          if (entry.default !== undefined) content.appendMarkdown("\n\n**Declared default**\n\n").appendCodeblock(entry.default, "abstract");
+          if (entry.since > 1 || Number.isFinite(entry.removed)) {
+            const end = Number.isFinite(entry.removed) ? entry.removed - 1 : "latest";
+            content.appendMarkdown(`\n\n**Declared versions:** ${entry.since}–${end}`);
+          }
           return content;
         }));
       }
@@ -96,7 +105,15 @@ function registerLanguageFeatures(context, resolveProjectPath, reportError) {
           return action;
         });
       }
-    }, { providedCodeActionKinds: [vscode.CodeActionKind.RefactorRewrite] })
+    }, { providedCodeActionKinds: [vscode.CodeActionKind.RefactorRewrite] }),
+    vscode.languages.registerDocumentFormattingEditProvider(selector, {
+      provideDocumentFormattingEdits(document, options) {
+        const formatted = formatDocument(document.getText(), options);
+        if (formatted === document.getText()) return [];
+        const end = document.positionAt(document.getText().length);
+        return [vscode.TextEdit.replace(new vscode.Range(new vscode.Position(0, 0), end), formatted)];
+      }
+    })
   );
 }
 

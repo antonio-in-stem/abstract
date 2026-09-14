@@ -132,6 +132,7 @@ test("process cancellation terminates a running process and marks its response u
 test("capability negotiation distinguishes old compiler support from broken executables", async () => {
   const actual = await protocol.startProcess(compiler, ["analyze", "--capabilities"]).promise;
   assert.equal(protocol.capability(actual).supported, true);
+  assert.equal(protocol.capability(actual).values, true);
   assert.equal(protocol.capability({ error: { code: 2 }, stderr: "abstract: error[E801]: Unknown command 'analyze'; expected compile, lint, templates or init.", stdout: "" }).supported, false);
   assert.throws(() => protocol.capability({ error: { code: "ENOENT", message: "missing" }, stderr: "", stdout: "" }), /missing/);
 });

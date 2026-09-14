@@ -1,6 +1,6 @@
 # The Abstract language
 
-Abstract 1.0 is a schema-backed data language. You describe the shape of your
+Abstract 1.1 is a schema-backed data language. You describe the shape of your
 data once, write the data in a compact authoring syntax, and compile it into a
 canonical JSON, YAML or RAW document that every other tool reads.
 

@@ -65,14 +65,20 @@ fn respond(
     );
     // Nesting adds renderer indentation. The final envelope, not a standalone
     // fragment estimate, is the last authority on response size.
-    if rendered.as_ref().is_err_and(|error| error == "Analysis response exceeds protocol limit.") {
+    if rendered
+        .as_ref()
+        .is_err_and(|error| error == "Analysis response exceeds protocol limit.")
+    {
         response(
             request.id,
             diagnostics,
             &layout.sources,
             &request.overlays,
             true,
-            Some(("publicInventory", unavailable("Public inventory exceeds the complete analysis response budget."))),
+            Some((
+                "publicInventory",
+                unavailable("Public inventory exceeds the complete analysis response budget."),
+            )),
             false,
         )
     } else {
@@ -583,9 +589,18 @@ mod tests {
     fn complete_envelope_budget_failure_returns_unavailable_without_partial_data() {
         let fixture = Fixture::new("schema Settings {}\n", "");
         let layout = project::resolve(&[fixture.0.clone()]).unwrap();
-        let request = Request { id: 1, overlays: HashMap::new() };
-        let output = respond(&layout, &request, &Diagnostics::default(),
-            object(vec![("fragment", text("x".repeat(MAX_RESPONSE_BYTES)))]), false).unwrap();
+        let request = Request {
+            id: 1,
+            overlays: HashMap::new(),
+        };
+        let output = respond(
+            &layout,
+            &request,
+            &Diagnostics::default(),
+            object(vec![("fragment", text("x".repeat(MAX_RESPONSE_BYTES)))]),
+            false,
+        )
+        .unwrap();
         assert!(output.len() < MAX_RESPONSE_BYTES);
         assert!(output.contains("\"status\": \"unavailable\""));
         assert!(!output.contains("\"fragment\""));

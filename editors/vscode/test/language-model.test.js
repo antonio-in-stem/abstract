@@ -1,5 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const path = require("node:path");
 const model = require("../src/language-model");
 
 const schema = `schema Owner {
@@ -131,12 +132,49 @@ test("nested logic and else bodies keep the schema context for dotted paths", ()
   assert.deepEqual(labels(f), ["team", "07"]);
 });
 
-test("dotted-path refactor preserves annotation and value bytes, skips comments on braces and list paths", () => {
+test("dotted-path refactor preserves values and comments, flattens repeated prefixes, and skips unsafe paths", () => {
   const f = fixture('Product :: @id.x\n  owner {\n    team: "a, b" @since(2) // comment\n  }\n|');
   const [edit] = model.abbreviations(f.index, f.file);
   assert.equal(edit.replacement, '  owner.team: "a, b" @since(2) // comment');
-  for (const body of ["owner { // comment\nteam: x\n}", "owner {\nteam: x\n} // comment", "capabilities {\nactive: true\n}", "owner {\n// keep\nteam: x\n}"]) {
+  const multiple = fixture("Product :: @id.x\nowner {\n // keep\n team: x\n 07: 2\n}\n|");
+  assert.equal(model.abbreviations(multiple.index, multiple.file)[0].replacement,
+    " // keep\nowner.team: x\nowner.07: 2");
+  for (const body of ["owner { // comment\nteam: x\n}", "owner {\nteam: x\n} // comment", "capabilities {\nactive: true\n}"]) {
     const invalid = fixture(`Product :: @id.x\n${body}\n|`);
     assert.equal(model.abbreviations(invalid.index, invalid.file).length, 0);
   }
+});
+
+test("definitions resolve field declarations for schema hover metadata", () => {
+  const file = "schema-hover.abt";
+  const text = "schema Car {\npower: int = 10\nstats {\nlegacy: int @removed(3)\n}\n}\n";
+  const index = model.createIndex([{ file, text }]);
+  const power = model.definitions(index, file, text.indexOf("power") + 2);
+  assert.equal(power[0].default, "10");
+  const legacy = model.definitions(index, file, text.indexOf("legacy") + 2);
+  assert.equal(legacy[0].removed, 3);
+});
+
+test("tuple columns/cells, tag arguments, assets and loop element fields complete from schema shape", () => {
+  const extended = `${schema}\nschema Rich {\nassets[] {\nkind: enum(icon, model) @tag\nenabled: bool\nnested {\nlabel: text\n}\n}\nimage: image(png 16x16)\n}\n`;
+  const complete = (marked, file = "rich.ab") => {
+    const value = fixture(marked, extended, file);
+    value.index.assets = ["./textures/icon.png", "./notes/readme.txt"];
+    return labels(value);
+  };
+  assert.deepEqual(complete("Rich :: @id.x\nassets(ki|): (icon)"), ["kind", "enabled", "nested"]);
+  assert.deepEqual(complete("Rich :: @id.x\nassets(kind, enabled): (icon, |)"), ["true", "false"]);
+  assert.deepEqual(complete("Rich :: @id.x\nassets: [#icon(en|)]"), ["enabled", "nested"]);
+  assert.deepEqual(complete("Rich :: @id.x\nassets: [#icon(enabled: |)]"), ["true", "false"]);
+  assert.deepEqual(complete("Rich :: @id.x\nimage: ./tex|"), ["./textures/icon.png"]);
+  assert.deepEqual(complete("logic Rich {\nfor $asset in .assets {\nrequire $asset.|\n}\n}", "rich.abt"),
+    ["kind", "enabled", "nested"]);
+});
+
+test("instance hover target follows nested body prefixes and authored dotted segments", () => {
+  const file = path.resolve("hover.ab");
+  const text = "Car :: @id.demo\nstats {\npower: 12\n}\nstats.speed: 3\n";
+  const index = model.createIndex([{ file, text }]);
+  assert.deepEqual(model.instanceFieldTarget(index, file, text.indexOf("power") + 2), { id: "demo", path: ["stats", "power"] });
+  assert.deepEqual(model.instanceFieldTarget(index, file, text.indexOf("speed") + 2), { id: "demo", path: ["stats", "speed"] });
 });

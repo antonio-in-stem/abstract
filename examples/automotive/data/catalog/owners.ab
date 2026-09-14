@@ -1,0 +1,13 @@
+Owner :: @id.alex_demo
+    display_name: Alex Example
+    owner_kind: individual
+    home_market: uk_ireland
+    contact {
+        email: alex@example.invalid
+        phone: +44-0000-000000
+    }
+
+Owner :: @id.aurora_fleet
+    display_name: Aurora Demonstration Fleet
+    owner_kind: fleet
+    home_market: continental_europe

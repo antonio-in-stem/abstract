@@ -8,10 +8,10 @@ YAML or RAW document that every other tool reads.
 .abt schemas + .ab instances  ->  abstract compile  ->  JSON | YAML | RAW
 ```
 
-Version 1.0 is the first stable definition of the language. It is specified
-byte for byte in [`docs/SPEC.md`](docs/SPEC.md), with the complete grammar in
-[`docs/GRAMMAR.ebnf`](docs/GRAMMAR.ebnf). The compiler is written in Rust with
-**zero dependencies**.
+Language 1.0 was the first stable definition; the current normative language
+specification is Abstract 1.1 in [`docs/SPEC.md`](docs/SPEC.md), with the
+complete grammar in [`docs/GRAMMAR.ebnf`](docs/GRAMMAR.ebnf). The reference
+compiler release is 1.3.0 and is written in Rust with **zero dependencies**.
 
 ---
 
@@ -182,6 +182,12 @@ That project is checked in as
 compiles to — including the `overlays` entry for version 1, where `glow` does
 not yet exist.
 
+For a larger real-life-shaped project, open
+[`examples/automotive`](examples/automotive). Its fictional vehicle catalogue
+exercises the complete language across related schemas, real checked assets,
+logic and three output formats, with a feature matrix and six intentional
+failure projects.
+
 ---
 
 ## Project layout
@@ -202,6 +208,7 @@ abstract/                  the repository root
     ai/README.md           working inside this repository
     examples/              every documented example, as a compilable project
   example/                 the scaffold `abstract init` produces
+  examples/automotive/     complete multi-schema language and editor tour
   editors/                 VS Code and Antigravity support
   java/                    optional Java runtime for sealed containers
   scripts/                 install.ps1, install.sh

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Abstract — identity preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4f5f6;
+      --muted: #9299a1;
+      --line: rgba(255,255,255,.11);
+      --surface: #111315;
+      --panel: #191b1e;
+      --paper: #f4f5f3;
+      --paper-ink: #1a1d20;
+      --paper-muted: #697078;
+      --accent: #d7d9dc;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: var(--sans);
+      letter-spacing: -.01em;
+    }
+    a { color: inherit; }
+    .shell { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 82px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand span { font-weight: 650; letter-spacing: -.03em; }
+    .meta { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: 12px; }
+    .eyebrow { color: var(--accent); font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    main { padding: 30px 0 72px; }
+    .intro { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 38px; align-items: end; }
+    .hero-logo { display: block; width: 240px; height: 240px; object-fit: contain; }
+    h1 { margin: 0 0 10px; font-size: clamp(42px, 6vw, 68px); line-height: .97; letter-spacing: -.075em; font-weight: 600; }
+    .signature { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .signature strong { display: block; color: var(--ink); font-weight: 500; }
+    .workbench { margin-top: 34px; border: 1px solid var(--line); background: var(--panel); }
+    .workbench-bar { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+    .workbench-bar h2 { margin: 0; font-size: 13px; font-weight: 500; }
+    .workbench-bar span { color: var(--muted); font: 11px var(--mono); }
+    .samples { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
+    .sample { min-height: 220px; padding: 24px; background: var(--paper); color: var(--paper-ink); }
+    .sample.dark { background: #0b0d0f; color: #f4f5f6; }
+    .sample h3 { margin: 0 0 8px; font-size: 13px; font-weight: 550; }
+    .sample p { margin: 0 0 22px; color: var(--paper-muted); font-size: 12px; }
+    .dark p { color: #8c949c; }
+    .icon-grid { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 26px; }
+    .icon-item { display: flex; align-items: center; gap: 10px; min-width: 100px; }
+    .icon-item img { display: block; width: var(--size); height: var(--size); }
+    .icon-item figcaption { color: var(--paper-muted); font: 10px var(--mono); }
+    .dark .icon-item figcaption { color: #8c949c; }
+    .scale { margin-top: 22px; padding-top: 12px; border-top: 1px solid rgba(20,24,27,.14); color: var(--paper-muted); font: 10px var(--mono); }
+    .dark .scale { border-color: var(--line); }
+    .scale-row { display: flex; gap: 17px; margin-top: 10px; }
+    .scale-row span { display: inline-flex; gap: 7px; align-items: center; }
+    .scale-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+    .demo { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 20px; border-top: 1px solid var(--line); }
+    .demo p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .demo code { color: var(--ink); font: 11px var(--mono); }
+    .demo a { flex: 0 0 auto; padding: 10px 13px; border: 1px solid rgba(215,217,220,.45); color: var(--accent); text-decoration: none; font: 11px var(--mono); }
+    .demo a:hover { background: rgba(215,217,220,.08); }
+    footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 26px; color: var(--muted); font: 11px var(--mono); }
+    footer a { text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 32px, 560px); }
+      header { min-height: 68px; }
+      .meta { gap: 10px; }
+      .meta .eyebrow { display: none; }
+      main { padding-top: 24px; }
+      .intro { grid-template-columns: 1fr; gap: 28px; }
+      .hero-logo { width: 180px; height: 180px; }
+      .signature { justify-self: start; }
+      .workbench { margin-top: 30px; }
+      .samples { grid-template-columns: 1fr; }
+      .demo, footer { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <a class="brand" href="./index.html" aria-label="Abstract identity preview">
+        <span>Abstract</span>
+      </a>
+      <div class="meta"><span>Identity preview</span></div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <img class="hero-logo" src="./abstract-logo.webp" alt="Abstract logo">
+        </div>
+        <p class="signature"><strong id="page-title">Abstract</strong>Antonio M.</p>
+      </section>
+
+      <section class="workbench" aria-labelledby="icons-title">
+        <div class="workbench-bar"><h2 id="icons-title">Editor icon set</h2><span>abstract / vscode</span></div>
+        <div class="samples">
+          <div class="sample">
+            <h3>Paper panel</h3>
+            <p>Neutral surface for documentation and light editor themes.</p>
+            <div class="icon-grid">
+              <figure class="icon-item" style="--size:16px"><img src="../../editors/vscode/icons/abstract-data.svg" alt="Abstract data icon, 16 pixels"><figcaption>data · 16</figcaption></figure>
+              <figure class="icon-item" style="--size:16px"><img src="../../editors/vscode/icons/abstract-template.svg" alt="Abstract template icon, 16 pixels"><figcaption>template · 16</figcaption></figure>
+              <figure class="icon-item" style="--size:24px"><img src="../../editors/vscode/icons/abstract-data.svg" alt="Abstract data icon, 24 pixels"><figcaption>data · 24</figcaption></figure>
+              <figure class="icon-item" style="--size:24px"><img src="../../editors/vscode/icons/abstract-template.svg" alt="Abstract template icon, 24 pixels"><figcaption>template · 24</figcaption></figure>
+              <figure class="icon-item" style="--size:32px"><img src="../../editors/vscode/icons/abstract-data.svg" alt="Abstract data icon, 32 pixels"><figcaption>data · 32</figcaption></figure>
+              <figure class="icon-item" style="--size:32px"><img src="../../editors/vscode/icons/abstract-template.svg" alt="Abstract template icon, 32 pixels"><figcaption>template · 32</figcaption></figure>
+            </div>
+            <div class="scale">actual rendered sizes <div class="scale-row"><span><i class="scale-dot"></i>16 px</span><span><i class="scale-dot"></i>24 px</span><span><i class="scale-dot"></i>32 px</span></div></div>
+          </div>
+          <div class="sample dark">
+            <h3>Black Noir panel</h3>
+            <p>High contrast surface for the production editor and terminal.</p>
+            <div class="icon-grid">
+              <figure class="icon-item" style="--size:16px"><img src="../../editors/vscode/icons/abstract-data.svg" alt="Abstract data icon, 16 pixels"><figcaption>data · 16</figcaption></figure>
+              <figure class="icon-item" style="--size:16px"><img src="../../editors/vscode/icons/abstract-template.svg" alt="Abstract template icon, 16 pixels"><figcaption>template · 16</figcaption></figure>
+              <figure class="icon-item" style="--size:24px"><img src="../../editors/vscode/icons/abstract-data.svg" alt="Abstract data icon, 24 pixels"><figcaption>data · 24</figcaption></figure>
+              <figure class="icon-item" style="--size:24px"><img src="../../editors/vscode/icons/abstract-template.svg" alt="Abstract template icon, 24 pixels"><figcaption>template · 24</figcaption></figure>
+              <figure class="icon-item" style="--size:32px"><img src="../../editors/vscode/icons/abstract-data.svg" alt="Abstract data icon, 32 pixels"><figcaption>data · 32</figcaption></figure>
+              <figure class="icon-item" style="--size:32px"><img src="../../editors/vscode/icons/abstract-template.svg" alt="Abstract template icon, 32 pixels"><figcaption>template · 32</figcaption></figure>
+            </div>
+            <div class="scale">actual rendered sizes <div class="scale-row"><span><i class="scale-dot"></i>16 px</span><span><i class="scale-dot"></i>24 px</span><span><i class="scale-dot"></i>32 px</span></div></div>
+          </div>
+        </div>
+        <div class="demo">
+          <p>See the icon language in context with the real automotive example: <code>aurora.ab</code> and its expected output.</p>
+          <a href="../../examples/automotive/data/vehicles/aurora.ab">Open demo source ↗</a>
+        </div>
+      </section>
+
+      <footer><span>Abstract / identity preview</span><a href="../../examples/automotive/expected.json">View expected.json ↗</a></footer>
+    </main>
+  </div>
+</body>
+</html>

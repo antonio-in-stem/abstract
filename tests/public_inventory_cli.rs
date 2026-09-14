@@ -75,14 +75,106 @@ fn capability_is_explicit_and_existing_analysis_modes_stay_separate() {
     let capability = success(fixture.run(&["analyze", "--capabilities"], &[]));
     assert!(capability.contains("\"publicInventory\": 1"));
     assert!(capability.contains("\"schemaBindings\": 1"));
+    assert!(capability.contains("\"values\": 1"));
     let ordinary = success(fixture.run(&["analyze", ".", "--stdio"], &frame(&[])));
     assert!(!ordinary.contains("publicInventory"));
     let symbols = success(fixture.run(&["analyze", ".", "--stdio", "--symbols"], &frame(&[])));
     assert!(symbols.contains("\"bindings\""));
     assert!(!symbols.contains("publicInventory"));
+    let values = success(fixture.run(&["analyze", ".", "--stdio", "--values"], &frame(&[])));
+    assert!(values.contains("\"values\""));
+    assert!(values.contains("\"complete\": true"));
+    assert!(values.contains("\"document\""));
+    assert!(values.contains("\"data\""));
+    assert!(values.contains("\"overlays\""));
     let invalid = fixture.run(&["analyze", ".", "--stdio", "--symbols", "--public"], &[]);
     assert_eq!(invalid.status.code(), Some(2));
     assert!(invalid.stdout.is_empty());
+}
+
+#[test]
+fn evaluated_values_are_the_compilers_base_and_overlay_document() {
+    let fixture = Fixture::new(
+        "versions 1..2\nschema Settings {\n base: int = 7\n derived: int\n late: bool @since(2) = true\n}\nlogic Settings {\n derive .derived = .base\n}\n",
+        "Settings :: @id.main\n",
+    );
+    let output = success(fixture.run(&["analyze", ".", "--stdio", "--values"], &frame(&[])));
+    assert!(output.contains("\"complete\": true"), "{output}");
+    assert!(output.contains("\"base\": 7"), "{output}");
+    assert!(output.contains("\"derived\": 7"), "{output}");
+    assert!(output.contains("\"late\": true"), "{output}");
+    assert!(output.contains("\"versions\": {"), "{output}");
+    assert!(output.contains("\"min\": 1"), "{output}");
+    assert!(output.contains("\"max\": 2"), "{output}");
+    assert!(output.contains("\"overlays\": ["), "{output}");
+}
+
+#[test]
+fn evaluated_values_fail_closed_with_compiler_diagnostics() {
+    let fixture = Fixture::new(
+        "schema Settings {\n n: int\n}\n",
+        "Settings :: @id.main\nn: nope\n",
+    );
+    let output = success(fixture.run(&["analyze", ".", "--stdio", "--values"], &frame(&[])));
+    assert!(output.contains("\"complete\": false"), "{output}");
+    assert!(!output.contains("\"document\""), "{output}");
+    assert!(output.contains("\"code\": \"E412\""), "{output}");
+}
+
+#[test]
+fn evaluated_values_preserve_exact_numeric_lexemes() {
+    let fixture = Fixture::new(
+        "schema Measurements {\n huge: int\n signed_zero: float\n}\n",
+        "Measurements :: @id.main\nhuge: 9223372036854775807\nsigned_zero: -0.0\n",
+    );
+    let output = success(fixture.run(&["analyze", ".", "--stdio", "--values"], &frame(&[])));
+    assert!(output.contains("\"huge\": 9223372036854775807"), "{output}");
+    assert!(output.contains("\"signed_zero\": -0.0"), "{output}");
+}
+
+#[test]
+fn semantic_bindings_cover_fields_instances_and_lexical_loops() {
+    let fixture = Fixture::new(
+        "schema Owner {\n name: text\n}\nschema Car {\n owner: $(Owner)\n peer: ref(Car) @optional\n features[]: text\n display-name: text\n id-suffix: text\n label: text\n raw_label: text\n literal: text\n count: int = 0\n}\nlogic Car {\n for $feature in .features {\n  require $feature != \"$feature\" else throw \"feature required\"\n }\n for $feature in .features {\n  require $feature != \"reserved\" else throw \"feature reserved\"\n }\n derive .count = length(.features)\n derive .literal = $$feature\n}\n",
+        "Car :: @id.Base-Car\nowner.name: Alex\nfeatures: safe, quiet\nDISPLAY_NAME: Base\nid-suffix: raw_boundary\nlabel: ${id}_label\nraw_label: $id-suffix\n\nCar :: @id.copy\n&BASE-CAR\npeer: base_car\nowner.name: Bea\nfeatures: efficient\ndisplay-name: Copy\nid-suffix: second_boundary\nlabel: $id\nraw_label: $id-suffix\n",
+    );
+    let output = success(fixture.run(&["analyze", ".", "--stdio", "--symbols"], &frame(&[])));
+    assert!(output.contains("\"complete\": true"), "{output}");
+    for kind in ["schema", "field", "instance", "loop"] {
+        assert!(
+            output.contains(&format!("\"kind\": \"{kind}\"")),
+            "missing {kind}: {output}"
+        );
+    }
+    for key in [
+        "symbolId",
+        "ownerId",
+        "qualifiedName",
+        "spelling",
+        "shape",
+        "renamable",
+    ] {
+        assert!(
+            output.contains(&format!("\"{key}\"")),
+            "missing {key}: {output}"
+        );
+    }
+    assert!(output.contains("\"qualifiedName\": \"Owner.name\""));
+    assert!(output.contains("\"qualifiedName\": \"Car::base_car\""));
+    assert!(output.contains("\"name\": \"feature\""));
+    assert_eq!(output.matches("\"kind\": \"loop\"").count(), 2, "{output}");
+    assert!(output.contains("\"spelling\": \"DISPLAY_NAME\""));
+    assert!(output.contains("\"spelling\": \"BASE-CAR\""));
+    assert!(output.contains("\"spelling\": \"base_car\""));
+    assert_eq!(
+        output.matches("\"spelling\": \"feature\"").count(),
+        6,
+        "quoted comparison literals and $$ escapes must not become loop references: {output}"
+    );
+    assert!(
+        output.contains("\"spelling\": \"id-suffix\""),
+        "the greedy raw interpolation binds id-suffix, while ${{id}} is explicit: {output}"
+    );
 }
 
 #[test]

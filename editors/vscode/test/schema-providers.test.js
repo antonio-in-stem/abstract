@@ -26,6 +26,8 @@ async function setup(hook = () => {}) {
     Uri: { file: uri }, Position: class { constructor(line, character) { this.line = line; this.character = character; } },
     Range: class { constructor(...values) { this.values = values; } },
     Location: class { constructor(uri, range) { this.uri = uri; this.range = range; } },
+    MarkdownString: class { constructor(value = "") { this.value = value; } },
+    Hover: class { constructor(contents) { this.contents = contents; } },
     WorkspaceEdit: class { constructor() { this.edits = []; } replace(...edit) { this.edits.push(edit); } },
     workspace: {
       isTrusted: true, textDocuments: documents,
@@ -37,6 +39,7 @@ async function setup(hook = () => {}) {
     },
     languages: {
       registerReferenceProvider: (_, provider) => { providers.references = provider; return { dispose() {} }; },
+      registerHoverProvider: (_, provider) => { providers.hover = provider; return { dispose() {} }; },
       registerRenameProvider: (_, provider) => { providers.rename = provider; return { dispose() {} }; },
     },
   };
@@ -198,7 +201,7 @@ test("compiler diagnostic-only capability cannot enable semantic rename", async 
     }
   });
   try {
-    await assert.rejects(f.providers.rename.prepareRename(f.doc, { line: 0, character: 2 }, f.token), /does not expose schema bindings/);
+    await assert.rejects(f.providers.rename.prepareRename(f.doc, { line: 0, character: 2 }, f.token), /does not expose semantic bindings/);
     assert.equal(f.calls.length, 1);
   } finally { await f.dispose(); }
 });

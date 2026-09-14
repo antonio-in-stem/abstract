@@ -3,6 +3,8 @@ const path = require("path");
 const protocol = require("./analysis-client");
 const bindings = require("./schema-bindings");
 const resources = require("./schema-resources");
+const model = require("./language-model");
+const valueHover = require("./value-hover");
 const { isSource } = require("./project-index");
 const { createSourceCapture } = require("./source-capture");
 
@@ -11,8 +13,8 @@ const { createSourceCapture } = require("./source-capture");
 // No disk writes and no fallback to the tolerant completion/navigation index.
 function registerSchemaFeatures(context, resolveProjectPath, report, workspaceRoot = () => undefined) {
   let revision = 0; let requestId = 0; let disposed = false;
-  const operations = new Set(); const prepared = new Map();
-  const changed = () => { revision += 1; for (const operation of operations) operation.cancel(); };
+  const operations = new Set(); const prepared = new Map(); const valueCache = new Map();
+  const changed = () => { revision += 1; valueCache.clear(); for (const operation of operations) operation.cancel(); };
   const watcher = vscode.workspace.createFileSystemWatcher("**/*");
   context.subscriptions.push(watcher, watcher.onDidCreate(changed), watcher.onDidChange(changed), watcher.onDidDelete(changed),
     vscode.workspace.onDidChangeTextDocument(({ document }) => { if (isSource(document.uri.fsPath)) changed(); }),
@@ -44,7 +46,7 @@ function registerSchemaFeatures(context, resolveProjectPath, report, workspaceRo
   async function capture(document, token) {
     const state = await sourceCapture.capture(document, { revision, token });
     const capability = protocol.capability(await execute(state, ["analyze", "--capabilities"], undefined, 5000));
-    if (!capability?.schemaBindings) throw new Error("This compiler does not expose schema bindings v1. Update the compiler to use schema references and rename.");
+    if (!capability?.schemaBindings) throw new Error("This compiler does not expose semantic bindings v1. Update the compiler to use references and rename.");
     state.graph = await analyze(state);
     await current(state);
     return state;
@@ -62,11 +64,34 @@ function registerSchemaFeatures(context, resolveProjectPath, report, workspaceRo
     bindings.validateSnapshot(graph, expected);
     return graph;
   }
+  async function values(document, position, token) {
+    const localIndex = model.createIndex([{ file: document.uri.fsPath, text: document.getText() }]);
+    const target = model.instanceFieldTarget(localIndex, document.uri.fsPath, document.offsetAt(position));
+    if (!target) return undefined;
+    const state = await sourceCapture.capture(document, { revision, token });
+    const sourceFingerprint = [...state.texts].map(([file, text]) => `${file}:${bindings.hash(text)}`).sort().join("\n");
+    const cached = valueCache.get(state.root);
+    let compiled = cached?.revision === revision && cached.sourceFingerprint === sourceFingerprint ? cached.compiled : undefined;
+    if (!compiled) {
+      const capability = protocol.capability(await execute(state, ["analyze", "--capabilities"], undefined, 5000));
+      if (!capability?.values) return undefined;
+      const overlays = [...state.sources.values()].filter((source) => source.overlay)
+        .map((source) => ({ path: source.path, text: source.text }));
+      const id = requestId = (requestId + 1) >>> 0;
+      const result = await execute(state, ["analyze", state.root, "--stdio", "--values"], protocol.encodeRequest(id, overlays));
+      const response = protocol.response(result, id);
+      if (!response.analyzed || response.truncated || response.diagnostics.length || !response.values?.complete) return undefined;
+      compiled = valueHover.compiledValues(response);
+      valueCache.set(state.root, { revision, sourceFingerprint, compiled });
+    }
+    await current(state);
+    return valueHover.markdown(compiled, target.id, target.path);
+  }
   const range = (entry) => new vscode.Range(entry.range.start.line, entry.range.start.character, entry.range.end.line, entry.range.end.character);
   const fingerprint = (state) => state.graph.sources.map((source) => `${bindings.key(source.path)}:${source.sha256}`).sort().join("\n");
   const selected = (state, position) => {
     const match = bindings.symbolAt(state.graph, state.file, position);
-    if (!match) throw new Error("This position is not a schema symbol. Fields, instance IDs and loop variables are not supported by this increment.");
+    if (!match) throw new Error("This position is not a compiler-bound schema, field, instance ID or loop variable.");
     return match;
   };
   const selector = { language: "abstract", scheme: "file" };
@@ -79,33 +104,50 @@ function registerSchemaFeatures(context, resolveProjectPath, report, workspaceRo
           if (!match) return [];
           return match.symbol.occurrences.filter((entry) => options.includeDeclaration || entry.role !== "declaration")
             .map((entry) => new vscode.Location(state.sources.get(bindings.key(entry.path)).uri, range(entry)));
-        } catch (error) { report(`Schema references: ${error.message}`); throw error; }
+        } catch (error) { report(`Semantic references: ${error.message}`); throw error; }
+      }
+    }),
+    vscode.languages.registerHoverProvider(selector, {
+      async provideHover(document, position, token) {
+        try {
+          const content = await values(document, position, token);
+          return content ? new vscode.Hover(new vscode.MarkdownString(content)) : undefined;
+        } catch (error) { report(`Compiled value hover: ${error.message}`); return undefined; }
       }
     }),
     vscode.languages.registerRenameProvider(selector, {
       async prepareRename(document, position, token) {
         const state = await capture(document, token);
         const match = selected(state, position);
-        prepared.set(document.uri.toString(), { fingerprint: fingerprint(state), version: document.version, name: match.symbol.name });
-        return { range: range(match.occurrence), placeholder: match.symbol.name };
+        if (match.symbol.renamable === false) {
+          throw new Error(bindings.renameUnavailable(match.symbol));
+        }
+        prepared.set(document.uri.toString(), { fingerprint: fingerprint(state), version: document.version,
+          name: match.symbol.name, kind: match.symbol.kind || "schema" });
+        return { range: range(match.occurrence), placeholder: match.occurrence.spelling || match.symbol.name };
       },
       async provideRenameEdits(document, position, newName, token) {
         const preparation = prepared.get(document.uri.toString());
         prepared.delete(document.uri.toString());
         const state = await capture(document, token);
         const match = selected(state, position);
-        if (preparation && (preparation.version !== document.version || preparation.fingerprint !== fingerprint(state) || preparation.name !== match.symbol.name)) {
+        if (preparation && (preparation.version !== document.version || preparation.fingerprint !== fingerprint(state)
+            || preparation.name !== match.symbol.name || preparation.kind !== (match.symbol.kind || "schema"))) {
           throw new Error("The project changed after rename preparation; start Rename again.");
         }
         // Reject expansion before constructing candidate strings. Names and
         // bound occurrences are ASCII; byte growth is exact for the edits.
-        if (!bindings.validName(newName)) throw new Error("A schema name must start with an ASCII letter and contain only letters, digits and underscores.");
-        const counts = new Map();
+        const kind = match.symbol.kind || "schema";
+        if (!bindings.validName(newName, kind)) throw new Error(kind === "schema"
+          ? "A schema name must start with an ASCII letter and contain only letters, digits and underscores."
+          : "This name must contain only ASCII letters, digits, underscores and hyphens.");
+        const growth = new Map();
         for (const entry of match.symbol.occurrences) {
-          const file = bindings.key(entry.path); counts.set(file, (counts.get(file) || 0) + 1);
+          const file = bindings.key(entry.path);
+          growth.set(file, (growth.get(file) || 0) + newName.length - (entry.spelling ?? match.symbol.name).length);
         }
         const candidateBudget = resources.budget();
-        for (const [file, source] of state.sources) resources.bytes(source.bytes + (newName.length - match.symbol.name.length) * (counts.get(file) || 0), candidateBudget);
+        for (const [file, source] of state.sources) resources.bytes(source.bytes + (growth.get(file) || 0), candidateBudget);
         const replacements = bindings.rename(state.graph, match.symbol, newName, state.texts);
         for (const file of replacements.keys()) {
           if (state.sources.get(file).aliases?.size > 1) {

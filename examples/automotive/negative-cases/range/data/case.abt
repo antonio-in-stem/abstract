@@ -1,0 +1,3 @@
+schema Reading {
+    pressure_kpa: int(150..400)
+}

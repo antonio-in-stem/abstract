@@ -51,7 +51,7 @@ Flags:
   --max-errors <n>    report at most n diagnostics (1 to 10000; default 20)
 
 Optional tooling, outside the language specification:
-  analyze --capabilities | analyze <project> --stdio [--symbols | --public]
+  analyze --capabilities | analyze <project> --stdio [--symbols | --public | --values]
   public-contract --capabilities | public-contract <path>... [--out <file>] [--skip-assets]
   bundle <path>... [--key <k> | --plain] [--out <file>]
   unbundle <file.abx> [--key <k>] [--out <file>]";
@@ -142,9 +142,13 @@ fn command_analyze(args: &[String]) -> Result<i32, Failure> {
             let request = abstract_lang::analysis::read_request(io::stdin().lock()).map_err(plain)?;
             abstract_lang::analysis::analyze_public(Path::new(root), request).map_err(plain)?
         }
+        [root, mode, values] if mode == "--stdio" && values == "--values" && !root.starts_with('-') => {
+            let request = abstract_lang::analysis::read_request(io::stdin().lock()).map_err(plain)?;
+            abstract_lang::analysis::analyze_values(Path::new(root), request).map_err(plain)?
+        }
         _ => {
             return Err(plain(
-                "Usage: abstract analyze --capabilities | abstract analyze <project> --stdio [--symbols | --public]"
+                "Usage: abstract analyze --capabilities | abstract analyze <project> --stdio [--symbols | --public | --values]"
                     .into(),
             ))
         }

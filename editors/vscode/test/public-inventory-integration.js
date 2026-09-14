@@ -31,7 +31,7 @@ async function run() {
   const schemaUri = vscode.Uri.file(path.join(root, "public/data/model.abt"));
   const document = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(document);
-  await vscode.extensions.getExtension("minhocreates.abstract-language").activate();
+  await vscode.extensions.getExtension("antonio-in-stem.abstract-language").activate();
   const commands = await vscode.commands.getCommands();
   assert.ok(commands.includes(inspect), "Public inventory command was not registered.");
   console.log(`Testing public inventory in actual VS Code ${vscode.version}`);

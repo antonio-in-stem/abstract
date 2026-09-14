@@ -1,0 +1,51 @@
+schema Tire {
+    manufacturer: text(2..50)
+    family: text(2..50)
+    width_mm: int(135..405)
+    aspect_ratio: int(20..85)
+    rim_diameter_in: int(12..24)
+    season: enum(summer, winter, all_season)
+    run_flat: bool = false
+}
+
+schema Wheel {
+    position: enum(front_left, front_right, rear_left, rear_right)
+    rim_diameter_in: int(12..24)
+    width_in: float(4.0..14.0)
+    material: enum(steel, alloy, forged_alloy, carbon_composite)
+    rim_design: enum(aero_disc, split_five_spoke, turbine) = aero_disc
+    pressure_kpa: int(150..400)
+}
+
+schema Seat {
+    position: enum(driver, front_passenger, rear_left, rear_center, rear_right)
+    upholstery: enum(fabric, synthetic, leather, recycled_textile)
+    color: enum(charcoal, stone, red) = charcoal
+    heated: bool = false
+    ventilation: bool @optional
+    adjustment_axes: int(0..24) = 4
+}
+
+schema Powertrain {
+    architecture: enum(ice, mild_hybrid, plug_in_hybrid, battery_electric)
+    fuel: enum(petrol, diesel, electricity, petrol_electric)
+    driven_wheels: enum(front, rear, all)
+    transmission: enum(manual_6, automatic_8, single_speed)
+    power_kw: int(30..1000)
+    torque_nm: int(50..2000)
+    battery_kwh: float(0.0..250.0) = 0.0
+    consumption_l_per_100km: float(0.0..30.0) @optional
+}
+
+schema PerformanceSnapshot {
+    source: enum(synthetic_demo, manufacturer_claim, independent_test)
+    minimum_valid_speed_kmh: int(0..100) = 0
+    zero_to_100_kmh_s: float(1.0..30.0)
+    top_speed_kmh: int(60..500)
+    efficiency_wh_km: int(50..500) @optional
+    note: text(1..120)
+}
+
+logic PerformanceSnapshot {
+    require .minimum_valid_speed_kmh < .top_speed_kmh else throw "Minimum valid speed must be below top speed."
+}

@@ -23,6 +23,7 @@ test("unsaved and newly created buffers replace disk sources without crossing pr
   const workspace = await temporaryWorkspace();
   try {
     const file = await workspace.write("data/Shape.abt", "schema Shape {\nold: bool\n}\n");
+    await workspace.write("assets/textures/icon.png", "asset");
     const projects = new ProjectIndex();
     const index = await projects.get(workspace.root, [
       { file, text: "schema Shape {\nfresh: text\n}\n" },
@@ -32,6 +33,7 @@ test("unsaved and newly created buffers replace disk sources without crossing pr
     assert.deepEqual(schemaFields(index, "Shape").map((f) => f.key), ["fresh"]);
     assert.ok(index.schemas.has("New"));
     assert.ok(!index.schemas.has("Other"));
+    assert.deepEqual(index.assets, ["./textures/icon.png"]);
     await workspace.write("data/Shape.abt", "schema Shape {\nsaved: int\n}\n");
     projects.invalidate();
     assert.deepEqual(schemaFields(await projects.get(workspace.root), "Shape").map((f) => f.key), ["saved"]);

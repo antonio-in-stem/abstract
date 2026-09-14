@@ -1,0 +1,3 @@
+PerformanceBounds :: @id.reversed
+minimum_speed_kmh: 240
+maximum_speed_kmh: 120

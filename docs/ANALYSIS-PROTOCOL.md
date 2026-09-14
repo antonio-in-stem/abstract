@@ -12,6 +12,7 @@ abstract analyze --capabilities
 abstract analyze <project-or-data-directory> --stdio
 abstract analyze <project-or-data-directory> --stdio --symbols
 abstract analyze <project-or-data-directory> --stdio --public
+abstract analyze <project-or-data-directory> --stdio --values
 ```
 
 The capability command returns JSON with `protocol: "abstract-analysis"`,
@@ -114,7 +115,7 @@ per message and 4 KiB per note. Truncation preserves UTF-8 character boundaries.
 The response is bounded to **4 MiB**. `truncated: true` signals omitted entries
 or shortened text; clients must not present that list as exhaustive.
 
-## Optional schema bindings, feature version 1
+## Optional semantic bindings, feature version 1
 
 The capability response advertises `schemaBindings: 1` for the opt-in
 `--stdio --symbols` mode. Absence or another value does not enable semantic
@@ -124,23 +125,38 @@ version string substitutes for this feature negotiation.
 
 The symbols response adds `bindings` with `version: 1`, `complete`, `sources`
 and `symbols`. A complete graph is emitted only after the normal compilation
-pipeline succeeds with no diagnostics. It resolves the real lexer's
-`SchemaName` tokens against parsed project schema declarations and checks their
-declaration locations. Covered occurrences are `schema Name`, `logic Name`,
-instance headers, `$(Name)` and `ref(Name)`, including types nested in groups.
-These names are case-sensitive. Comments and ordinary value strings do not
-become references because they contain the same spelling. Abstract 1.x has no
+pipeline succeeds with no diagnostics. It resolves compiler-validated schema,
+field, instance and lexical loop identities. Schema occurrences cover
+declarations, logic bindings, instance headers and `$(Name)` / `ref(Name)` type
+arguments. Field occurrences cover declarations, header/body/clone/logic paths,
+multi-path keys, tuple columns, tagged-object argument paths and interpolation.
+Instance occurrences cover explicit or file-stem declarations, clone sources,
+`ref` values and direct instance interpolation. Loop occurrences are
+scope-aware across paths, operands, derive values, functions and interpolation.
+Comments and unrelated strings never become references. Abstract 1.x has no
 imports: references span the project's discovered source set.
 
 Each source has canonical absolute `path` and `sha256` of the UTF-8 encoding of
 its editor text: disk BOM metadata is omitted, an overlay's typed BOM remains.
-Each symbol has a snapshot-local `id`, `name`, `kind: "schema"`, a `declaration`
-location and `occurrences`. Each occurrence has `path`, an exact token `range`
-using the UTF-16 conventions above, and `role: "declaration" | "reference"`.
-Exactly one occurrence is the declaration. IDs must not be reused across
-snapshots; the declaration and source hashes establish the current identity.
+Each symbol has a snapshot-local `id`, normalized semantic `name`, `kind`
+(`schema`, `field`, `instance` or `loop`), `qualifiedName`, a `declaration`
+location, `renamable`, `implicit` and `occurrences`. Fields and loops also carry
+`type` / `shape` metadata where the compiler can state it. `ownerId` names the
+declaring schema/field or lexical scope. Every location and occurrence carries
+`path`, exact UTF-16 `range` and exact source `spelling`; occurrences also carry
+their `symbolId` and `role: "declaration" | "reference"`. Schema names are exact
+and case-sensitive. Field names, instance IDs and loop variables use language
+normalisation, so two occurrences of one symbol may have different spellings.
+Exactly one occurrence is the declaration.
 
-The complete graph is limited to 1024 sources, 16384 occurrences and the existing
+A file-stem instance ID has no source token. It is still present so references
+and definitions remain exhaustive, with `implicit: true`, `renamable: false`
+and a zero-width declaration anchor at its instance header. Renaming it requires
+a file operation outside this text-edit protocol. A field reached through a
+dynamic path segment is also non-renamable when no single declaration owns the
+indirect occurrence.
+
+The complete graph is limited to 1024 sources, 16384 symbols, 65536 occurrences and the existing
 4 MiB response budget. Failure, ambiguity or exhaustion returns
 `complete: false`, a `reason`, and empty source/symbol arrays; it never publishes
 a partial graph as exhaustive. Discovery failures and source diagnostics also
@@ -164,6 +180,27 @@ Revalidation uses the same bounded reads. Rename checks the projected byte
 growth before constructing candidates, then admits their actual UTF-8 text
 before candidate compilation.
 
+## Optional evaluated values, feature version 1
+
+The capability response advertises `values: 1` for the opt-in
+`--stdio --values` mode. The ordinary response gains `values` with
+`version: 1`, `complete` and `document`. On success, `document` is the exact
+canonical value tree that the compiler's existing P1–P5 pipeline would render
+as JSON: the maximum-version `data` plus the reduced earlier-version
+`overlays`. Defaults and logic-derived values have therefore already been
+applied. The editor reconstructs a requested earlier version from those
+overlays using the same documented representation; it does not evaluate
+Abstract source. Clients must preserve JSON number lexemes when displaying
+values: Abstract integers span signed 64-bit values, and exact float rendering
+distinguishes spellings such as `-0.0` that JavaScript numbers do not preserve.
+
+This mode runs one compilation and does not use the narrower public inventory
+projection. A diagnostic snapshot returns `complete: false`, a reason and no
+`document`. If the complete outer response would exceed 4 MiB, the same
+unavailable shape replaces the document. No truncated compiled document is
+ever published as complete. The request frame, source-overlay rules and
+diagnostic envelope remain protocol version 1.
+
 Schema discovery uses incremental directory iteration with rejection limits of
 **32,768 entries per traversal**, **4,096 distinct directories**, and **128
 directory levels** below the selected root. Root selection has the same entry
@@ -179,8 +216,8 @@ and these checks are not an I/O deadline.
 
 The editor's schema operations capture project membership, source text and open
 document versions. They negotiate on each operation, check source hashes, and
-discard cancelled or superseded work. Rename rejects malformed names and exact
-name collisions, constructs edits only at bound occurrences, and asks the real
+discard cancelled or superseded work. Rename rejects malformed names and
+schema-exact or identifier-normalized owner-scope collisions, constructs edits only at bound occurrences, and asks the real
 compiler to validate the complete proposed overlay set before returning a
 `WorkspaceEdit`. It checks saved source bytes and discovered membership again
 before returning. Preparation records also bind the document version and project
@@ -200,8 +237,8 @@ reaches it through a link. It cannot discover unknown consumers in other project
 roots or external data readers. Source checks are not filesystem transactions;
 changes after the final check or to external assets remain outside that snapshot
 guarantee. The provider returns an edit for VS Code to apply; it never writes
-source files itself. Fields, instance IDs and loop variables are outside this
-first semantic-symbol increment, and remain explicit future work.
+source files itself. Symbols marked `renamable: false` retain navigation and
+references but never produce a partial edit.
 
 In VS Code 1.92.0, the F2 Rename adapter converts the provider's edit without
 `versionInfo`; the public `WorkspaceEdit` API cannot attach our source-snapshot

@@ -1,5 +1,6 @@
 const cp = require("child_process");
 const path = require("path");
+const { parseProtocolJson } = require("./protocol-json");
 
 const LIMITS = Object.freeze({ request: 16 * 1024 * 1024, text: 4 * 1024 * 1024, path: 32768, overlays: 128, response: 4 * 1024 * 1024 });
 function unicode(text) {
@@ -58,14 +59,15 @@ function capability(result) {
   if (value.protocol !== "abstract-analysis" || value.version !== 1 || value.positionEncoding !== "utf-16") {
     return { supported: false, reason: "This compiler's analysis protocol is unsupported. Diagnostics use saved files; save all Abstract buffers to validate." };
   }
-  return { supported: true, compiler: value.compiler, schemaBindings: value.schemaBindings === 1, publicInventory: value.publicInventory === 1 };
+  return { supported: true, compiler: value.compiler, schemaBindings: value.schemaBindings === 1,
+    publicInventory: value.publicInventory === 1, values: value.values === 1 };
 }
 
 function response(result, expectedId) {
   if (result.cancelled) return undefined;
   if (result.error) throw new Error(result.stderr.trim() || result.error.message);
   let value;
-  try { value = JSON.parse(result.stdout); } catch { throw new Error("The compiler returned invalid analysis JSON."); }
+  try { value = parseProtocolJson(result.stdout); } catch { throw new Error("The compiler returned invalid analysis JSON."); }
   if (value.protocol !== "abstract-analysis" || value.version !== 1 || value.requestId !== expectedId || value.positionEncoding !== "utf-16"
       || typeof value.analyzed !== "boolean" || typeof value.truncated !== "boolean" || !Array.isArray(value.diagnostics) || value.diagnostics.length > 100) {
     throw new Error("The compiler returned an incompatible or stale analysis response.");

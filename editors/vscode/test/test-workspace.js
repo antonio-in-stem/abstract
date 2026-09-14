@@ -19,7 +19,7 @@ async function temporaryWorkspace() {
       if (path.dirname(resolved) !== path.resolve(os.tmpdir()) || !path.basename(resolved).startsWith("abstract-vscode-")) {
         throw new Error("Refusing cleanup outside the named temporary workspace.");
       }
-      await fs.rm(resolved, { recursive: true, force: true });
+      await fs.rm(resolved, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
     }
   };
 }

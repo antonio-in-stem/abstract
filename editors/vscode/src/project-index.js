@@ -63,6 +63,30 @@ async function discover(root, limits) {
   return [...files].sort();
 }
 
+async function discoverAssets(root) {
+  const project = path.basename(root).toLowerCase() === "data" ? path.dirname(root) : root;
+  const assets = path.join(project, "assets");
+  const files = [];
+  const directories = new Set();
+  async function walk(directory, relative = "") {
+    let canonical;
+    try { canonical = await fs.realpath(directory); } catch { return; }
+    if (directories.has(canonical) || directories.size >= 1024) return;
+    directories.add(canonical);
+    let entries;
+    try { entries = await fs.readdir(directory, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (files.length >= 4096) return;
+      const child = path.join(directory, entry.name);
+      const next = relative ? `${relative}/${entry.name}` : entry.name;
+      if (entry.isDirectory() && !ignored(entry.name)) await walk(child, next);
+      else if (entry.isFile()) files.push(`./${next}`);
+    }
+  }
+  await walk(assets);
+  return files.sort();
+}
+
 class ProjectIndex {
   constructor() { this.projects = new Map(); }
   invalidate() { this.projects.clear(); }
@@ -75,7 +99,7 @@ class ProjectIndex {
       this.projects.set(target, entry);
       entry.disk.catch(() => { if (this.projects.get(target) === entry) this.projects.delete(target); });
     }
-    const { root, sources, parsed } = await entry.disk;
+    const { root, sources, parsed, assets } = await entry.disk;
     if (token?.isCancellationRequested) return undefined;
     const merged = new Map(sources.map((s) => [s.file, s]));
     // Unsaved buffers are the authoring source of truth. realpath also makes
@@ -88,7 +112,9 @@ class ProjectIndex {
         merged.set(canonical, { file: canonical, text: source.text });
       }
     }
-    return createIndex([...merged.values()], parsed);
+    const index = createIndex([...merged.values()], parsed);
+    index.assets = assets;
+    return index;
   }
   async load(target) {
     const root = await discoveryRoot(target);
@@ -98,7 +124,7 @@ class ProjectIndex {
     for (let i = 0; i < files.length; i += 32) {
       sources.push(...await Promise.all(files.slice(i, i + 32).map(async (file) => ({ file, text: await fs.readFile(file, "utf8") }))));
     }
-    return { root, sources, parsed: new Map() };
+    return { root, sources, parsed: new Map(), assets: await discoverAssets(root) };
   }
 }
 

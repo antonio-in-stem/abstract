@@ -6,6 +6,20 @@ and by the `abstract.format` number in every compiled document.
 
 ---
 
+## 1.3.0
+
+- Extended the negotiated `schemaBindings: 1` analysis graph from schemas to
+  complete compiler-owned field, instance and lexical loop identities. Exact
+  UTF-16 occurrence spellings, ownership, type/shape metadata and fail-closed
+  dynamic-path rename safety support project-wide navigation and rename.
+- Added the negotiated `values: 1` analysis capability. It returns the existing
+  validated base-plus-overlays compiled document for effective-value hover,
+  preserving signed 64-bit integer and exact float spellings and refusing
+  partial or oversized results.
+- Added the automotive language tour: a synthetic connected vehicle catalogue,
+  checked PNG/JPEG/text assets, exact JSON/YAML/RAW goldens, six readable
+  diagnostic projects and a feature-to-test coverage matrix for Abstract 1.1.
+
 ## 1.2.0
 
 - Added the negotiated `publicInventory: 1` editor capability and

@@ -1,0 +1,12 @@
+schema CarMarket {
+    market: enum(uk_ireland, continental_europe)
+    steering_position: enum(left, right)
+}
+
+logic CarMarket {
+    if .market == "uk_ireland" {
+        require .steering_position == "right" else throw "UK and Ireland fixture expects right-hand drive."
+    } else {
+        require .steering_position == "left" else throw "Continental Europe fixture expects left-hand drive."
+    }
+}

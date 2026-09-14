@@ -48,9 +48,13 @@ async function runSchemaIntegration(root) {
   assert.equal(await vscode.workspace.applyEdit(privateEdit), true);
   assert.ok(schema.getText().includes("$(PrivateDetail)"));
   assert.ok(schema.getText().includes("ref(PrivateDetail)"));
-  const unsupported = await vscode.commands.executeCommand("vscode.executeReferenceProvider", uri, new vscode.Position(1, 2));
-  assert.equal(unsupported.length, 0);
-  console.log("PASS: compiler schema references and Rename in real VS Code, declaration/logic/header/nested/ref, unsaved multi-file edits, collisions, unchanged disk and homonymous text");
+  const fieldRefs = await vscode.commands.executeCommand("vscode.executeReferenceProvider", uri, new vscode.Position(1, 2));
+  assert.equal(fieldRefs.length, 3);
+  for (const reference of fieldRefs) {
+    const source = await vscode.workspace.openTextDocument(reference.uri);
+    assert.equal(source.getText(reference.range), "value");
+  }
+  console.log("PASS: compiler schema and field references and Rename in real VS Code, declaration/logic/header/nested/ref, unsaved multi-file edits, collisions, unchanged disk and homonymous text");
 }
 
 module.exports = { runSchemaIntegration };

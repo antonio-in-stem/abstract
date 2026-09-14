@@ -77,6 +77,8 @@ pub enum LogicStatement {
         variable: String,
         /// The name as written, for diagnostics.
         spelled: String,
+        /// The exact variable-name token, used by compiler-owned editor bindings.
+        variable_at: Located,
         iterable: Iterable,
         body: Vec<LogicStatement>,
         at: Located,
@@ -156,6 +158,8 @@ pub struct LogicSegment {
     pub name: String,
     /// The name as written.
     pub spelled: String,
+    /// The exact field-name or dynamic-variable token.
+    pub at: Located,
     /// True when the segment is a `$variable` used as a dynamic name.
     pub variable: bool,
     /// A read index; write positions never carry one (E506).
@@ -166,7 +170,11 @@ pub struct LogicSegment {
 #[derive(Clone, Debug)]
 pub enum LengthArg {
     Path(LogicPath),
-    Variable { name: String, spelled: String },
+    Variable {
+        name: String,
+        spelled: String,
+        at: Located,
+    },
 }
 
 impl LengthArg {
@@ -608,11 +616,12 @@ impl<'a> Parser<'a> {
                 return self.logic_path().map(DeriveExpr::Path);
             }
             self.bump();
+            let variable_at = self.here();
             let spelled = self.variable_name()?;
             return Some(DeriveExpr::Variable {
                 name: normalise(&spelled),
                 spelled,
-                at: at.clone(),
+                at: variable_at,
             });
         }
         if first.is_keyword("length")
@@ -729,6 +738,7 @@ impl<'a> Parser<'a> {
             return None;
         }
         self.bump();
+        let variable_at = self.here();
         let spelled = self.variable_name()?;
         if !self.peek().is_keyword("in") {
             self.unexpected("'in'");
@@ -757,6 +767,7 @@ impl<'a> Parser<'a> {
         Some(LogicStatement::For {
             variable: normalise(&spelled),
             spelled,
+            variable_at,
             iterable,
             body,
             at,
@@ -877,6 +888,7 @@ impl<'a> Parser<'a> {
             self.bump();
         }
         let token = self.peek().clone();
+        let at = self.located(&token);
         let Some(text) = token.identifier_text().map(str::to_string) else {
             self.unexpected("a field name");
             self.skip_line();
@@ -914,6 +926,7 @@ impl<'a> Parser<'a> {
         Some(LogicSegment {
             name: normalise(&text),
             spelled: text,
+            at,
             variable,
             index,
         })
@@ -950,10 +963,12 @@ impl<'a> Parser<'a> {
         let bare_variable = self.at_punctuation("$") && !self.peek_at(2).is_punctuation(".");
         let arg = if bare_variable {
             self.bump();
+            let at = self.here();
             let spelled = self.variable_name()?;
             LengthArg::Variable {
                 name: normalise(&spelled),
                 spelled,
+                at,
             }
         } else {
             LengthArg::Path(self.logic_path()?)
@@ -1600,6 +1615,7 @@ impl<'t> Checker<'t> {
                 iterable,
                 body,
                 at,
+                ..
             } => self.for_statement(variable, spelled, iterable, body, at),
         }
     }
@@ -1987,7 +2003,7 @@ impl<'t> Checker<'t> {
                 }
                 (facts.kind(), facts.word(), path.text())
             }
-            LengthArg::Variable { name, spelled } => {
+            LengthArg::Variable { name, spelled, .. } => {
                 let Some(binding) = self.binding(name) else {
                     let at = at.clone();
                     self.error(

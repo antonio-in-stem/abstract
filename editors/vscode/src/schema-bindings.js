@@ -4,8 +4,14 @@ const path = require("path");
 const crypto = require("crypto");
 const key = (file) => process.platform === "win32" ? path.normalize(file).toLowerCase() : path.normalize(file);
 const hash = (text) => crypto.createHash("sha256").update(text, "utf8").digest("hex");
-const validName = (name) => typeof name === "string" && /^[A-Za-z][A-Za-z0-9_]*$/.test(name);
+const normalize = (name) => name.replace(/[A-Z-]/g, (character) => character === "-" ? "_" : character.toLowerCase());
+const validName = (name, kind = "schema") => typeof name === "string" && (kind === "schema"
+  ? /^[A-Za-z][A-Za-z0-9_]*$/.test(name)
+  : /^[A-Za-z0-9_][A-Za-z0-9_-]*$/.test(name));
 const fail = (message) => { throw new Error(message); };
+const renameUnavailable = (symbol) => symbol.kind === "instance" && symbol.implicit
+  ? "This instance uses its file stem as its ID. Rename the file or add an explicit @id before renaming references."
+  : "The compiler cannot prove that every use of this symbol can be renamed safely.";
 
 function readBindings(response) {
   const graph = response.bindings;
@@ -18,32 +24,43 @@ function readBindings(response) {
     if (typeof source.path !== "string" || !path.isAbsolute(source.path) || !/^[a-f0-9]{64}$/.test(source.sha256) || sources.has(key(source.path))) fail("Invalid or duplicate binding source.");
     sources.add(key(source.path));
   }
-  const ids = new Set(); const names = new Set(); const spans = new Map();
+  const ids = new Set(); const spans = new Map();
   let count = 0;
-  const location = (entry, name) => {
+  const location = (entry, spelling, implicit = false) => {
     const { start, end } = entry?.range || {};
     const pos = (p) => p && Number.isInteger(p.line) && p.line >= 0 && p.line <= 0x7FFFFFFF
       && Number.isInteger(p.character) && p.character >= 0 && p.character <= 0x7FFFFFFF;
     if (typeof entry?.path !== "string" || !sources.has(key(entry.path)) || !pos(start) || !pos(end)
-      || start.line !== end.line || end.character - start.character !== name.length) fail("Invalid schema token location.");
+      || start.line !== end.line || end.character - start.character !== spelling.length
+      || (!implicit && !spelling.length)) fail("Invalid semantic token location.");
     return `${key(entry.path)}:${start.line}:${start.character}:${end.character}`;
   };
   for (const symbol of graph.symbols) {
-    if (!validName(symbol.name) || symbol.kind !== "schema" || typeof symbol.id !== "string" || !symbol.id || ids.has(symbol.id) || names.has(symbol.name)
-      || !Array.isArray(symbol.occurrences) || !symbol.occurrences.length) fail("Invalid or ambiguous schema identity.");
-    ids.add(symbol.id); names.add(symbol.name);
-    const declaration = location(symbol.declaration, symbol.name);
+    const kind = symbol.kind || "schema";
+    const implicit = kind === "instance" && symbol.implicit === true && symbol.renamable === false;
+    if (!["schema", "field", "instance", "loop"].includes(kind) || !validName(symbol.name, kind)
+      || (kind !== "schema" && symbol.name !== normalize(symbol.name))
+      || typeof symbol.id !== "string" || !symbol.id || ids.has(symbol.id)
+      || !Array.isArray(symbol.occurrences) || !symbol.occurrences.length) fail("Invalid or ambiguous semantic identity.");
+    ids.add(symbol.id);
+    const declarationSpelling = symbol.declaration?.spelling ?? (kind === "schema" ? symbol.name : "");
+    if (implicit !== (declarationSpelling === "")) fail("Invalid implicit instance declaration.");
+    const declaration = location(symbol.declaration, declarationSpelling, implicit);
     let declarations = 0;
     for (const occurrence of symbol.occurrences) {
-      const span = location(occurrence, symbol.name);
-      if (++count > 16384 || spans.has(span) || !["declaration", "reference"].includes(occurrence.role)) fail("Invalid or duplicate schema occurrence.");
-      spans.set(span, symbol.id);
+      const spelling = occurrence.spelling ?? (kind === "schema" ? symbol.name : undefined);
+      if (typeof spelling !== "string" || (!implicit && !validName(spelling, kind))) fail("Invalid semantic occurrence spelling.");
+      if (kind !== "schema" && spelling && normalize(spelling) !== symbol.name) fail("Semantic occurrence spelling does not match its identity.");
+      const isImplicitDeclaration = implicit && occurrence.role === "declaration";
+      const span = location(occurrence, spelling, isImplicitDeclaration);
+      if (++count > 65536 || (!isImplicitDeclaration && spans.has(span)) || !["declaration", "reference"].includes(occurrence.role)) fail("Invalid or duplicate semantic occurrence.");
+      if (!isImplicitDeclaration) spans.set(span, symbol.id);
       if (occurrence.role === "declaration") {
         declarations += 1;
-        if (span !== declaration) fail("Schema declaration does not bind to its occurrence.");
+        if (span !== declaration) fail("Semantic declaration does not bind to its occurrence.");
       }
     }
-    if (declarations !== 1) fail("Ambiguous schema declaration.");
+    if (declarations !== 1) fail("Ambiguous semantic declaration.");
   }
   return graph;
 }
@@ -71,7 +88,8 @@ function validateSnapshot(graph, texts) {
   for (const symbol of graph.symbols) for (const entry of symbol.occurrences) {
     const content = texts.get(key(entry.path));
     const start = offset(content, entry.range.start); const end = offset(content, entry.range.end);
-    if (content.slice(start, end) !== symbol.name) fail("Schema occurrence does not match its source.");
+    const spelling = entry.spelling ?? (symbol.kind === "schema" || !symbol.kind ? symbol.name : "");
+    if (content.slice(start, end) !== spelling) fail("Semantic occurrence does not match its source.");
     const intervals = occupied.get(key(entry.path)) || [];
     intervals.push([start, end]); occupied.set(key(entry.path), intervals);
   }
@@ -90,9 +108,22 @@ function symbolAt(graph, file, position) {
 }
 
 function rename(graph, symbol, newName, texts) {
-  if (!graph.symbols.includes(symbol)) fail("Schema identity is not part of this snapshot.");
-  if (!validName(newName)) fail("A schema name must start with an ASCII letter and contain only letters, digits and underscores.");
-  if (graph.symbols.some((other) => other !== symbol && other.name === newName)) fail(`Schema '${newName}' is already declared.`);
+  if (!graph.symbols.includes(symbol)) fail("Semantic identity is not part of this snapshot.");
+  const kind = symbol.kind || "schema";
+  if (symbol.renamable === false) fail(renameUnavailable(symbol));
+  if (!validName(newName, kind)) fail(kind === "schema"
+    ? "A schema name must start with an ASCII letter and contain only letters, digits and underscores."
+    : "This name must contain only ASCII letters, digits, underscores and hyphens.");
+  const domain = (entry) => {
+    const entryKind = entry.kind || "schema";
+    if (entryKind === "schema" || entryKind === "instance") return "";
+    return entry.scopeId ?? entry.ownerId ?? entry.owner;
+  };
+  const identity = kind === "schema" ? newName : normalize(newName);
+  if (graph.symbols.some((other) => other !== symbol && (other.kind || "schema") === kind
+      && other.name === identity && domain(symbol) !== undefined && domain(other) === domain(symbol))) {
+    fail(`${kind[0].toUpperCase()}${kind.slice(1)} '${newName}' is already declared in this scope.`);
+  }
   validateSnapshot(graph, texts);
   const edits = new Map();
   for (const entry of symbol.occurrences) {
@@ -110,4 +141,4 @@ function rename(graph, symbol, newName, texts) {
   return changed;
 }
 
-module.exports = { key, hash, validName, readBindings, validateSnapshot, symbolAt, rename };
+module.exports = { key, hash, normalize, validName, renameUnavailable, readBindings, validateSnapshot, symbolAt, rename };

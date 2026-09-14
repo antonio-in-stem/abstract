@@ -1,0 +1,45 @@
+VehicleModel :: @id.aurora_estate_uk
+    brand: northstar
+    name: Aurora Estate
+    model_year: 2028
+    body_style: estate
+    market: uk_ireland
+    steering_position: right
+    doors: 5
+    seats: 5
+    powertrain {
+        architecture: plug_in_hybrid
+        fuel: petrol_electric
+        driven_wheels: all
+        transmission: automatic_8
+        power_kw: 210
+        torque_nm: 430
+        battery_kwh: 24.5
+        consumption_l_per_100km: 1.8
+    }
+    hero_image: ./images/aurora-estate.png
+    engineering_preview: ./images/engineering-preview.jpg
+    specification: ./documents/service-summary.txt
+    legacy_platform_code: NX-E28
+
+VehicleModel :: @id.aurora_estate_eu
+    brand: northstar
+    name: Aurora Estate Continental
+    model_year: 2028
+    body_style: estate
+    market: continental_europe
+    steering_position: left
+    doors: 5
+    seats: 5
+    powertrain {
+        architecture: battery_electric
+        fuel: electricity
+        driven_wheels: all
+        transmission: single_speed
+        power_kw: 230
+        torque_nm: 480
+        battery_kwh: 82.0
+    }
+    hero_image: ./images/aurora-estate.png
+    engineering_preview: ./images/engineering-preview.jpg
+    specification: ./documents/service-summary.txt

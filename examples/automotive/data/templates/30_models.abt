@@ -1,0 +1,28 @@
+schema VehicleModel {
+    id: text(2..40)
+    brand: ref(Brand)
+    name: text(2..60) @public
+    model_year: int(2020..2035)
+    body_style: enum(hatchback, saloon, estate, suv, coupe, van)
+    market: enum(uk_ireland, continental_europe, north_america, global)
+    steering_position: enum(left, right)
+    doors: int(2..5)
+    seats: int(1..9)
+    powertrain: $(Powertrain)
+    hero_image: image(png 1536x1024)
+    engineering_preview: image(jpg)
+    specification: file(txt)
+    legacy_platform_code: text(2..24) @removed(3) @optional
+    connectivity: enum(basic, connected) @since(2) = basic
+}
+
+logic VehicleModel {
+    if .market == "uk_ireland" {
+        require .steering_position == "right" else throw "UK and Ireland demo models use right-hand drive."
+    } else if .market == "continental_europe" {
+        require .steering_position == "left" else throw "Continental Europe demo models use left-hand drive."
+    } else {
+        require .steering_position exists else throw "Every model declares a steering position."
+    }
+    require .doors >= 2 and .seats >= 1 else throw "The synthetic model dimensions must be positive."
+}
