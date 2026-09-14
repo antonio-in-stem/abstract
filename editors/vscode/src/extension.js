@@ -7,6 +7,7 @@ const { registerLanguageFeatures } = require("./providers");
 const { registerDiagnostics } = require("./live-diagnostics");
 const { registerSchemaFeatures } = require("./schema-providers");
 const { registerPublicInventory } = require("./public-inventory-provider");
+const { registerSyntaxHover } = require("./syntax-hover-provider");
 
 const SEMANTIC_TOKEN_TYPES = [
   "abstractSchemaKeyword",
@@ -28,6 +29,7 @@ function activate(context) {
   registerLanguageFeatures(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message));
   registerSchemaFeatures(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message), workspaceRoot);
   registerPublicInventory(context, resolveProjectPath, (message) => getOutputChannel().appendLine(message), workspaceRoot);
+  registerSyntaxHover(context);
   const live = registerDiagnostics(context, {
     diagnostics, resolveProjectPath, workspaceRoot,
     lintSaved: lintDocument,

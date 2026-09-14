@@ -25,6 +25,18 @@ async function run() {
   document = await vscode.workspace.openTextDocument(uri);
   assert.equal(document.languageId, "abstract", "workspace recovery command did not select Abstract");
 
+  const syntaxDocument = await vscode.workspace.openTextDocument({ language: "abstract", content:
+    "schema Scratch {\nlabel: text @optional\n}\n// logic and derive are prose here\n" });
+  const syntaxHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", syntaxDocument.uri, new vscode.Position(0, 2));
+  const syntaxHover = syntaxHovers.find((hover) => hover.contents.some((content) => (content.value || content).includes("Schema declaration")));
+  assert.ok(syntaxHover, "untitled Abstract document did not provide offline syntax help");
+  assert.deepEqual(syntaxHover.range, new vscode.Range(0, 0, 0, 6));
+  const typeHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", syntaxDocument.uri, new vscode.Position(1, 8));
+  assert.ok(typeHovers.some((hover) => hover.contents.some((content) => (content.value || content).includes("`text` type"))));
+  const proseHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", syntaxDocument.uri, new vscode.Position(3, 4));
+  assert.deepEqual(proseHovers, [], "syntax help matched a keyword spelling inside a comment");
+  console.log("PASS: offline contextual syntax hover works in an untitled buffer with precise ranges and ignores comments");
+
   if (process.env.ABSTRACT_TEST_RESTRICTED === "1") {
     assert.equal(vscode.workspace.isTrusted, false);
     const fields = await vscode.commands.executeCommand("vscode.executeCompletionItemProvider", uri, new vscode.Position(2, 0));

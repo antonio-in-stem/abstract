@@ -1,6 +1,8 @@
 # Abstract Language for VS Code
 
-Version 1.5.0 adds the planned missing authoring features: formatting,
+Version 1.6.0 adds offline, contextual syntax hover: language constructs explain
+their purpose and show a valid Abstract example without requiring a compiler or
+saved project. Version 1.5.0 added the planned authoring features: formatting,
 compiler-bound rename/references, tuple, tagged-object and asset completion,
 loop element inference, and broader safe dotted-path rewriting. The optional
 file icon theme distinguishes `.ab` data files from `.abt` template files.
@@ -38,6 +40,12 @@ Install the compiler separately and set
   a Covenant consumer. A rejected export never becomes a partially admitted list.
 - Syntax and semantic highlighting for `.ab` instances and `.abt` templates,
   plus optional Abstract Orbit Dark and file icon themes.
+- Contextual syntax hover for declarations, schema types and modifiers, logic
+  statements and operators, version annotations, and instance sigils/compact
+  structures. It works in untitled Abstract buffers and uses grammar position to
+  avoid treating comments, quoted prose, bare values or ordinary identifiers as
+  language constructs. Declaration metadata and compiler-evaluated value hovers
+  remain available alongside it.
 - Whole-document formatting through **Format Document**. Formatting changes
   indentation only and preserves authored tokens, strings, comments, line endings
   and compiler meaning.
@@ -176,7 +184,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.5.0.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.6.0.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 The public-inventory host tests also use a temporary profile. Set
