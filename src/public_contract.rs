@@ -15,7 +15,7 @@ use crate::ast::Located;
 use crate::diagnostics::{Diagnostic, Diagnostics, ErrorId, Note};
 use crate::instance::{InstanceDecl, SyntaxValue};
 use crate::logic::{
-    Condition, DeriveExpr, Iterable, LengthArg, LogicPath, LogicStatement, Operand,
+    CalcExpr, Condition, DeriveExpr, Iterable, LengthArg, LogicPath, LogicStatement, Operand,
 };
 use crate::output::{Format, Value};
 use crate::resolve::InstanceTable;
@@ -653,6 +653,7 @@ fn operand(
         Operand::Length { arg, at } => length(arg, at, scope, out, work),
         Operand::Literal { value, at } if dollars(value) => fact(out, scope, at, work),
         Operand::Group(c) => condition(c, scope, out, work),
+        Operand::Calc { expr, .. } => calc(expr, scope, out, work),
         _ => Ok(()),
     }
 }
@@ -697,6 +698,7 @@ fn statements(
                     DeriveExpr::Value { value, at } if dollars(value) => {
                         fact(out, scope, at, work)?
                     }
+                    DeriveExpr::Calc { expr, .. } => calc(expr, scope, out, work)?,
                     _ => (),
                 }
             }
@@ -736,6 +738,31 @@ fn statements(
         }
     }
     Ok(())
+}
+
+fn calc(
+    value: &CalcExpr,
+    scope: &[String],
+    out: &mut Vec<Fact>,
+    work: &mut Work,
+) -> Result<(), Diagnostics> {
+    match value {
+        CalcExpr::Path(path) => path_fact(path, scope, out, work),
+        CalcExpr::Variable { at, .. } => fact(out, scope, at, work),
+        CalcExpr::Length { arg, at } => length(arg, at, scope, out, work),
+        CalcExpr::Unary { value, .. } => calc(value, scope, out, work),
+        CalcExpr::Binary { left, right, .. } => {
+            calc(left, scope, out, work)?;
+            calc(right, scope, out, work)
+        }
+        CalcExpr::Call { args, .. } => {
+            for arg in args {
+                calc(arg, scope, out, work)?;
+            }
+            Ok(())
+        }
+        CalcExpr::Literal { .. } | CalcExpr::Version { .. } => Ok(()),
+    }
 }
 
 fn typed_value(field: &FieldDecl, value: &Value, work: &mut Work) -> Result<Value, Diagnostics> {

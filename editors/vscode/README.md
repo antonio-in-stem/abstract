@@ -1,6 +1,9 @@
 # Abstract Language for VS Code
 
-Version 1.6.1 fills in hover help for defaults and constraints, and distinguishes
+Version 1.7.0 adds contextual completion, hover help, and highlighting for
+Abstract 1.2 explicit `calc(...)` arithmetic. Only glued lowercase `calc(` in a
+derive right-hand side or condition selects arithmetic; an older unquoted literal
+with that spelling must be quoted when migrating. Version 1.6.1 fills in hover help for defaults and constraints, and distinguishes
 instance keys from bare values, including tuple columns and cells.
 Version 1.6.0 added offline, contextual syntax hover: language constructs explain
 their purpose and show a valid Abstract example without requiring a compiler or
@@ -22,7 +25,7 @@ The visual assets are extension UI artwork under [LICENSE.txt](https://github.co
 
 Editor support for the Abstract 1.x language in m-project. The extension version
 is independent of the compiler version: this release targets the language and
-CLI in Abstract **1.3.0**, plus its optional analysis protocol when advertised.
+CLI in Abstract **1.2.0**, plus its optional analysis protocol when advertised.
 Install the compiler separately and set
 `abstract.compilerPath` if `abstract` is not on your PATH.
 
@@ -186,7 +189,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.6.1.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.7.0.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 The public-inventory host tests also use a temporary profile. Set

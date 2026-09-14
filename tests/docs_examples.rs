@@ -1,10 +1,10 @@
 //! The worked examples printed in the documentation, checked mechanically.
 //!
-//! `docs/examples/<name>/` is a complete project whose compiled bytes the
-//! documentation quotes; `expected.json` — and, for `formats`, `expected.yml`
-//! and `expected.abraw` — hold those bytes. Each one is compiled through the
-//! binary, exactly as `docs/examples/README.md` tells a reader to run it, and
-//! compared after the one normalisation SPEC §11.2 permits.
+//! `docs/examples/<name>/` and each `examples/exercises/<name>/solution/` are
+//! complete projects whose compiled bytes the documentation quotes;
+//! `expected.json` — and, for `formats`, `expected.yml` and `expected.abraw` —
+//! hold those bytes. Each one is compiled through the binary and compared
+//! after the one normalisation SPEC §11.2 permits.
 //!
 //! An example that drifts from the compiler is a documentation defect, so it
 //! fails the suite rather than being repaired silently.
@@ -57,9 +57,46 @@ fn every_documentation_example_compiles_to_its_recorded_bytes() {
         }
     }
 
+    let exercises_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/exercises");
+    assert!(exercises_root.is_dir(), "examples/exercises is missing");
+    let mut exercise_names: Vec<String> = fs::read_dir(&exercises_root)
+        .expect("examples/exercises is readable")
+        .flatten()
+        .filter(|entry| entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false))
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect();
+    exercise_names.sort();
+    assert!(
+        !exercise_names.is_empty(),
+        "examples/exercises holds no exercise"
+    );
+
+    for name in &exercise_names {
+        let project = exercises_root.join(name).join("solution");
+        let expected_path = project.join("expected.json");
+        if !expected_path.is_file() {
+            failures.push(format!("{name}/solution/expected.json: missing golden"));
+            continue;
+        }
+        compared += 1;
+        let expected = fs::read_to_string(&expected_path).unwrap_or_default();
+        match compile(&project, "JSON") {
+            Err(reason) => failures.push(format!("{name}/solution/expected.json: {reason}")),
+            Ok(actual) => {
+                if normalise(&actual) != normalise(&expected) {
+                    let line = first_difference(&normalise(&actual), &normalise(&expected));
+                    failures.push(format!(
+                        "{name}/solution/expected.json: bytes differ at line {line}"
+                    ));
+                }
+            }
+        }
+    }
+
     println!(
-        "docs examples: {} project(s), {compared} comparison(s)",
-        names.len()
+        "docs examples: {} project(s), {} exercise solution(s), {compared} comparison(s)",
+        names.len(),
+        exercise_names.len()
     );
     assert!(
         failures.is_empty(),

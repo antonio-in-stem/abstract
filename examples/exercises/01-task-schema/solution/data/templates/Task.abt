@@ -1,0 +1,5 @@
+schema Task {
+    title: text(1..60)
+    priority: int(1..3)
+    state: enum(todo, doing, done) = todo
+}

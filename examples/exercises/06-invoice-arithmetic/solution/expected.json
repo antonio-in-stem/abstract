@@ -1,0 +1,31 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.4.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Invoice",
+      "id": "inv_001",
+      "number": "INV-001",
+      "lines": [
+        {
+          "quantity": 2,
+          "unit_price_cents": 150,
+          "total_cents": 300
+        },
+        {
+          "quantity": 1,
+          "unit_price_cents": 120,
+          "total_cents": 120
+        }
+      ],
+      "total_cents": 420
+    }
+  ],
+  "overlays": []
+}

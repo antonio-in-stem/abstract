@@ -26,6 +26,8 @@ async function main() {
     await workspace.write("semantic/data/copy.ab", "Offer :: @id.copy\n&x.*\nvalue: 3\npeer_offer: x\nitems(key, label): (b, two)\n");
     await workspace.write("hover/data/car.abt", "versions 1..3\n\nschema Car {\npower: int = 10\nshipping: enum(standard, express) @optional\nlegacy: int @removed(3) @optional\n}\nlogic Car {\nderive .shipping = standard\n}\n");
     await workspace.write("hover/data/car.ab", "Car :: @id.demo\npower: 2\nshipping: express\nlegacy: 7\n");
+    await workspace.write("math/data/bill.abt", "schema Bill {\nquantity: int\nprice: int\ntotal: int\n}\nlogic Bill {\nderive .total = calc(.quantity * .price)\n}\n");
+    await workspace.write("math/data/bill.ab", "Bill :: @id.bill\nquantity: 3\nprice: 140\ntotal: 0\n");
     await workspace.write("unicode/data/schema.abt", "\uFEFFschema Unicode { 😀: text }\r\n");
     await workspace.write("shared/schema.abt", "schema Shared {\nvalue: int\n}\n");
     for (const project of ["one", "two"]) {
@@ -37,7 +39,7 @@ async function main() {
     }));
     const file = await workspace.write("test.code-workspace", JSON.stringify({
       folders: [{ path: "one", name: "one" }, { path: "two", name: "two" }, { path: "symbols", name: "symbols" },
-        { path: "semantic", name: "semantic" }, { path: "hover", name: "hover" }],
+        { path: "semantic", name: "semantic" }, { path: "hover", name: "hover" }, { path: "math", name: "math" }],
       settings: { "abstract.compilerPath": compiler, "files.associations": { "*.ab": "swift", "*.abt": "swift" } }
     }));
     const executable = process.env.ABSTRACT_VSCODE_PATH || await downloadAndUnzipVSCode({ version: "1.92.0", cachePath: path.resolve(__dirname, "../.vscode-test") });

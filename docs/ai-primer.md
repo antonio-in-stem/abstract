@@ -1,7 +1,10 @@
 # Writing correct Abstract: a primer for AI collaborators
 
-This page is written for an assistant or agent that must produce Abstract 1.0
+This page is written for an assistant or agent that must produce Abstract 1.2
 source that compiles on the first attempt. It is a rule sheet, not a tutorial.
+For numeric expressions, follow [ARITHMETIC.md](ARITHMETIC.md): calculations
+are explicit `calc(...)` expressions in logic. Do not invent operators in
+ordinary instance values or assume binary floats are exact decimal money.
 For the narrative version read [`abstract-language.md`](abstract-language.md);
 the normative text is [`SPEC.md`](SPEC.md) and [`GRAMMAR.ebnf`](GRAMMAR.ebnf).
 

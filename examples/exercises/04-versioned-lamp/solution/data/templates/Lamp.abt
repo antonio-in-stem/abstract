@@ -1,0 +1,7 @@
+versions 1..2
+
+schema Lamp {
+    name: text(1..40)
+    glow: bool @since(2) = false
+    old_tint: int(0..255) @removed(2) @optional
+}

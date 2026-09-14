@@ -1,4 +1,8 @@
-# Abstract 1.1 technical reference
+# Abstract 1.2 technical reference
+
+Numeric expressions and function contracts are listed in
+[ARITHMETIC.md](ARITHMETIC.md). Use `calc(...)` in a derive value or condition
+operand; ordinary instance values remain data.
 
 A lookup table for people editing `.ab` and `.abt` files. Every entry names the
 section of [`SPEC.md`](SPEC.md) that defines it; the specification is normative

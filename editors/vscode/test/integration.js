@@ -194,6 +194,18 @@ async function run() {
   assert.match(schemaText, /Declared default/); assert.match(schemaText, /10/);
   console.log("PASS: compiler-backed hover shows derived values and version projections; schema hover shows declared defaults");
 
+  const mathUri = vscode.Uri.file(path.join(root, "math/data/bill.ab"));
+  const mathSchemaUri = vscode.Uri.file(path.join(root, "math/data/bill.abt"));
+  await vscode.workspace.openTextDocument(mathUri);
+  await vscode.workspace.openTextDocument(mathSchemaUri);
+  const mathHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", mathUri, new vscode.Position(3, 2));
+  assert.ok(mathHovers.some((hover) => hover.contents.some((content) => /420/.test(content.value || content))), "arithmetic result missing from compiled-value hover");
+  const calcHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", mathSchemaUri, new vscode.Position(6, 17));
+  assert.ok(calcHovers.some((hover) => hover.contents.some((content) => /numeric arithmetic/.test(content.value || content))), "calc syntax help missing");
+  const mathReferences = await vscode.commands.executeCommand("vscode.executeReferenceProvider", mathSchemaUri, new vscode.Position(1, 2));
+  assert.ok(mathReferences.some((location) => location.uri.toString() === mathSchemaUri.toString() && location.range.start.line === 6), "calc field read missing from semantic references");
+  console.log("PASS: calc syntax hover, computed value 420 and compiler-owned arithmetic references");
+
   if (process.env.ABSTRACT_LEGACY_COMPILER_PATH) {
     // Use a real pre-protocol compiler, not a mock claiming compatibility.
     await vscode.workspace.getConfiguration("abstract", liveUri).update("compilerPath", process.env.ABSTRACT_LEGACY_COMPILER_PATH, vscode.ConfigurationTarget.WorkspaceFolder);

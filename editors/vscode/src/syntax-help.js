@@ -2,6 +2,7 @@
 // conservative: a spelling gets help only when its surrounding grammar role is
 // clear, so prose values and user identifiers do not masquerade as keywords.
 const { parseSource, scanLine } = require("./language-model");
+const { CALC_FUNCTIONS, calcRegionAt } = require("./arithmetic-context");
 
 const ID = "[A-Za-z0-9_][A-Za-z0-9_-]*";
 const SCHEMA = "[A-Za-z][A-Za-z0-9_]*";
@@ -55,6 +56,20 @@ const HELP = {
   length: ["`length(…)` function", "Returns the element count of a list or the Unicode scalar count of text; an absent optional value has length zero.", "derive .tag_count = length(.tags)"],
   version: ["`version` built-in", "Evaluates to the integer project version currently being compiled.", "if version >= 2 {\n    derive .modern = true\n}"],
   comparison: ["Comparison operator", "Compares two logic operands. Available operators are `==`, `!=`, `>`, `>=`, `<`, and `<=`.", "require .price >= 0 else throw \"Negative price.\""],
+  calc: ["`calc(…)` expression", "Evaluates explicit numeric arithmetic. Only the adjacent lowercase spelling `calc(` selects arithmetic grammar. Invalid syntax and static types report E524; value-dependent failures report E525.", "derive .total = calc(.quantity * .unit_price)"],
+  arithmeticOperator: ["Arithmetic operator", "Applies numeric arithmetic inside `calc(…)`. Unary `+` and `-` bind first, then `*`, `/`, `%`, then binary `+` and `-`.", "derive .net = calc((.price - .discount) * .quantity)"],
+  abs: ["`abs(x)`", "Returns the absolute numeric value; integer overflow fails.", "derive .magnitude = calc(abs(.delta))"],
+  min: ["`min(…)`", "Returns the least of two or more numeric scalars, or of one numeric list or projection.", "derive .lowest = calc(min(.lines.price))"],
+  max: ["`max(…)`", "Returns the greatest of two or more numeric scalars, or of one numeric list or projection.", "derive .highest = calc(max(.a, .b, 0))"],
+  clamp: ["`clamp(x, low, high)`", "Restricts a number to inclusive ordered bounds; reversed bounds fail.", "derive .percent = calc(clamp(.raw, 0, 100))"],
+  div: ["`div(a, b)`", "Performs checked integer division truncated toward zero.", "derive .boxes = calc(div(.items, .per_box))"],
+  round: ["`round(x)`", "Rounds to an integer, with halfway values away from zero.", "derive .score = calc(round(.average))"],
+  floor: ["`floor(x)`", "Returns the checked integer at or below the numeric argument.", "derive .whole = calc(floor(.value))"],
+  ceil: ["`ceil(x)`", "Returns the checked integer at or above the numeric argument.", "derive .whole = calc(ceil(.value))"],
+  sqrt: ["`sqrt(x)`", "Returns the floating-point square root; negative arguments fail.", "derive .root = calc(sqrt(.value))"],
+  pow: ["`pow(base, exponent)`", "Raises a number to an integer exponent. A negative exponent requires a float base so the result type remains stable.", "derive .area = calc(pow(.side, 2))"],
+  sum: ["`sum(path)`", "Sums one declared numeric list or numeric projection; empty lists produce numeric zero.", "derive .total = calc(sum(.lines.total))"],
+  avg: ["`avg(path)`", "Returns the floating-point average of one nonempty numeric list or projection.", "derive .average = calc(avg(.scores))"],
 };
 
 function lineAt(text, offset) {
@@ -94,12 +109,14 @@ const TOKEN_PATTERNS = [
   /&[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.(?:\*|[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_][A-Za-z0-9_-]*)*))?/g,
   /#[A-Za-z0-9_][A-Za-z0-9_-]*/g,
   /derive\?/g,
+  /\bcalc(?=\()/g,
   /\b(?:text|int|float)\([^\)\r\n]*\)/g,
   /\[(?:\d+\.\.(?:\d+)?)?\]/g,
   /::|&&|\|\||==|!=|>=|<=|\.\.|[><!]/g,
   /=/g,
   /\.\{[A-Za-z0-9_, \t-]*\}/g,
   /\.[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\$[A-Za-z0-9_][A-Za-z0-9_-]*))*(?:\[\d+\])?/g,
+  /[+*\/%]|(?<![A-Za-z0-9_])-|-(?![A-Za-z0-9_-])/g,
   /\([A-Za-z0-9_][A-Za-z0-9_-]*(?:\s*,\s*[A-Za-z0-9_][A-Za-z0-9_-]*)+\)(?=\s*:)/g,
   /\[[^\]\r\n]*\]/g,
   /\b[A-Za-z][A-Za-z0-9_]*\b/g,
@@ -244,9 +261,18 @@ function classify(text, absoluteOffset, line, token, region) {
   if (token.text.startsWith("#") && isValuePosition(mode, mask, relativeStart)) return "tagObject";
   if (token.text.startsWith("[") && isValuePosition(mode, mask, relativeStart)) return "list";
   if (mode !== "schema" && /^\$(?:\$|\{|[A-Za-z0-9_])/.test(token.text) && isValuePosition(mode, mask, relativeStart)
-      && !(mode === "logic" && /^\$[A-Za-z0-9_]/.test(token.text) && logicOperandPosition(mask, relativeStart))) return "interpolation";
+      && !(mode === "logic" && /^\$[A-Za-z0-9_]/.test(token.text)
+        && (logicOperandPosition(mask, relativeStart) || calcRegionAt(mask, relativeStart)))) return "interpolation";
 
   if (mode !== "logic") return undefined;
+  const calc = calcRegionAt(mask, relativeStart, true);
+  if (calc) {
+    if (token.text === "calc" && relativeStart === calc.start) return "calc";
+    if (calcRegionAt(mask, relativeStart) && /^[+*\/%-]$/.test(token.text)) return "arithmeticOperator";
+    if (calcRegionAt(mask, relativeStart) && token.text === "version") return "version";
+    if (calcRegionAt(mask, relativeStart) && CALC_FUNCTIONS.includes(token.text)
+        && mask.slice(relativeEnd).match(/^\s*\(/)) return token.text;
+  }
   const first = /^\s*(derive\?(?=\s|$)|(?:derive|require|if|for)\b)/d.exec(mask);
   if (first && contains(captureRange(first, 1), relativeStart, relativeEnd)) {
     return token.text === "derive?" ? "deriveOptional" : token.text;
@@ -254,8 +280,8 @@ function classify(text, absoluteOffset, line, token, region) {
   if (token.text === "else" && /(?:\belse\s+throw\b|(?:^|})\s*else(?:\s+if)?\b)/.test(mask)) return "else";
   if (token.text === "throw" && /\belse\s+throw\s+/.test(mask)) return "throw";
   if (token.text === "in" && /^\s*for\s+\$[A-Za-z0-9_][A-Za-z0-9_-]*\s+in\b/.test(mask)) return "in";
-  if (/^\$[A-Za-z0-9_]/.test(token.text) && logicOperandPosition(mask, relativeStart)) return "logicVariable";
-  if (token.text.startsWith(".") && logicOperandPosition(mask, relativeStart)) return "logicPath";
+  if (/^\$[A-Za-z0-9_]/.test(token.text) && (logicOperandPosition(mask, relativeStart) || calcRegionAt(mask, relativeStart))) return "logicVariable";
+  if (token.text.startsWith(".") && (logicOperandPosition(mask, relativeStart) || calcRegionAt(mask, relativeStart))) return "logicPath";
 
   const condition = conditionRange(mask);
   if (contains(condition, relativeStart, relativeEnd)) {
@@ -296,7 +322,10 @@ function numericRangePurpose(key, syntax) {
 function markdown(key, syntax) {
   const [title, purpose, example] = HELP[key];
   const contextualPurpose = key === "cardinality" ? cardinalityPurpose(syntax)
-    : ["text", "int", "float"].includes(key) ? numericRangePurpose(key, syntax) : purpose;
+    : ["text", "int", "float"].includes(key) ? numericRangePurpose(key, syntax)
+      : key === "arithmeticOperator" && syntax === "/" ? "Performs floating-point division, including for two integers. Use `div(a, b)` for an integer quotient; division by zero fails."
+        : key === "arithmeticOperator" && syntax === "%" ? "Computes integer remainder with the dividend's sign. Both operands must be integers, and a zero divisor fails."
+          : purpose;
   return `**${title}**\n\n${contextualPurpose}\n\n\`\`\`abstract\n${example}\n\`\`\``;
 }
 

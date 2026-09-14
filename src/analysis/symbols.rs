@@ -6,7 +6,7 @@ use crate::ast::Located;
 use crate::instance::InstanceDecl;
 use crate::lexer::{self, normalise, Token, TokenKind};
 use crate::logic::{
-    Condition, DeriveExpr, Iterable, LengthArg, LogicPath, LogicStatement, Operand,
+    CalcExpr, Condition, DeriveExpr, Iterable, LengthArg, LogicPath, LogicStatement, Operand,
 };
 use crate::schema::{FieldDecl, FieldKind, TypeExpr};
 
@@ -1160,6 +1160,7 @@ impl LogicWalker<'_, '_> {
             DeriveExpr::Variable { name, spelled, at } => {
                 self.variable(schema, name, spelled, at, false)?
             }
+            DeriveExpr::Calc { expr, .. } => self.calc_expr(schema, expr)?,
             DeriveExpr::Value { .. } | DeriveExpr::Version { .. } => {}
         }
         Ok(())
@@ -1194,7 +1195,32 @@ impl LogicWalker<'_, '_> {
             }
             Operand::Length { arg, .. } => self.length_arg(schema, arg)?,
             Operand::Group(inner) => self.condition(schema, inner)?,
+            Operand::Calc { expr, .. } => self.calc_expr(schema, expr)?,
             Operand::Version { .. } | Operand::Literal { .. } => {}
+        }
+        Ok(())
+    }
+
+    fn calc_expr(&mut self, schema: &str, expr: &CalcExpr) -> Result<(), String> {
+        match expr {
+            CalcExpr::Path(path) => {
+                self.path(schema, path)?;
+            }
+            CalcExpr::Variable { name, spelled, at } => {
+                self.variable(schema, name, spelled, at, true)?
+            }
+            CalcExpr::Length { arg, .. } => self.length_arg(schema, arg)?,
+            CalcExpr::Unary { value, .. } => self.calc_expr(schema, value)?,
+            CalcExpr::Binary { left, right, .. } => {
+                self.calc_expr(schema, left)?;
+                self.calc_expr(schema, right)?;
+            }
+            CalcExpr::Call { args, .. } => {
+                for arg in args {
+                    self.calc_expr(schema, arg)?;
+                }
+            }
+            CalcExpr::Literal { .. } | CalcExpr::Version { .. } => {}
         }
         Ok(())
     }

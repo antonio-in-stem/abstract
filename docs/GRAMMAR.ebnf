@@ -1,5 +1,5 @@
 (* ============================================================================
-   Abstract 1.1 - grammar for .abt (template) and .ab (instance) files.
+   Abstract 1.2 - grammar for .abt (template) and .ab (instance) files.
 
    Normative reference: SPEC.md. Every rule name defined here is referenced
    from SPEC.md by the name used below.
@@ -328,14 +328,16 @@ logic_statement     = ( derive_statement
 
 derive_statement    = ( "derive" | "derive?" ) , logic_path , "=" , derive_expr , NL ;
 
-(* The right-hand side is read as one of the first four alternatives when its
+(* An adjacent calc( selects numeric grammar first. Otherwise the right-hand
+   side is read as one of the four non-value alternatives when its
    first token is ".", a loop_variable, the keyword "length" or the keyword
    "version"; in every other case it is an ordinary value - a literal, or text
    carrying "$" interpolation, interpreted by the target field's declared type
    (SPEC 5.10) and interpolated (SPEC 5.11). To write ".owner.team",
    "length(.tags)" or "version" as literal text, quote it (SPEC 6.4).
    A logic_path keeps the type of the value it resolves to. *)
-derive_expr         = logic_path
+derive_expr         = calc_call
+                    | logic_path
                     | length_call
                     | version_builtin
                     | loop_variable
@@ -348,8 +350,8 @@ if_statement        = "if" , condition , block ,
                       [ "else" , block ] ;
 
 for_statement       = "for" , loop_variable , "in" , iterable , block ;
-(* Iteration is the one construct in the language that multiplies work, so it
-   is the one that is charged: the logic of one instance may execute at most
+(* Iteration and calc share a work budget (ARITHMETIC.md). Without arithmetic,
+   the logic of one instance may execute at most
    1000000 for-bodies for one version, and crossing that is E523, not E209
    (SPEC 3.7, 6.2, 10.5). *)
 
@@ -384,6 +386,7 @@ comparison          = operand , comparison_op , operand
 comparison_op       = "==" | "!=" | ">=" | "<=" | ">" | "<" ;
 
 operand             = "(" , condition , ")"
+                    | calc_call
                     | length_call
                     | version_builtin
                     | logic_path
@@ -393,6 +396,21 @@ operand             = "(" , condition , ")"
                     | bool_literal ;
 
 length_call         = "length" , "(" , ( logic_path | loop_variable ) , ")" ;
+
+(* Explicit numeric grammar; adjacency and numeric semantics are specified in
+   ARITHMETIC.md. Hyphens remain part of identifiers; space subtraction. *)
+calc_call           = "calc(" , numeric_sum , ")" ;
+numeric_sum         = numeric_product , { ( "+" | "-" ) , numeric_product } ;
+numeric_product     = numeric_unary , { ( "*" | "/" | "%" ) , numeric_unary } ;
+numeric_unary       = { "+" | "-" } , numeric_atom ;
+numeric_atom        = number | logic_path | loop_variable | version_builtin
+                    | length_call
+                    | "(" , numeric_sum , ")" | numeric_call ;
+numeric_call        = numeric_function , "(" , numeric_sum ,
+                      { "," , numeric_sum } , ")" ;
+numeric_function    = "abs" | "min" | "max" | "clamp" | "div"
+                    | "round" | "floor" | "ceil" | "sqrt" | "pow"
+                    | "sum" | "avg" ;
 
 (* The integer version being compiled (SPEC 6.6). It is a bare word: a field is
    always written with a leading ".", a loop variable with a leading "$", and a

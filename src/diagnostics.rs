@@ -127,6 +127,8 @@ pub enum ErrorId {
     E521,
     E522,
     E523,
+    E524,
+    E525,
 
     // §10.6 E6xx — versions
     E601,
@@ -263,6 +265,8 @@ impl ErrorId {
         ErrorId::E521,
         ErrorId::E522,
         ErrorId::E523,
+        ErrorId::E524,
+        ErrorId::E525,
         ErrorId::E601,
         ErrorId::E602,
         ErrorId::E603,
@@ -393,6 +397,8 @@ impl ErrorId {
             ErrorId::E521 => "E521",
             ErrorId::E522 => "E522",
             ErrorId::E523 => "E523",
+            ErrorId::E524 => "E524",
+            ErrorId::E525 => "E525",
             ErrorId::E601 => "E601",
             ErrorId::E602 => "E602",
             ErrorId::E603 => "E603",
@@ -633,6 +639,8 @@ impl ErrorId {
             ErrorId::E523 => &[
                 "Logic work limit exceeded at {context}: the logic executed more than 1000000 loop iterations in version {v}.",
             ],
+            ErrorId::E524 => &["Invalid arithmetic expression: {reason}."],
+            ErrorId::E525 => &["Arithmetic evaluation failed: {reason}."],
 
             ErrorId::E601 => &["The project already declares a version range."],
             ErrorId::E602 => &[
@@ -983,7 +991,7 @@ mod tests {
             assert!(!id.templates().is_empty());
             assert!(id.template().ends_with('.') || id.template().ends_with('}'));
         }
-        assert_eq!(seen.len(), 125);
+        assert_eq!(seen.len(), 127);
         assert_eq!(ErrorId::from_code("E000"), None);
         assert_eq!(ErrorId::from_code("E809"), None);
     }

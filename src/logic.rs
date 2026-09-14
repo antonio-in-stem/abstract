@@ -27,7 +27,10 @@ use crate::ast::Located;
 use crate::diagnostics::{Diagnostic, Diagnostics, ErrorId, Note};
 use crate::instance::{ListSpelling, SyntaxValue};
 use crate::lexer::{is_float_literal, is_identifier, is_int_literal, normalise, Token, TokenKind};
-use crate::limits::{BRACKET_DEPTH, LOGIC_BLOCK_DEPTH, LOGIC_WORK, PATH_SEGMENTS};
+use crate::limits::{
+    BRACKET_DEPTH, CALC_NODES, CALC_POW_EXPONENT, LOGIC_BLOCK_DEPTH, LOGIC_WORK, PATH_SEGMENTS,
+};
+use crate::output::render_float;
 use crate::resolve::{
     element_fields, lookup_path, substitute, variable_table, AuthoredObject, PathLookup, Step,
     ValuePath, VariableTable,
@@ -207,6 +210,11 @@ pub enum Operand {
         value: SyntaxValue,
         at: Located,
     },
+    /// An explicitly opted-in numeric expression.
+    Calc {
+        expr: CalcExpr,
+        at: Located,
+    },
     /// `( <condition> )`, whose value is a boolean (SPEC §6.6).
     Group(Box<Condition>),
 }
@@ -294,6 +302,116 @@ pub enum DeriveExpr {
         value: SyntaxValue,
         at: Located,
     },
+    Calc {
+        expr: CalcExpr,
+        at: Located,
+    },
+}
+
+/// The bounded numeric expression inside `calc(...)`.
+#[derive(Clone, Debug)]
+pub enum CalcExpr {
+    Literal {
+        spelling: String,
+        at: Located,
+    },
+    Path(LogicPath),
+    Variable {
+        name: String,
+        spelled: String,
+        at: Located,
+    },
+    Version {
+        at: Located,
+    },
+    Length {
+        arg: LengthArg,
+        at: Located,
+    },
+    Unary {
+        op: CalcUnary,
+        value: Box<CalcExpr>,
+        at: Located,
+    },
+    Binary {
+        left: Box<CalcExpr>,
+        op: CalcBinary,
+        right: Box<CalcExpr>,
+        at: Located,
+    },
+    Call {
+        function: CalcFunction,
+        args: Vec<CalcExpr>,
+        at: Located,
+    },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CalcUnary {
+    Plus,
+    Minus,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CalcBinary {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CalcFunction {
+    Abs,
+    Min,
+    Max,
+    Clamp,
+    Round,
+    Floor,
+    Ceil,
+    Sqrt,
+    Pow,
+    Div,
+    Sum,
+    Avg,
+}
+
+impl CalcFunction {
+    fn parse(name: &str) -> Option<Self> {
+        Some(match name {
+            "abs" => Self::Abs,
+            "min" => Self::Min,
+            "max" => Self::Max,
+            "clamp" => Self::Clamp,
+            "round" => Self::Round,
+            "floor" => Self::Floor,
+            "ceil" => Self::Ceil,
+            "sqrt" => Self::Sqrt,
+            "pow" => Self::Pow,
+            "div" => Self::Div,
+            "sum" => Self::Sum,
+            "avg" => Self::Avg,
+            _ => return None,
+        })
+    }
+
+    fn spelling(self) -> &'static str {
+        match self {
+            Self::Abs => "abs",
+            Self::Min => "min",
+            Self::Max => "max",
+            Self::Clamp => "clamp",
+            Self::Round => "round",
+            Self::Floor => "floor",
+            Self::Ceil => "ceil",
+            Self::Sqrt => "sqrt",
+            Self::Pow => "pow",
+            Self::Div => "div",
+            Self::Sum => "sum",
+            Self::Avg => "avg",
+        }
+    }
 }
 
 // ===========================================================================
@@ -609,6 +727,15 @@ impl<'a> Parser<'a> {
         };
         if first.is_punctuation(".") {
             return self.logic_path().map(DeriveExpr::Path);
+        }
+        if first.is_keyword("calc")
+            && rest
+                .get(1)
+                .is_some_and(|token| token.is_punctuation("(") && token.glued)
+        {
+            let calc_at = self.located(first);
+            let expr = self.calc(&calc_at)?;
+            return Some(DeriveExpr::Calc { expr, at: calc_at });
         }
         if first.is_punctuation("$") {
             let dotted = rest.get(2).map(|token| token.is_punctuation(".")) == Some(true);
@@ -1145,6 +1272,14 @@ impl<'a> Parser<'a> {
             });
         }
         match &token.kind {
+            TokenKind::Identifier(word)
+                if word == "calc"
+                    && self.peek_at(1).is_punctuation("(")
+                    && self.peek_at(1).glued =>
+            {
+                let expr = self.calc(&at)?;
+                Some(Operand::Calc { expr, at })
+            }
             TokenKind::Identifier(word) if word == "length" => {
                 self.bump();
                 let arg = self.length_arg()?;
@@ -1175,6 +1310,214 @@ impl<'a> Parser<'a> {
                 None
             }
         }
+    }
+
+    // --------------------------------------------------------- arithmetic
+
+    fn calc(&mut self, at: &Located) -> Option<CalcExpr> {
+        self.bump(); // calc
+        self.bump(); // glued '('
+        let mut nodes = 0usize;
+        let expr = self.calc_additive(0, &mut nodes)?;
+        if !self.at_punctuation(")") {
+            return self.calc_parse_error(at, "expected ')' after the expression");
+        }
+        self.bump();
+        Some(expr)
+    }
+
+    fn calc_node(&mut self, at: &Located, nodes: &mut usize) -> Option<()> {
+        *nodes = nodes.saturating_add(1);
+        if *nodes > CALC_NODES {
+            return self.calc_parse_error(
+                at,
+                format!("expression exceeds the limit of {CALC_NODES} nodes"),
+            );
+        }
+        Some(())
+    }
+
+    fn calc_additive(&mut self, depth: usize, nodes: &mut usize) -> Option<CalcExpr> {
+        let mut left = self.calc_multiplicative(depth, nodes)?;
+        loop {
+            let op = if self.at_punctuation("+") {
+                CalcBinary::Add
+            } else if self.at_punctuation("-") {
+                CalcBinary::Subtract
+            } else {
+                break;
+            };
+            let token = self.bump();
+            let at = self.located(&token);
+            self.calc_node(&at, nodes)?;
+            let right = self.calc_multiplicative(depth, nodes)?;
+            left = CalcExpr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+                at,
+            };
+        }
+        Some(left)
+    }
+
+    fn calc_multiplicative(&mut self, depth: usize, nodes: &mut usize) -> Option<CalcExpr> {
+        let mut left = self.calc_unary(depth, nodes)?;
+        loop {
+            let op = if self.at_punctuation("*") {
+                CalcBinary::Multiply
+            } else if self.at_punctuation("/") {
+                CalcBinary::Divide
+            } else if self.at_punctuation("%") {
+                CalcBinary::Remainder
+            } else {
+                break;
+            };
+            let token = self.bump();
+            let at = self.located(&token);
+            self.calc_node(&at, nodes)?;
+            let right = self.calc_unary(depth, nodes)?;
+            left = CalcExpr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+                at,
+            };
+        }
+        Some(left)
+    }
+
+    fn calc_unary(&mut self, depth: usize, nodes: &mut usize) -> Option<CalcExpr> {
+        let op = if self.at_punctuation("+") {
+            Some(CalcUnary::Plus)
+        } else if self.at_punctuation("-") {
+            Some(CalcUnary::Minus)
+        } else {
+            None
+        };
+        if let Some(op) = op {
+            let token = self.bump();
+            let at = self.located(&token);
+            self.calc_node(&at, nodes)?;
+            if depth >= BRACKET_DEPTH {
+                return self.calc_parse_error(
+                    &at,
+                    format!("expression exceeds the depth limit of {BRACKET_DEPTH}"),
+                );
+            }
+            let value = self.calc_unary(depth + 1, nodes)?;
+            return Some(CalcExpr::Unary {
+                op,
+                value: Box::new(value),
+                at,
+            });
+        }
+        self.calc_primary(depth, nodes)
+    }
+
+    fn calc_primary(&mut self, depth: usize, nodes: &mut usize) -> Option<CalcExpr> {
+        let token = self.peek().clone();
+        let at = self.located(&token);
+        if depth > BRACKET_DEPTH {
+            return self.calc_parse_error(
+                &at,
+                format!("expression exceeds the depth limit of {BRACKET_DEPTH}"),
+            );
+        }
+        if token.is_punctuation("(") {
+            if depth >= BRACKET_DEPTH {
+                return self.calc_parse_error(
+                    &at,
+                    format!("parentheses exceed the depth limit of {BRACKET_DEPTH}"),
+                );
+            }
+            self.bump();
+            let value = self.calc_additive(depth + 1, nodes)?;
+            if !self.at_punctuation(")") {
+                return self.calc_parse_error(&at, "expected ')' after the grouped expression");
+            }
+            self.bump();
+            return Some(value);
+        }
+        if token.is_punctuation(".") {
+            self.calc_node(&at, nodes)?;
+            return self.logic_path().map(CalcExpr::Path);
+        }
+        if token.is_punctuation("$") {
+            if self.peek_at(2).is_punctuation(".") {
+                self.calc_node(&at, nodes)?;
+                return self.logic_path().map(CalcExpr::Path);
+            }
+            self.bump();
+            let spelled = self.variable_name()?;
+            self.calc_node(&at, nodes)?;
+            return Some(CalcExpr::Variable {
+                name: normalise(&spelled),
+                spelled,
+                at,
+            });
+        }
+        match &token.kind {
+            TokenKind::IntLiteral(spelling) | TokenKind::FloatLiteral(spelling) => {
+                let spelling = spelling.clone();
+                self.bump();
+                self.calc_node(&at, nodes)?;
+                Some(CalcExpr::Literal { spelling, at })
+            }
+            TokenKind::Identifier(word) if word == "version" => {
+                self.bump();
+                self.calc_node(&at, nodes)?;
+                Some(CalcExpr::Version { at })
+            }
+            TokenKind::Identifier(word)
+                if word == "length" && self.peek_at(1).is_punctuation("(") =>
+            {
+                self.bump();
+                let arg = self.length_arg()?;
+                self.calc_node(&at, nodes)?;
+                Some(CalcExpr::Length { arg, at })
+            }
+            TokenKind::Identifier(word) if self.peek_at(1).is_punctuation("(") => {
+                let name = word.clone();
+                self.bump();
+                self.bump();
+                let Some(function) = CalcFunction::parse(&name) else {
+                    return self.calc_parse_error(&at, format!("unknown function '{name}'"));
+                };
+                let mut args = Vec::new();
+                if !self.at_punctuation(")") {
+                    loop {
+                        args.push(self.calc_additive(depth + 1, nodes)?);
+                        if !self.at_punctuation(",") {
+                            break;
+                        }
+                        self.bump();
+                    }
+                }
+                if !self.at_punctuation(")") {
+                    return self.calc_parse_error(&at, "expected ')' after function arguments");
+                }
+                self.bump();
+                self.calc_node(&at, nodes)?;
+                Some(CalcExpr::Call { function, args, at })
+            }
+            _ => self.calc_parse_error(
+                &at,
+                format!(
+                    "expected a number, path, variable, function, or '('; found {}",
+                    token.describe()
+                ),
+            ),
+        }
+    }
+
+    fn calc_parse_error<T>(&mut self, at: &Located, reason: impl Into<String>) -> Option<T> {
+        self.error(
+            ErrorId::E524,
+            at,
+            format!("Invalid arithmetic expression: {}.", reason.into()),
+        );
+        None
     }
 
     fn report_invalid(&mut self, text: &str, reason: impl Into<String>) {
@@ -1408,6 +1751,37 @@ enum Kind {
     /// Not decidable from the schema — a dynamic segment, or a literal list
     /// whose elements disagree. Nothing is reported about an unknown kind.
     Unknown,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CalcType {
+    Int,
+    Float,
+    IntList,
+    FloatList,
+}
+
+impl CalcType {
+    fn word(self) -> &'static str {
+        match self {
+            Self::Int => "int",
+            Self::Float => "float",
+            Self::IntList => "list of int",
+            Self::FloatList => "list of float",
+        }
+    }
+
+    fn scalar(self) -> bool {
+        matches!(self, Self::Int | Self::Float)
+    }
+
+    fn element(self) -> Option<Self> {
+        match self {
+            Self::IntList => Some(Self::Int),
+            Self::FloatList => Some(Self::Float),
+            _ => None,
+        }
+    }
 }
 
 /// The kind a field's value has, or the kind of one of its elements.
@@ -1647,6 +2021,269 @@ impl<'t> Checker<'t> {
                 }
             }
             DeriveExpr::Value { value, at } => self.check_value_references(value, at),
+            DeriveExpr::Calc { expr, at } => {
+                let found = self.calc_expr(expr);
+                if let (Some(found), Some(target)) = (found, self.derive_target_field(target)) {
+                    let expected = match target.type_expr() {
+                        Some(TypeExpr::Int { .. }) if !target.is_list() => Some(CalcType::Int),
+                        Some(TypeExpr::Float { .. }) if !target.is_list() => Some(CalcType::Float),
+                        _ => None,
+                    };
+                    if expected != Some(found) {
+                        let expected = expected
+                            .map(CalcType::word)
+                            .unwrap_or_else(|| target.kind_word());
+                        self.error(
+                            ErrorId::E524,
+                            at,
+                            format!("Invalid arithmetic expression: result is {}, but derive target requires {expected}.", found.word()),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    fn derive_target_field(&self, target: &LogicPath) -> Option<&'t FieldDecl> {
+        if target.root.is_some()
+            || target
+                .segments
+                .iter()
+                .any(|s| s.variable || s.index.is_some())
+        {
+            return None;
+        }
+        let mut fields = self.schema.fields.as_slice();
+        let mut found = None;
+        for segment in &target.segments {
+            found = fields.iter().find(|field| field.name == segment.name);
+            let field = found?;
+            fields = element_fields(self.tables, field).unwrap_or(&[]);
+        }
+        found
+    }
+
+    fn calc_error(&mut self, at: &Located, reason: impl Into<String>) {
+        self.error(
+            ErrorId::E524,
+            at,
+            format!("Invalid arithmetic expression: {}.", reason.into()),
+        );
+    }
+
+    fn calc_expr(&mut self, expr: &CalcExpr) -> Option<CalcType> {
+        match expr {
+            CalcExpr::Literal { spelling, .. } => Some(if is_int_literal(spelling) {
+                CalcType::Int
+            } else {
+                CalcType::Float
+            }),
+            CalcExpr::Version { .. } | CalcExpr::Length { .. } => {
+                if let CalcExpr::Length { arg, at } = expr {
+                    self.length(arg, at);
+                }
+                Some(CalcType::Int)
+            }
+            CalcExpr::Path(path) => self.calc_path(path),
+            CalcExpr::Variable { name, spelled, at } => {
+                let Some(binding) = self.binding(name) else {
+                    self.error(ErrorId::E510, at, format!("Unbound variable '${spelled}'."));
+                    return None;
+                };
+                match binding.word {
+                    "int" => Some(CalcType::Int),
+                    "float" => Some(CalcType::Float),
+                    other => {
+                        self.calc_error(at, format!("'${spelled}' is {other}, expected a number"));
+                        None
+                    }
+                }
+            }
+            CalcExpr::Unary { value, at, .. } => {
+                let ty = self.calc_expr(value)?;
+                if ty.scalar() {
+                    Some(ty)
+                } else {
+                    self.calc_error(
+                        at,
+                        format!("unary operator requires a number, found {}", ty.word()),
+                    );
+                    None
+                }
+            }
+            CalcExpr::Binary {
+                left,
+                op,
+                right,
+                at,
+            } => {
+                let left = self.calc_expr(left)?;
+                let right = self.calc_expr(right)?;
+                if !left.scalar() || !right.scalar() {
+                    self.calc_error(at, "binary operators require scalar numbers");
+                    return None;
+                }
+                match op {
+                    CalcBinary::Remainder if left != CalcType::Int || right != CalcType::Int => {
+                        self.calc_error(at, "'%' requires two int values");
+                        None
+                    }
+                    CalcBinary::Divide => Some(CalcType::Float),
+                    _ if left == CalcType::Float || right == CalcType::Float => {
+                        Some(CalcType::Float)
+                    }
+                    _ => Some(CalcType::Int),
+                }
+            }
+            CalcExpr::Call { function, args, at } => self.calc_call(*function, args, at),
+        }
+    }
+
+    fn calc_path(&mut self, path: &LogicPath) -> Option<CalcType> {
+        let facts = self.path(path);
+        if !facts.ok {
+            return None;
+        }
+        if facts.ambiguous {
+            self.calc_error(
+                &path.at,
+                format!("'{}' has no single declared numeric type", path.text()),
+            );
+            return None;
+        }
+        let Some(field) = facts.field else {
+            self.calc_error(
+                &path.at,
+                format!("'{}' has no declared numeric type", path.text()),
+            );
+            return None;
+        };
+        let list = facts.crossed.is_some() || (field.is_list() && !facts.element);
+        match (field.type_expr(), list) {
+            (Some(TypeExpr::Int { .. }), false) => Some(CalcType::Int),
+            (Some(TypeExpr::Float { .. }), false) => Some(CalcType::Float),
+            (Some(TypeExpr::Int { .. }), true) => Some(CalcType::IntList),
+            (Some(TypeExpr::Float { .. }), true) => Some(CalcType::FloatList),
+            _ => {
+                self.calc_error(
+                    &path.at,
+                    format!(
+                        "'{}' is {}, expected a number or numeric list",
+                        path.text(),
+                        facts.word()
+                    ),
+                );
+                None
+            }
+        }
+    }
+
+    fn calc_call(
+        &mut self,
+        function: CalcFunction,
+        args: &[CalcExpr],
+        at: &Located,
+    ) -> Option<CalcType> {
+        let arity = args.len();
+        let exact = |wanted| arity == wanted;
+        let arity_ok = match function {
+            CalcFunction::Abs
+            | CalcFunction::Round
+            | CalcFunction::Floor
+            | CalcFunction::Ceil
+            | CalcFunction::Sqrt
+            | CalcFunction::Sum
+            | CalcFunction::Avg => exact(1),
+            CalcFunction::Pow | CalcFunction::Div => exact(2),
+            CalcFunction::Clamp => exact(3),
+            CalcFunction::Min | CalcFunction::Max => arity == 1 || arity >= 2,
+        };
+        if !arity_ok {
+            self.calc_error(
+                at,
+                format!("{}() received {arity} arguments", function.spelling()),
+            );
+            return None;
+        }
+        let types: Option<Vec<_>> = args.iter().map(|arg| self.calc_expr(arg)).collect();
+        let types = types?;
+        match function {
+            CalcFunction::Sum | CalcFunction::Avg => {
+                let Some(element) = types[0].element() else {
+                    self.calc_error(
+                        at,
+                        format!(
+                            "{}() requires one numeric list or projection",
+                            function.spelling()
+                        ),
+                    );
+                    return None;
+                };
+                Some(if function == CalcFunction::Avg {
+                    CalcType::Float
+                } else {
+                    element
+                })
+            }
+            CalcFunction::Min | CalcFunction::Max if arity == 1 => {
+                let Some(element) = types[0].element() else {
+                    self.calc_error(
+                        at,
+                        format!(
+                            "{}() with one argument requires a numeric list or projection",
+                            function.spelling()
+                        ),
+                    );
+                    return None;
+                };
+                Some(element)
+            }
+            CalcFunction::Div => {
+                if types == [CalcType::Int, CalcType::Int] {
+                    Some(CalcType::Int)
+                } else {
+                    self.calc_error(at, "div() requires two int values");
+                    None
+                }
+            }
+            CalcFunction::Pow => {
+                if !types[0].scalar() || types[1] != CalcType::Int {
+                    self.calc_error(at, "pow() requires a numeric base and an int exponent");
+                    None
+                } else {
+                    Some(types[0])
+                }
+            }
+            CalcFunction::Round | CalcFunction::Floor | CalcFunction::Ceil => {
+                if types[0].scalar() {
+                    Some(CalcType::Int)
+                } else {
+                    self.calc_error(at, format!("{}() requires a number", function.spelling()));
+                    None
+                }
+            }
+            CalcFunction::Sqrt => {
+                if types[0].scalar() {
+                    Some(CalcType::Float)
+                } else {
+                    self.calc_error(at, "sqrt() requires a number");
+                    None
+                }
+            }
+            _ => {
+                if types.iter().any(|ty| !ty.scalar()) {
+                    self.calc_error(
+                        at,
+                        format!("{}() requires scalar numbers", function.spelling()),
+                    );
+                    return None;
+                }
+                Some(if types.contains(&CalcType::Float) {
+                    CalcType::Float
+                } else {
+                    CalcType::Int
+                })
+            }
         }
     }
 
@@ -1980,6 +2617,15 @@ impl<'t> Checker<'t> {
                     crossed: None,
                 }
             }
+            Operand::Calc { expr, .. } => {
+                let ty = self.calc_expr(expr);
+                OperandFacts {
+                    kind: Kind::Number,
+                    word: ty.map(CalcType::word).unwrap_or("number"),
+                    text: "calc(…)".to_string(),
+                    crossed: None,
+                }
+            }
             Operand::Group(inner) => {
                 self.condition(inner);
                 OperandFacts {
@@ -2302,6 +2948,29 @@ impl Number {
             _ => self.as_float().partial_cmp(&other.as_float()),
         }
     }
+
+    fn exact_float(self) -> Result<f64, &'static str> {
+        match self {
+            Number::Float(value) => Ok(value),
+            Number::Int(value) => {
+                let promoted = value as f64;
+                if promoted as i128 == value as i128 {
+                    Ok(promoted)
+                } else {
+                    Err("an int cannot be represented exactly as float")
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum CalcValue {
+    Scalar(Number),
+    List {
+        values: Vec<Number>,
+        element: CalcType,
+    },
 }
 
 /// One value, read through the declared type of the field it came from.
@@ -2505,7 +3174,7 @@ impl<'t> Evaluator<'_, 't> {
                 message,
                 at,
             } => {
-                if self.condition(condition, object) {
+                if self.condition(condition, object)? {
                     return Ok(());
                 }
                 let variables = self.variables(object);
@@ -2529,7 +3198,7 @@ impl<'t> Evaluator<'_, 't> {
                 ..
             } => {
                 for (condition, body) in branches {
-                    if self.condition(condition, object) {
+                    if self.condition(condition, object)? {
                         return self.statements(body, object);
                     }
                 }
@@ -2800,6 +3469,237 @@ impl<'t> Evaluator<'_, 't> {
                     interpreted: false,
                 }))
             }
+            DeriveExpr::Calc { expr, at } => {
+                let value = match self.calc_expr(expr, object) {
+                    Ok(CalcValue::Scalar(value)) => value,
+                    Ok(CalcValue::List { .. }) => {
+                        return Err(self.calc_diagnostic(at, "expression produced a list"));
+                    }
+                    Err(reason) => return Err(self.calc_diagnostic(at, reason)),
+                };
+                let (value, word) = match value {
+                    Number::Int(value) => (SyntaxValue::Bare(value.to_string()), "int"),
+                    Number::Float(value) => {
+                        let Some(rendered) = render_float(value) else {
+                            return Err(self.calc_diagnostic(at, "result is not finite"));
+                        };
+                        (SyntaxValue::Bare(rendered), "float")
+                    }
+                };
+                Ok(Some(Produced {
+                    value,
+                    kind: Kind::Number,
+                    word,
+                    interpreted: true,
+                }))
+            }
+        }
+    }
+
+    fn calc_diagnostic(&self, at: &Located, reason: impl Into<String>) -> Diagnostics {
+        self.diagnostic(
+            ErrorId::E525,
+            at,
+            format!("Arithmetic evaluation failed: {}.", reason.into()),
+            vec![Note::new(format!(
+                "compiling version {}.",
+                self.validation.version
+            ))],
+        )
+    }
+
+    fn charge_calc(&self) -> Result<(), String> {
+        if self.validation.charge_logic_work() {
+            Ok(())
+        } else {
+            Err(format!(
+                "arithmetic work exceeds the shared limit of {LOGIC_WORK}"
+            ))
+        }
+    }
+
+    fn calc_expr(&self, expr: &CalcExpr, object: &AuthoredObject) -> Result<CalcValue, String> {
+        self.charge_calc()?;
+        match expr {
+            CalcExpr::Literal { spelling, .. } => {
+                if is_int_literal(spelling) {
+                    spelling
+                        .parse::<i64>()
+                        .map(Number::Int)
+                        .map(CalcValue::Scalar)
+                        .map_err(|_| "invalid int literal".into())
+                } else {
+                    let value = spelling
+                        .parse::<f64>()
+                        .map_err(|_| "invalid float literal")?;
+                    finite(value).map(|value| CalcValue::Scalar(Number::Float(value)))
+                }
+            }
+            CalcExpr::Version { .. } => Ok(CalcValue::Scalar(Number::Int(i64::from(
+                self.validation.version,
+            )))),
+            CalcExpr::Length { arg, .. } => {
+                let value =
+                    i64::try_from(self.length(arg, object)).map_err(|_| "length exceeds i64")?;
+                Ok(CalcValue::Scalar(Number::Int(value)))
+            }
+            CalcExpr::Path(path) => {
+                let slots = self.resolve(path, object);
+                let list_type = self.calc_path_list_type(path);
+                if slots.is_empty() {
+                    return match list_type {
+                        Some(element) => Ok(CalcValue::List {
+                            values: Vec::new(),
+                            element,
+                        }),
+                        None => Err(format!("'{}' has no value", path.text())),
+                    };
+                }
+                let mut values = Vec::new();
+                for slot in slots {
+                    match slot.datum() {
+                        Datum::Number(value) => {
+                            if list_type.is_some() {
+                                self.charge_calc()?;
+                            }
+                            values.push(value);
+                        }
+                        Datum::List(items) => {
+                            for item in items {
+                                self.charge_calc()?;
+                                let Datum::Number(value) = item else {
+                                    return Err(format!("'{}' contains a non-number", path.text()));
+                                };
+                                values.push(value);
+                            }
+                        }
+                        _ => return Err(format!("'{}' is not numeric", path.text())),
+                    }
+                }
+                if values.len() == 1 && list_type.is_none() {
+                    Ok(CalcValue::Scalar(values[0]))
+                } else {
+                    Ok(CalcValue::List {
+                        values,
+                        element: list_type.unwrap_or(CalcType::Int),
+                    })
+                }
+            }
+            CalcExpr::Variable { name, spelled, .. } => {
+                let binding = self
+                    .loops
+                    .iter()
+                    .rev()
+                    .find(|item| &item.name == name)
+                    .ok_or_else(|| format!("unbound variable '${spelled}'"))?;
+                let Datum::Number(value) = read_datum(&binding.value, binding.shape) else {
+                    return Err(format!("'${spelled}' is not numeric"));
+                };
+                Ok(CalcValue::Scalar(value))
+            }
+            CalcExpr::Unary { op, value, .. } => {
+                let value = scalar(self.calc_expr(value, object)?)?;
+                let value = match (op, value) {
+                    (CalcUnary::Plus, value) => value,
+                    (CalcUnary::Minus, Number::Int(value)) => {
+                        Number::Int(value.checked_neg().ok_or("integer overflow in unary '-'")?)
+                    }
+                    (CalcUnary::Minus, Number::Float(value)) => Number::Float(finite(-value)?),
+                };
+                Ok(CalcValue::Scalar(value))
+            }
+            CalcExpr::Binary {
+                left, op, right, ..
+            } => {
+                let left = scalar(self.calc_expr(left, object)?)?;
+                let right = scalar(self.calc_expr(right, object)?)?;
+                binary(*op, left, right).map(CalcValue::Scalar)
+            }
+            CalcExpr::Call { function, args, .. } => {
+                let values: Result<Vec<_>, _> =
+                    args.iter().map(|arg| self.calc_expr(arg, object)).collect();
+                self.calc_call(*function, values?)
+            }
+        }
+    }
+
+    fn calc_call(
+        &self,
+        function: CalcFunction,
+        values: Vec<CalcValue>,
+    ) -> Result<CalcValue, String> {
+        match function {
+            CalcFunction::Sum | CalcFunction::Avg => {
+                let (items, element) = list(
+                    values
+                        .into_iter()
+                        .next()
+                        .ok_or("missing aggregate argument")?,
+                )?;
+                aggregate(function, items, element, || self.charge_calc())
+            }
+            CalcFunction::Min | CalcFunction::Max if values.len() == 1 => {
+                let (items, _) = list(
+                    values
+                        .into_iter()
+                        .next()
+                        .ok_or("missing aggregate argument")?,
+                )?;
+                extrema(function, items, || self.charge_calc()).map(CalcValue::Scalar)
+            }
+            _ => {
+                let numbers: Result<Vec<_>, _> = values.into_iter().map(scalar).collect();
+                call_scalars(function, &numbers?, || self.charge_calc()).map(CalcValue::Scalar)
+            }
+        }
+    }
+
+    fn calc_path_list_type(&self, path: &LogicPath) -> Option<CalcType> {
+        let mut fields = match &path.root {
+            None => Some(self.schema.fields.as_slice()),
+            Some(name) => self
+                .loops
+                .iter()
+                .rev()
+                .find(|item| &item.name == name)
+                .and_then(|item| item.shape.fields),
+        };
+        let mut list = false;
+        for segment in &path.segments {
+            let Some(field) =
+                fields.and_then(|scope| scope.iter().find(|field| field.name == segment.name))
+            else {
+                return None;
+            };
+            if field.is_list() && segment.index.is_none() {
+                list = true;
+            }
+            fields = element_fields(self.validation.tables, field);
+        }
+        if !list {
+            return None;
+        }
+        let field = path.segments.last().and_then(|segment| {
+            let mut fields = match &path.root {
+                None => Some(self.schema.fields.as_slice()),
+                Some(name) => self
+                    .loops
+                    .iter()
+                    .rev()
+                    .find(|item| &item.name == name)
+                    .and_then(|item| item.shape.fields),
+            };
+            let mut found = None;
+            for part in &path.segments {
+                found = fields.and_then(|scope| scope.iter().find(|field| field.name == part.name));
+                fields = found.and_then(|field| element_fields(self.validation.tables, field));
+            }
+            found.filter(|_| !segment.variable)
+        })?;
+        match field.type_expr() {
+            Some(TypeExpr::Int { .. }) => Some(CalcType::Int),
+            Some(TypeExpr::Float { .. }) => Some(CalcType::Float),
+            _ => None,
         }
     }
 
@@ -2807,18 +3707,37 @@ impl<'t> Evaluator<'_, 't> {
 
     /// Conditions never fail: an operand that resolves to no value makes every
     /// comparison false (SPEC §6.8), and every type rule was decided at P3.
-    fn condition(&self, condition: &Condition, object: &AuthoredObject) -> bool {
+    fn condition(
+        &self,
+        condition: &Condition,
+        object: &AuthoredObject,
+    ) -> Result<bool, Diagnostics> {
         match condition {
             Condition::Comparison {
                 left, op, right, ..
             } => self.compare(left, *op, right, object),
-            Condition::Exists { operand, .. } => self.exists(operand, object),
-            Condition::Truth { operand, .. } => {
-                matches!(self.value_of(operand, object), Some(Datum::Bool(true)))
+            Condition::Exists { operand, at } => self.exists(operand, object, at),
+            Condition::Truth { operand, .. } => Ok(matches!(
+                self.value_of(operand, object)?,
+                Some(Datum::Bool(true))
+            )),
+            Condition::Not(inner) => Ok(!self.condition(inner, object)?),
+            Condition::And(parts) => {
+                for part in parts {
+                    if !self.condition(part, object)? {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
             }
-            Condition::Not(inner) => !self.condition(inner, object),
-            Condition::And(parts) => parts.iter().all(|part| self.condition(part, object)),
-            Condition::Or(parts) => parts.iter().any(|part| self.condition(part, object)),
+            Condition::Or(parts) => {
+                for part in parts {
+                    if self.condition(part, object)? {
+                        return Ok(true);
+                    }
+                }
+                Ok(false)
+            }
         }
     }
 
@@ -2828,15 +3747,38 @@ impl<'t> Evaluator<'_, 't> {
         op: ComparisonOp,
         right: &Operand,
         object: &AuthoredObject,
-    ) -> bool {
-        let (Some(left), Some(right)) = (self.value_of(left, object), self.value_of(right, object))
+    ) -> Result<bool, Diagnostics> {
+        let calc_at = match (left, right) {
+            (Operand::Calc { at, .. }, _) => Some(at),
+            (_, Operand::Calc { at, .. }) => Some(at),
+            _ => None,
+        };
+        let (Some(left), Some(right)) =
+            (self.value_of(left, object)?, self.value_of(right, object)?)
         else {
-            return false;
+            return Ok(false);
         };
         if left == Datum::Unreadable || right == Datum::Unreadable {
-            return false;
+            return Ok(false);
         }
-        match op {
+        if let (Some(at), Datum::Number(left_number), Datum::Number(right_number)) =
+            (calc_at, &left, &right)
+        {
+            let ordering = match numeric_compare(*left_number, *right_number) {
+                Ok(ordering) => ordering,
+                Err(reason) => return Err(self.calc_diagnostic(at, reason)),
+            };
+            return Ok(match op {
+                ComparisonOp::Equal => ordering.is_eq(),
+                ComparisonOp::NotEqual => !ordering.is_eq(),
+                ComparisonOp::Less => ordering.is_lt(),
+                ComparisonOp::LessOrEqual => ordering.is_le(),
+                ComparisonOp::Greater => ordering.is_gt(),
+                ComparisonOp::GreaterOrEqual => ordering.is_ge(),
+                ComparisonOp::Contains => false,
+            });
+        }
+        Ok(match op {
             ComparisonOp::Contains => match (&left, &right) {
                 (Datum::List(items), scalar) => items.iter().any(|item| item.equals(scalar)),
                 (Datum::Text(haystack), Datum::Text(needle)) => haystack.contains(needle.as_str()),
@@ -2850,10 +3792,10 @@ impl<'t> Evaluator<'_, 't> {
             }
             _ => {
                 let (Datum::Number(left), Datum::Number(right)) = (&left, &right) else {
-                    return false;
+                    return Ok(false);
                 };
                 let Some(ordering) = left.compare(*right) else {
-                    return false;
+                    return Ok(false);
                 };
                 match op {
                     ComparisonOp::Less => ordering.is_lt(),
@@ -2863,20 +3805,25 @@ impl<'t> Evaluator<'_, 't> {
                     _ => false,
                 }
             }
-        }
+        })
     }
 
     /// SPEC §6.7: presence on compiled data, never the filesystem.
-    fn exists(&self, operand: &Operand, object: &AuthoredObject) -> bool {
-        match operand {
+    fn exists(
+        &self,
+        operand: &Operand,
+        object: &AuthoredObject,
+        _at: &Located,
+    ) -> Result<bool, Diagnostics> {
+        Ok(match operand {
             Operand::Path(path) => {
                 let slots = self.resolve(path, object);
                 if slots.is_empty() {
-                    return false;
+                    return Ok(false);
                 }
                 if slots.len() == 1 {
                     if let SyntaxValue::List(items, _) = &slots[0].value {
-                        return !items.is_empty();
+                        return Ok(!items.is_empty());
                     }
                 }
                 true
@@ -2890,21 +3837,29 @@ impl<'t> Evaluator<'_, 't> {
                     },
                 }
             }
-            Operand::Group(inner) => self.condition(inner, object),
+            Operand::Group(inner) => self.condition(inner, object)?,
+            Operand::Calc { expr, at } => match self.calc_expr(expr, object) {
+                Ok(_) => true,
+                Err(reason) => return Err(self.calc_diagnostic(at, reason)),
+            },
             _ => true,
-        }
+        })
     }
 
     /// The single value an operand reads, or `None` when it reads none.
-    fn value_of(&self, operand: &Operand, object: &AuthoredObject) -> Option<Datum> {
-        match operand {
+    fn value_of(
+        &self,
+        operand: &Operand,
+        object: &AuthoredObject,
+    ) -> Result<Option<Datum>, Diagnostics> {
+        Ok(match operand {
             Operand::Path(path) => {
                 let slots = self.resolve(path, object);
                 if slots.is_empty() {
-                    return None;
+                    return Ok(None);
                 }
                 if slots.len() == 1 {
-                    return Some(slots[0].datum());
+                    return Ok(Some(slots[0].datum()));
                 }
                 // A projection is a list value; only `contains` and `exists`
                 // accept it, and P3 rejected every other operator (E519).
@@ -2923,8 +3878,15 @@ impl<'t> Evaluator<'_, 't> {
                 self.validation.version,
             )))),
             Operand::Literal { value, .. } => Some(literal_datum(value)),
-            Operand::Group(inner) => Some(Datum::Bool(self.condition(inner, object))),
-        }
+            Operand::Calc { expr, at } => match self.calc_expr(expr, object) {
+                Ok(CalcValue::Scalar(value)) => Some(Datum::Number(value)),
+                Ok(CalcValue::List { values, .. }) => {
+                    Some(Datum::List(values.into_iter().map(Datum::Number).collect()))
+                }
+                Err(reason) => return Err(self.calc_diagnostic(at, reason)),
+            },
+            Operand::Group(inner) => Some(Datum::Bool(self.condition(inner, object)?)),
+        })
     }
 
     /// SPEC §6.10: elements of a list, Unicode scalar values of a string, the
@@ -3111,6 +4073,277 @@ impl<'t> Evaluator<'_, 't> {
         VariableTable {
             entries,
             non_scalars,
+        }
+    }
+}
+
+fn finite(value: f64) -> Result<f64, String> {
+    if value.is_finite() {
+        Ok(value)
+    } else {
+        Err("result is not finite".into())
+    }
+}
+
+fn scalar(value: CalcValue) -> Result<Number, String> {
+    match value {
+        CalcValue::Scalar(value) => Ok(value),
+        CalcValue::List { .. } => Err("expected a scalar number, found a list".into()),
+    }
+}
+
+fn list(value: CalcValue) -> Result<(Vec<Number>, CalcType), String> {
+    match value {
+        CalcValue::List { values, element } => Ok((values, element)),
+        CalcValue::Scalar(_) => Err("expected a numeric list or projection, found a scalar".into()),
+    }
+}
+
+fn float_pair(left: Number, right: Number) -> Result<(f64, f64), String> {
+    Ok((left.exact_float()?, right.exact_float()?))
+}
+
+fn binary(op: CalcBinary, left: Number, right: Number) -> Result<Number, String> {
+    if let (Number::Int(left), Number::Int(right)) = (left, right) {
+        return match op {
+            CalcBinary::Add => left
+                .checked_add(right)
+                .map(Number::Int)
+                .ok_or_else(|| "integer overflow in '+'".into()),
+            CalcBinary::Subtract => left
+                .checked_sub(right)
+                .map(Number::Int)
+                .ok_or_else(|| "integer overflow in '-'".into()),
+            CalcBinary::Multiply => left
+                .checked_mul(right)
+                .map(Number::Int)
+                .ok_or_else(|| "integer overflow in '*'".into()),
+            CalcBinary::Remainder if right == 0 => Err("remainder by zero".into()),
+            CalcBinary::Remainder => left
+                .checked_rem(right)
+                .map(Number::Int)
+                .ok_or_else(|| "integer overflow in '%'".into()),
+            CalcBinary::Divide if right == 0 => Err("division by zero".into()),
+            CalcBinary::Divide => finite((left as f64) / (right as f64)).and_then(|value| {
+                Number::Int(left).exact_float()?;
+                Number::Int(right).exact_float()?;
+                Ok(Number::Float(value))
+            }),
+        };
+    }
+    if op == CalcBinary::Remainder {
+        return Err("'%' requires two int values".into());
+    }
+    let (left, right) = float_pair(left, right)?;
+    if op == CalcBinary::Divide && right == 0.0 {
+        return Err("division by zero".into());
+    }
+    let value = match op {
+        CalcBinary::Add => left + right,
+        CalcBinary::Subtract => left - right,
+        CalcBinary::Multiply => left * right,
+        CalcBinary::Divide => left / right,
+        CalcBinary::Remainder => unreachable!(),
+    };
+    finite(value).map(|value| Number::Float(value))
+}
+
+fn aggregate(
+    function: CalcFunction,
+    values: Vec<Number>,
+    element: CalcType,
+    mut charge: impl FnMut() -> Result<(), String>,
+) -> Result<CalcValue, String> {
+    if function == CalcFunction::Avg && values.is_empty() {
+        return Err("avg() requires a non-empty list".into());
+    }
+    let float = element == CalcType::Float;
+    let mut total = if float {
+        Number::Float(0.0)
+    } else {
+        Number::Int(0)
+    };
+    let count = values.len();
+    for value in values {
+        charge()?;
+        total = binary(CalcBinary::Add, total, value)?;
+    }
+    if function == CalcFunction::Sum {
+        return Ok(CalcValue::Scalar(total));
+    }
+    let count = i64::try_from(count).map_err(|_| "aggregate length exceeds i64")?;
+    binary(CalcBinary::Divide, total, Number::Int(count)).map(CalcValue::Scalar)
+}
+
+fn extrema(
+    function: CalcFunction,
+    values: Vec<Number>,
+    mut charge: impl FnMut() -> Result<(), String>,
+) -> Result<Number, String> {
+    let mut values = values.into_iter();
+    let mut best = values
+        .next()
+        .ok_or_else(|| format!("{}() requires a non-empty list", function.spelling()))?;
+    for value in values {
+        charge()?;
+        let ordering = numeric_compare(value, best)?;
+        if (function == CalcFunction::Min && ordering.is_lt())
+            || (function == CalcFunction::Max && ordering.is_gt())
+        {
+            best = value;
+        }
+    }
+    Ok(best)
+}
+
+fn numeric_compare(left: Number, right: Number) -> Result<std::cmp::Ordering, String> {
+    match (left, right) {
+        (Number::Int(left), Number::Int(right)) => Ok(left.cmp(&right)),
+        _ => {
+            let (left, right) = float_pair(left, right)?;
+            left.partial_cmp(&right)
+                .ok_or_else(|| "numbers are not comparable".into())
+        }
+    }
+}
+
+fn call_scalars(
+    function: CalcFunction,
+    values: &[Number],
+    mut charge: impl FnMut() -> Result<(), String>,
+) -> Result<Number, String> {
+    match function {
+        CalcFunction::Abs => match values[0] {
+            Number::Int(value) => value
+                .checked_abs()
+                .map(Number::Int)
+                .ok_or_else(|| "integer overflow in abs()".into()),
+            Number::Float(value) => finite(value.abs()).map(Number::Float),
+        },
+        CalcFunction::Min | CalcFunction::Max => {
+            let selected = extrema(function, values.to_vec(), &mut charge)?;
+            promote_if_float(selected, values)
+        }
+        CalcFunction::Clamp => {
+            let (value, low, high) = (values[0], values[1], values[2]);
+            if numeric_compare(low, high)?.is_gt() {
+                return Err("clamp() lower bound exceeds upper bound".into());
+            }
+            let selected = if numeric_compare(value, low)?.is_lt() {
+                low
+            } else if numeric_compare(value, high)?.is_gt() {
+                high
+            } else {
+                value
+            };
+            promote_if_float(selected, values)
+        }
+        CalcFunction::Round | CalcFunction::Floor | CalcFunction::Ceil => match values[0] {
+            Number::Int(value) => Ok(Number::Int(value)),
+            Number::Float(value) => {
+                let rounded = match function {
+                    CalcFunction::Round => value.round(),
+                    CalcFunction::Floor => value.floor(),
+                    CalcFunction::Ceil => value.ceil(),
+                    _ => unreachable!(),
+                };
+                if !rounded.is_finite()
+                    || !(-9_223_372_036_854_775_808.0..9_223_372_036_854_775_808.0)
+                        .contains(&rounded)
+                {
+                    return Err(format!("{}() result is outside i64", function.spelling()));
+                }
+                Ok(Number::Int(rounded as i64))
+            }
+        },
+        CalcFunction::Sqrt => {
+            let value = values[0].exact_float()?;
+            if value < 0.0 {
+                return Err("sqrt() requires a non-negative value".into());
+            }
+            finite(value.sqrt()).map(Number::Float)
+        }
+        CalcFunction::Div => match (values[0], values[1]) {
+            (_, Number::Int(0)) => Err("division by zero in div()".into()),
+            (Number::Int(left), Number::Int(right)) => left
+                .checked_div(right)
+                .map(Number::Int)
+                .ok_or_else(|| "integer overflow in div()".into()),
+            _ => Err("div() requires two int values".into()),
+        },
+        CalcFunction::Pow => pow(values[0], values[1], &mut charge),
+        CalcFunction::Sum | CalcFunction::Avg => Err("aggregate requires a list".into()),
+    }
+}
+
+fn promote_if_float(value: Number, inputs: &[Number]) -> Result<Number, String> {
+    if inputs.iter().any(|input| matches!(input, Number::Float(_))) {
+        value
+            .exact_float()
+            .map(Number::Float)
+            .map_err(str::to_string)
+    } else {
+        Ok(value)
+    }
+}
+
+fn pow(
+    base: Number,
+    exponent: Number,
+    mut charge: impl FnMut() -> Result<(), String>,
+) -> Result<Number, String> {
+    let Number::Int(exponent) = exponent else {
+        return Err("pow() exponent must be int".into());
+    };
+    let magnitude = exponent.unsigned_abs();
+    if magnitude > u64::from(CALC_POW_EXPONENT) {
+        return Err(format!("pow() exponent exceeds {CALC_POW_EXPONENT}"));
+    }
+    match base {
+        Number::Int(base) => {
+            if exponent < 0 {
+                return Err("pow() with an int base requires a non-negative exponent; use a float base for a reciprocal".into());
+            }
+            let mut result = 1i64;
+            let mut factor = base;
+            let mut remaining = magnitude;
+            while remaining > 0 {
+                charge()?;
+                if remaining & 1 == 1 {
+                    result = result
+                        .checked_mul(factor)
+                        .ok_or("integer overflow in pow()")?;
+                }
+                remaining >>= 1;
+                if remaining > 0 {
+                    factor = factor
+                        .checked_mul(factor)
+                        .ok_or("integer overflow in pow()")?;
+                }
+            }
+            Ok(Number::Int(result))
+        }
+        Number::Float(base) => {
+            if exponent < 0 && base == 0.0 {
+                return Err("pow() cannot raise zero to a negative exponent".into());
+            }
+            let mut result = 1.0f64;
+            let mut factor = base;
+            let mut remaining = magnitude;
+            while remaining > 0 {
+                charge()?;
+                if remaining & 1 == 1 {
+                    result = finite(result * factor)?;
+                }
+                remaining >>= 1;
+                if remaining > 0 {
+                    factor = finite(factor * factor)?;
+                }
+            }
+            if exponent < 0 {
+                result = finite(1.0 / result)?;
+            }
+            Ok(Number::Float(result))
         }
     }
 }

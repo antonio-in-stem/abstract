@@ -78,6 +78,10 @@ pub mod limits {
     /// version. This is the one limit of SPEC §3.7 that bounds work
     /// rather than depth, and exceeding it is E523, not E209.
     pub const LOGIC_WORK: u64 = 1_000_000;
+    /// Nodes in one explicitly opted-in `calc(...)` expression.
+    pub const CALC_NODES: usize = 256;
+    /// Absolute value of the integer exponent accepted by `pow`.
+    pub const CALC_POW_EXPONENT: u32 = 1_000_000;
 }
 
 /// Compiler behaviour switches.

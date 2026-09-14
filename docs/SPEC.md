@@ -1,6 +1,10 @@
-# Abstract 1.1 — Language Specification
+# Abstract 1.2 — Language Specification
 
-Status: normative. This document defines the Abstract data language, version 1.1.
+Status: normative. This document defines the Abstract data language, version 1.2.
+Version 1.2 adds explicit arithmetic expressions in logic through `calc(...)`;
+the numeric contract, additional work charges and diagnostics are defined in
+[ARITHMETIC.md](ARITHMETIC.md), a normative
+companion to chapter 6. Document and overlay formats remain unchanged.
 Version 1.1 adds the `@public` nomination modifier; existing data semantics and
 document format remain unchanged. Its optional export profile is specified in
 [PUBLIC-CONTRACT.md](PUBLIC-CONTRACT.md).
@@ -330,7 +334,7 @@ The last two rows are the limits **not** reported as E209. A range too wide is a
 
 The limit is checked once, in validation (§7.3 steps 3 and 7), and the diagnostic is positioned at the statement that reaches the limit, or at the instance header when the depth is reached through defaults, clones or logic. The output stage performs **no** depth check of its own: by the time a document is rendered its depth is already known to be within the limit.
 
-**How logic work is counted.** Every other row of the table bounds the *shape* of a program; the last row bounds the *work* one demands, because nesting alone does not: seven `for` blocks nested over ten-element lists are seven levels deep, well inside every other row, and ask for eleven million iterations. One unit of work is **one execution of the body of a `for`** — one iteration. Nothing else is charged: `derive`, `derive?`, `require` and `if` each run at most once per enclosing iteration, so charging the iteration bounds the whole evaluation. The budget is spent by every `for` that runs while one instance is compiled for one version — the block of the instance's own schema and the block of every nested `$(Schema)` value alike (§6.11) — and it is fresh again for the next version and for the next instance, so the bound is on one instance-version and never on the project.
+**How logic work is counted.** Every other row of the table bounds the *shape* of a program; the last row bounds the *work* one demands, because nesting alone does not: seven `for` blocks nested over ten-element lists are seven levels deep, well inside every other row, and ask for eleven million iterations. A loop unit of work is **one execution of the body of a `for`** — one iteration. For programs without `calc`, nothing else is charged: `derive`, `derive?`, `require` and `if` each run at most once per enclosing iteration, so charging the iteration bounds the whole evaluation. The budget is spent by every `for` that runs while one instance is compiled for one version — the block of the instance's own schema and the block of every nested `$(Schema)` value alike (§6.11) — and it is fresh again for the next version and for the next instance, so the bound is on one instance-version and never on the project.
 
 The check is made in §7.3 step 5, as the iteration is about to run, and the diagnostic is positioned at the `for` statement whose iteration crossed the bound. An implementation MUST stop that instance there: it MUST NOT run the remaining iterations, which is what makes the bound a bound and not a report. So seven `for` blocks nested over a literal list of ten elements demand 11 111 110 iterations and are E523, reported at the 1 000 001st; five of them demand 111 110 and compile.
 
@@ -1405,13 +1409,15 @@ Grammar: `derive_statement`, `derive_expr`.
 - The target MUST NOT be `.template` or `.id` (E504).
 - The target MUST NOT traverse a list field, and MUST NOT use an index (E506). Logic cannot rewrite one element of an array.
 - The target MUST NOT use a loop variable as a segment: `derive .slots.$slot.mode = fixed` is E520. Loop variables are read positions (§6.5) and expression values, not write positions, so that every write target can be checked against the schema at P3. To write several fixed fields, write one `derive` for each.
-- The right-hand side is a `derive_expr`, one of five forms:
+- The right-hand side is a `derive_expr`. A leading adjacent `calc(` selects
+  the numeric expression grammar in [ARITHMETIC.md](ARITHMETIC.md). Otherwise
+  it has one of these five forms:
   - a `logic_path` (`.owner.team`, `$slot.mode`), which contributes its resolved value. **The type follows the source**: the written value keeps the type of the value the path resolved to, and is not re-read as text. A path that resolves to no value makes the statement write nothing and report nothing; a path that projects several values is E519.
   - `length(<path>)`, which yields a number under §6.10;
   - the built-in `version`, which yields the integer version being compiled (§6.6);
   - a loop variable (`$n`), which keeps the variable's type: `derive .slot_count = $n` on an `int` field writes a number;
   - any other `value` (§5.5) — a literal, or text carrying `$` interpolation — interpreted by the target field's declared type exactly like an authored value (§5.10), including list coercion, enum normalisation and wildcard expansion, and interpolated as in §5.11 when it is a string containing `$`.
-- The right-hand side is read as one of the first four forms when its first token is `.`, a loop variable, the keyword `length` or the keyword `version`; otherwise it is a value. To write the literal text `.owner.team`, `length(.tags)` or `version` into a `text` field, quote it.
+- Apart from the explicit `calc(...)` form, the right-hand side is read as one of the first four forms when its first token is `.`, a loop variable, the keyword `length` or the keyword `version`; otherwise it is a value. To write the literal text `.owner.team`, `length(.tags)`, `calc(1 + 2)` or `version` into a `text` field, quote it.
 - The result MUST be assignable to the target field's declared type, or E412. `derive .slot_count = length(.slots)` on an `int` field writes a number; `derive .label = .title` on a `text` field copies the title; `derive .schema_version = version` on an `int` field writes the version being compiled.
 - A `derive` inside a `for` body executes once per element and writes its target each time; the last write wins. Abstract has no accumulation operator and no list append: a list is assigned in the instance, or derived once from a single expression. A `derive` whose target and value both ignore the loop variable is therefore equivalent to the same statement written once outside the loop.
 - A `derive` or `derive?` that writes into an absent `@optional` group makes that group present (§4.7), and the group's own defaults and required fields are then filled and checked in §7.3 step 7.
@@ -1536,7 +1542,9 @@ derive .label = $c.id                      // fine: a path (§6.5), not interpol
 
 ### 6.10 Functions
 
-`length(<path>)` is the only function.
+`length(<path>)` is the function available directly in ordinary logic expressions.
+Additional numeric functions are available inside `calc(...)` (see
+[ARITHMETIC.md](ARITHMETIC.md)).
 
 - On a list value it yields the number of elements.
 - On a string value it yields the number of Unicode scalar values.

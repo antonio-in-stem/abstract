@@ -1,0 +1,5 @@
+schema Lamp {
+    name: text(1..40)
+    glow: bool = false
+    old_tint: int(0..255) @optional
+}

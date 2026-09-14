@@ -284,6 +284,8 @@ struct OpenBracket {
     /// True for the `(` of an `image(…)` type, where a `WIDTHxHEIGHT` lexeme
     /// may follow an extension (SPEC §4.4.7).
     image_args: bool,
+    /// True inside the explicit `calc(...)` numeric grammar.
+    calc_args: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -604,6 +606,14 @@ impl<'a> Lexer<'a> {
                 .previous_token()
                 .map(|token| token.is_keyword("image"))
                 .unwrap_or(false);
+        let calc_args = self
+            .brackets
+            .last()
+            .is_some_and(|bracket| bracket.calc_args)
+            || (open == '('
+                && self
+                    .previous_token()
+                    .is_some_and(|token| token.is_keyword("calc") && token.span.1 == offset));
         if self.brackets.len() >= BRACKET_DEPTH && !self.depth_reported {
             self.depth_reported = true;
             self.error(
@@ -620,6 +630,7 @@ impl<'a> Lexer<'a> {
             open,
             offset,
             image_args,
+            calc_args,
         });
     }
 
@@ -661,6 +672,12 @@ impl<'a> Lexer<'a> {
             .last()
             .map(|bracket| bracket.image_args)
             .unwrap_or(false)
+    }
+
+    fn in_calc_arguments(&self) -> bool {
+        self.brackets
+            .last()
+            .is_some_and(|bracket| bracket.calc_args)
     }
 }
 
@@ -1029,6 +1046,9 @@ impl Lexer<'_> {
                 self.require_glued_name();
             }
             '*' => self.emit_punctuation("*", start),
+            '+' if self.in_calc_arguments() => self.emit_punctuation("+", start),
+            '/' if self.in_calc_arguments() => self.emit_punctuation("/", start),
+            '%' if self.in_calc_arguments() => self.emit_punctuation("%", start),
             '?' => {
                 let after_derive = self
                     .tokens
@@ -1050,6 +1070,7 @@ impl Lexer<'_> {
                 let schema_position = self.at_schema_name_position();
                 self.scan_word(schema_position);
             }
+            '-' if self.in_calc_arguments() => self.emit_punctuation("-", start),
             _ if is_word_char(ch) => {
                 let schema_position = self.at_schema_name_position();
                 self.scan_word(schema_position);
@@ -2374,6 +2395,11 @@ impl Lexer<'_> {
                 let end = self.word_end(self.pos);
                 let word = self.text.get(self.pos..end).unwrap_or("");
                 if word == "length" {
+                    return self.char_at(end) == Some('(');
+                }
+                if word == "calc" {
+                    // Arithmetic is deliberately opt-in. Requiring adjacency
+                    // keeps `calc (anything)` an ordinary authored value.
                     return self.char_at(end) == Some('(');
                 }
                 if word == "version" {

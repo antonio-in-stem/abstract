@@ -80,3 +80,30 @@ test("TextMate distinguishes instance keys, tuple columns, and bare values acros
     assert.ok(tokenize(tupleComment).some((t) => t.scopes.includes("comment.line.double-slash.abstract")));
   } finally { registry.dispose(); }
 });
+
+test("TextMate scopes nested calc arithmetic without coloring similarly named data", async () => {
+  const wasm = fs.readFileSync(require.resolve("vscode-oniguruma/release/onig.wasm"));
+  await onig.loadWASM(wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength));
+  const registry = new Registry({
+    onigLib: Promise.resolve({ createOnigScanner: (s) => new onig.OnigScanner(s), createOnigString: (s) => new onig.OnigString(s) }),
+    loadGrammar: async () => JSON.parse(fs.readFileSync(path.join(__dirname, "../syntaxes/abstract.tmLanguage.json"), "utf8"))
+  });
+  try {
+    const grammar = await registry.loadGrammar("source.abstract");
+    let state = INITIAL;
+    const tokenize = (line) => { const result = grammar.tokenizeLine(line, state); state = result.ruleStack; return result.tokens; };
+    tokenize("logic Invoice {");
+    const line = "derive .total = calc(sum(.lines.total) + max(abs($delta), length(.lines)))";
+    const tokens = tokenize(line);
+    const texts = (scope) => tokens.filter((token) => token.scopes.includes(scope)).map((token) => line.slice(token.startIndex, token.endIndex));
+    assert.deepEqual(texts("support.function.calculation.abstract"), ["calc"]);
+    assert.deepEqual(texts("support.function.numeric.abstract"), ["sum", "max", "abs", "length"]);
+    assert.deepEqual(texts("keyword.operator.arithmetic.abstract"), ["+"]);
+    assert.ok(texts("variable.other.path.abstract").includes(".lines.total"));
+    tokenize("}");
+    const data = "note: calc(sum + max)";
+    const dataTokens = tokenize(data);
+    assert.equal(dataTokens.some((token) => token.scopes.includes("support.function.numeric.abstract")), false);
+    assert.ok(dataTokens.some((token) => token.scopes.includes("string.unquoted.bare.abstract")));
+  } finally { registry.dispose(); }
+});

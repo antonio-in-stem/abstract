@@ -145,6 +145,21 @@ test("dotted-path refactor preserves values and comments, flattens repeated pref
   }
 });
 
+test("numeric function completion is confined to explicit calc expressions", () => {
+  const inside = fixture("logic Product {\n derive .max_count = calc(ro|)\n}\n", schema, "logic.abt");
+  const items = model.completions(inside.index, inside.file, inside.offset);
+  assert.ok(items.some((item) => item.label === "round" && item.kind === "Function"));
+  assert.ok(items.some((item) => item.label === "sum"));
+  assert.equal(items.find((item) => item.label === "pow").insert, "pow(${1:base}, ${2:integerExponent})");
+  assert.ok(items.some((item) => item.label === "length"));
+  assert.ok(labels(fixture("logic Product {\n derive .max_count = ro|\n}\n", schema, "logic.abt")).every((label) => label !== "round"));
+  assert.ok(labels(fixture("Product :: @id.x\nlabel: calc(ro|)\n", schema)).every((label) => label !== "round"));
+  assert.ok(labels(fixture('Product :: @id.x\nlabel: "calc(ro|)"\n', schema)).every((label) => label !== "round"));
+  const start = fixture("logic Product {\n derive .max_count = ca|\n}\n", schema, "logic.abt");
+  assert.equal(model.completions(start.index, start.file, start.offset)[0].insert, "calc(${1:expression})");
+  assert.ok(labels(fixture("Product :: @id.x\nlabel: ca|\n", schema)).every((label) => label !== "calc"));
+});
+
 test("definitions resolve field declarations for schema hover metadata", () => {
   const file = "schema-hover.abt";
   const text = "schema Car {\npower: int = 10\nstats {\nlegacy: int @removed(3)\n}\n}\n";

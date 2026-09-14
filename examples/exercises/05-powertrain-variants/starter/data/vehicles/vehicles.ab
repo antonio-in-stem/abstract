@@ -1,0 +1,8 @@
+Vehicle :: @id.quiet_car
+    name: Quiet Car
+    powertrain.kind: electric
+    powertrain.battery.capacity_kwh: 60
+
+Vehicle :: @id.road_car
+    name: Road Car
+    powertrain.kind: gasoline

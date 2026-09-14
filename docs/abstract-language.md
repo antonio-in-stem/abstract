@@ -1,6 +1,6 @@
 # The Abstract language
 
-Abstract 1.1 is a schema-backed data language. You describe the shape of your
+Abstract 1.2 is a schema-backed data language. You describe the shape of your
 data once, write the data in a compact authoring syntax, and compile it into a
 canonical JSON, YAML or RAW document that every other tool reads.
 
@@ -35,7 +35,8 @@ consumers read.
 Four principles decide every rule in the language (SPEC 1.2):
 
 - **Minimal** — one way to express each thing. No imports, no free-key maps, no
-  user-defined functions, no arithmetic, no nested lists, no comments in output.
+  user-defined functions, no nested lists, no comments in output. Numeric
+  calculations explicitly use `calc(...)` in logic.
 - **Elegant** — the source is shorter and clearer than the JSON it produces.
 - **Deterministic** — the same input bytes produce the same output bytes on
   every machine, in every locale, in any command-line order.
@@ -882,7 +883,7 @@ what makes compiled data independent of `--skip-assets`.
 
 ### 6.4 `length` and `version`
 
-`length(<path>)` is the only function: elements for a list, Unicode scalar
+`length(<path>)` counts elements for a list, Unicode scalar
 values for a string, the number of projected values for a projection, and `0`
 for a path with no value. Its argument's *declared* type must be a list or
 `text`, checked before any instance is read (E514).
@@ -926,7 +927,10 @@ SPEC 6.13.
 | a path containing a loop variable | no (E520) |
 
 The right-hand side may be a literal, a string with interpolation, another path
-of the same object, `length(...)`, `version`, or a loop variable. A path keeps
+of the same object, `length(...)`, `version`, a loop variable, or an explicit
+`calc(...)` calculation. See [arithmetic](ARITHMETIC.md) and the
+[invoice exercise](../examples/exercises/06-invoice-arithmetic/README.md).
+A path keeps
 the **type** of the value it resolved to. A path that projects several values is
 E519.
 

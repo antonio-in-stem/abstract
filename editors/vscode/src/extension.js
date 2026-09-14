@@ -164,7 +164,9 @@ function provideDocumentSemanticTokens(document) {
       addRegexTokens(tokens, line, /^\s*([A-Za-z0-9_][A-Za-z0-9_-]*)(?:\[[^\]]*\])?(?=\s*[:{@])/g, "abstractSchemaField", 1);
     } else if (blockKind === "logic") {
       addRegexTokens(tokens, line, /\b(if|require|else|throw|for|in|derive)\b/g, "abstractLogicKeyword");
-      addRegexTokens(tokens, line, /\b(contains|exists|length|and|or|not|in|version)\b|&&|\|\||==|!=|>=|<=|>|</g, "abstractLogicOperator");
+      // `length` and `version` have more precise TextMate roles inside calc(...);
+      // leaving them lexical prevents this fallback provider from overriding those scopes.
+      addRegexTokens(tokens, line, /\b(contains|exists|and|or|not|in)\b|&&|\|\||==|!=|>=|<=|>|</g, "abstractLogicOperator");
       addRegexTokens(tokens, line, /\.[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\$[A-Za-z0-9_][A-Za-z0-9_-]*))*/g, "abstractLogicPath");
     }
     addRegexTokens(tokens, line, /\$[A-Za-z_][A-Za-z0-9_]*/g, "abstractInterpolationVariable");

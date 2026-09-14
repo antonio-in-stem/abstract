@@ -1,0 +1,9 @@
+Person :: @id.ada
+    name: Ada
+    contact.email: ada@example.test
+    contact.city: London
+
+Vendor :: @id.abstract_store
+    name: Abstract Store
+    contact.email: contact.example.test
+    contact.city: Mexico City

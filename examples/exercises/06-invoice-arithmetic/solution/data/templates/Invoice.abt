@@ -1,0 +1,19 @@
+schema Line {
+    quantity: int(1..99)
+    unit_price_cents: int(1..100000)
+    total_cents: int(1..10000000)
+}
+
+schema Invoice {
+    number: text(1..30)
+    lines[1..10]: $(Line)
+    total_cents: int(1..10000000)
+}
+
+logic Line {
+    derive .total_cents = calc(.quantity * .unit_price_cents)
+}
+
+logic Invoice {
+    derive .total_cents = calc(sum(.lines.total_cents))
+}

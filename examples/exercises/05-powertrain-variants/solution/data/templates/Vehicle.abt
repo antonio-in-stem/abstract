@@ -1,0 +1,28 @@
+schema Powertrain {
+    kind: enum(electric, gasoline)
+    battery @optional {
+        capacity_kwh: int(1..200)
+    }
+    fuel @optional {
+        tank_litres: int(1..120)
+    }
+}
+
+logic Powertrain {
+    if .kind == "electric" {
+        require .battery exists
+            else throw "An electric powertrain needs a battery."
+        require not .fuel exists
+            else throw "An electric powertrain cannot have fuel."
+    } else {
+        require .fuel exists
+            else throw "A gasoline powertrain needs fuel."
+        require not .battery exists
+            else throw "A gasoline powertrain cannot have a battery."
+    }
+}
+
+schema Vehicle {
+    name: text(1..50)
+    powertrain: $(Powertrain)
+}

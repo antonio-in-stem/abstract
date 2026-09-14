@@ -9,9 +9,13 @@ YAML or RAW document that every other tool reads.
 ```
 
 Language 1.0 was the first stable definition; the current normative language
-specification is Abstract 1.1 in [`docs/SPEC.md`](docs/SPEC.md), with the
+specification is Abstract 1.2 in [`docs/SPEC.md`](docs/SPEC.md), with the
 complete grammar in [`docs/GRAMMAR.ebnf`](docs/GRAMMAR.ebnf). The reference
-compiler release is 1.3.0 and is written in Rust with **zero dependencies**.
+compiler release is 1.4.0 and is written in Rust with **zero dependencies**.
+
+Start with the [small learning exercises](docs/learn/README.md). Numeric business
+rules use explicit [`calc(...)` expressions](docs/ARITHMETIC.md); shared nested
+schemas retain their own validation rules.
 
 ---
 

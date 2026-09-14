@@ -79,6 +79,8 @@ tags[]: text
       assert.match(result.markdown, /@optional.*omit the field/i);
     }
   }
+  assert.equal(help("schema X {\nvalue: float(-1..1)\n}\n", "float(-1..1)", 0, 7)?.key, "float",
+    "a negative numeric constraint remains one type-hover token");
 });
 
 test("documents logic only in statement and expression roles", () => {
@@ -146,6 +148,27 @@ price: $$99
   const block = help(source, "owner {", 0, "owner ".length);
   assert.equal(block?.key, "bodyBlock");
   assert.equal(source.slice(block.start, block.end), "{");
+});
+
+test("documents calc arithmetic only in explicit logic expression islands", () => {
+  const source = `logic Invoice {
+derive .total = calc(sum(.lines.total) + max(abs($delta), 2) + length(.lines) + version)
+require calc(.total / 100) <= 500 else throw "calc(sum + max)"
+}
+Invoice :: @id.example
+note: calc(sum + max)
+`;
+  for (const [needle, index, key] of [
+    ["calc", 0, "calc"], ["sum", 0, "sum"], ["+", 0, "arithmeticOperator"],
+    ["max", 0, "max"], ["abs", 0, "abs"], ["length", 0, "length"],
+    ["/", 0, "arithmeticOperator"], ["version", 0, "version"]
+  ]) assert.equal(help(source, needle, index, 0)?.key, key, `${needle} occurrence ${index}`);
+  assert.equal(help(source, "$delta", 0, 1)?.key, "logicVariable");
+  assert.equal(help(source, "sum", 1, 1), undefined, "throw text is not arithmetic");
+  assert.equal(help(source, "sum", 2, 1), undefined, "instance bare text is not arithmetic");
+  assert.match(help(source, "/", 0)?.markdown, /floating-point division.*div\(a, b\)/i);
+  assert.equal(help("logic X {\nderive .x = calc (.x + 1)\n}\n", "calc", 0, 1), undefined, "calc must be glued");
+  assert.equal(help("logic X {\nderive .x = calc(.x + 1) suffix\n}\n", "calc", 0, 1), undefined, "derive calc must be the complete right-hand side");
 });
 
 test("does not document comments, ordinary strings, values, identifiers, or near-miss syntax", () => {

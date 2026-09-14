@@ -1,0 +1,5 @@
+schema Package {
+    name: text(1..50)
+    state: enum(queued, packed, sent) = queued
+    weight: int(1..25)
+}

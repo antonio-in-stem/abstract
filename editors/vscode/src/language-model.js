@@ -1,12 +1,16 @@
 // Tolerant editor index for SPEC 1.x. This is not a validator: diagnostics
 // remain the compiler's responsibility. All offsets are UTF-16, as in VS Code.
 const path = require("path");
+const { CALC_FUNCTIONS, calcRegionAt, canStartCalcAt } = require("./arithmetic-context");
 
 const ID = "[A-Za-z0-9_][A-Za-z0-9_-]*";
 const SCHEMA = "[A-Za-z][A-Za-z0-9_]*";
 const PATH = `${ID}(?:\\.${ID})*`;
 const normalize = (name) => name.replace(/[A-Z-]/g, (c) => c === "-" ? "_" : c.toLowerCase());
 const PUBLIC_NOMINATION_DETAIL = "Author nomination for public values; requires Abstract 1.1+. Export checks dependencies separately. Runtime bindings are still required.";
+const CALC_COMPLETION_ARGUMENTS = { min: "${1:first}, ${2:second}", max: "${1:first}, ${2:second}",
+  clamp: "${1:value}, ${2:low}, ${3:high}", div: "${1:dividend}, ${2:divisor}",
+  pow: "${1:base}, ${2:integerExponent}" };
 
 // Strings end on their physical line. Escapes consume the next character;
 // testing only the immediately preceding slash gets even-length runs wrong.
@@ -300,6 +304,8 @@ function completions(index, file, offset) {
     return [];
   }
   if (context.mode === "logic") {
+    const calc = calcRegionAt(context.mask, offset - context.start);
+    const calcStart = canStartCalcAt(context.mask, offset - context.start - lastWord.length);
     const loopPath = before.match(new RegExp(`\\$(${ID})(?:\\.(${PATH}\\.?|))?$`));
     if (loopPath) {
       const bound = loopValue(index, schema, context.loops || [], loopPath[1]);
@@ -307,6 +313,15 @@ function completions(index, file, offset) {
       if (loopPath[2] === undefined) return result((context.loops || []).map((entry) => ({ label: entry.name, kind: "Variable", detail: `loop variable $${entry.name}` })));
     }
     const logicPath = before.match(new RegExp(`\\.(${PATH}\\.?|)$`));
+    if (calc && !logicPath) return result([
+      ...CALC_FUNCTIONS.map((label) => ({ label, kind: "Function", detail: "Abstract numeric function",
+        insert: `${label}(${CALC_COMPLETION_ARGUMENTS[label] || "${1:value}"})`, snippet: true })),
+      { label: "version", kind: "Variable", detail: "Current project version" }
+    ]);
+    if (calcStart && !logicPath) return result([
+      { label: "calc", kind: "Function", detail: "Explicit Abstract 1.2 numeric expression",
+        insert: "calc(${1:expression})", snippet: true }
+    ]);
     if (!logicPath) return result(["require", "if", "for", "derive", "derive?", "exists", "length", "contains", "version"]
       .map((label) => ({ label, kind: "Keyword" })));
     return result(fieldItems(index, schemaFields(index, schema), logicPath[1].split(".").slice(0, -1), false));

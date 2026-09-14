@@ -156,6 +156,7 @@
       "patterns": [
         { "include": "#comments" },
         { "include": "#strings" },
+        { "include": "#calculation" },
         { "include": "#logicKeywords" },
         { "include": "#logicOperators" },
         { "include": "#interpolationVariables" },
@@ -204,6 +205,45 @@
         { "include": "#constants" },
         { "include": "#continuedBareValue" },
         { "include": "#operators" }
+      ]
+    },
+    "calculation": {
+      "name": "meta.expression.calculation.abstract",
+      "begin": "\\b(calc)(\\()",
+      "beginCaptures": {
+        "1": { "name": "support.function.calculation.abstract" },
+        "2": { "name": "punctuation.section.parens.begin.abstract" }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.parens.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#calculationGroup" },
+        { "include": "#calculationTokens" }
+      ]
+    },
+    "calculationGroup": {
+      "begin": "\\(",
+      "beginCaptures": { "0": { "name": "punctuation.section.parens.begin.abstract" } },
+      "end": "\\)",
+      "endCaptures": { "0": { "name": "punctuation.section.parens.end.abstract" } },
+      "patterns": [
+        { "include": "#calculationGroup" },
+        { "include": "#calculationTokens" }
+      ]
+    },
+    "calculationTokens": {
+      "patterns": [
+        { "include": "#comments" },
+        { "name": "support.function.numeric.abstract", "match": "\\b(?:abs|min|max|clamp|div|round|floor|ceil|sqrt|pow|sum|avg|length)(?=\\s*\\()" },
+        { "name": "variable.language.version.abstract", "match": "(?<![.$\\w])version\\b" },
+        { "include": "#paths" },
+        { "name": "variable.other.loop.abstract", "match": "\\$[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)*" },
+        { "include": "#numbersAndRanges" },
+        { "name": "keyword.operator.arithmetic.abstract", "match": "[+*/%-]" },
+        { "name": "punctuation.separator.comma.abstract", "match": "," }
       ]
     },
     "bodyAssignment": {
