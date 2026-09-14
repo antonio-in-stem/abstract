@@ -13,7 +13,6 @@ read [`../ai-primer.md`](../ai-primer.md) instead; this page is about the repo.
 | [`../SPEC.md`](../SPEC.md) | normative. Defines the language, the diagnostics and the output bytes. |
 | [`../GRAMMAR.ebnf`](../GRAMMAR.ebnf) | normative. The complete grammar; SPEC refers to its rule names. |
 | everything else under `docs/` | explanatory. Must agree with SPEC; when it does not, SPEC is right and the doc is a bug. |
-| `site/` | a rendering of `docs/`. Never the source of truth. |
 
 Consequences:
 
@@ -47,7 +46,6 @@ abstract/                 the repository root
   editors/                editor support
   java/                   optional runtime for sealed containers
   scripts/                install scripts
-  site/                   the static documentation site, generated from docs/
   CHANGELOG.md            what changed in 1.0.0
   README.md               install, quick start, layout
 ```
