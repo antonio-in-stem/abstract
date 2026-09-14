@@ -17,10 +17,10 @@ import java.util.Map;
  * {@link #forVersion(int)} materialises any other version:
  *
  * <pre>{@code
- * AbstractData data = AbstractBundle.loadResource(MyPlugin.class, "/packs.abx", key);
+ * AbstractData data = AbstractBundle.loadResource(AppResources.class, "/configuration.abx", key);
  * AbstractData v2   = data.forVersion(2);
- * for (AbstractObject pack : v2.byTemplate("Pack")) {
- *     register(pack.id(), pack.getString("title"));
+ * for (AbstractObject record : v2.byTemplate("Record")) {
+ *     register(record.id(), record.getString("title"));
  * }
  * }</pre>
  */

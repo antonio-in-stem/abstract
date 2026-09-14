@@ -26,4 +26,4 @@ Compiler/schema implementation and editor implementation are separate workstream
 - Language contract: [SPEC.md](../SPEC.md).
 - VS Code language contribution and file association behavior: https://code.visualstudio.com/api/references/contribution-points#contributes.languages
 - VS Code icon theme contribution: https://code.visualstudio.com/api/extension-guides/file-icon-theme
-- Generated asset prompts: [PROMPTS.md](../../design/abstract-identity/PROMPTS.md).
+- The former identity preview and generation prompts were removed during repository cleanup.

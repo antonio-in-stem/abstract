@@ -28,4 +28,4 @@ project data, local machine paths or generated packages.
 
 Compiler, language and extension versions are separate. Update the relevant
 changelog and contract when behavior changes. See `docs/RELEASE.md` for release
-checks. Contributions to code are under MIT; branding follows `BRAND.md`.
+checks. Contributions to code are under MIT.

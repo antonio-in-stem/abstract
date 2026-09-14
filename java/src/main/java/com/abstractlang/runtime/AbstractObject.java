@@ -9,12 +9,12 @@ import java.util.Map;
  * One compiled Abstract instance with typed, dotted-path access.
  *
  * <pre>{@code
- * AbstractObject sticker = data.get("golden_dragon");
- * String rarity   = sticker.getString("rarity");
- * long variants   = sticker.getInt("variant_count", 0);
- * boolean shiny   = sticker.getBool("featured", false);
- * String slotMode = sticker.getString("slots.1.mode");
- * for (AbstractObject entry : sticker.getObjects("lang_values")) {
+ * AbstractObject record = data.get("quarterly_summary");
+ * String category = record.getString("category");
+ * long revision   = record.getInt("revision", 0);
+ * boolean featured = record.getBool("featured", false);
+ * String outputMode = record.getString("outputs.1.mode");
+ * for (AbstractObject entry : record.getObjects("display_values")) {
  *     register(entry.getString("key"), entry.getString("value"));
  * }
  * }</pre>

@@ -1,7 +1,7 @@
 # Abstract Runtime for Java
 
 Zero-dependency Java library that loads compiled Abstract data into a JVM
-application, including Minecraft plugins. Works on **Java 8 and newer**.
+application. Works on **Java 8 and newer**.
 
 It reads the compiled document envelope of SPEC 8.1 - `abstract`, `data` and
 `overlays` - and gives you any version of the project through
@@ -26,11 +26,11 @@ characters, and reports a malformed `\u` escape as
 ## Build the bundle (CLI side)
 
 ```bash
-abstract bundle path/to/project --key "my release passphrase" --out stickers.abx
+abstract bundle path/to/project --key "my release passphrase" --out catalog.abx
 ```
 
-Put `stickers.abx` in your plugin resources (for example
-`src/main/resources/data/stickers.abx`).
+Put `catalog.abx` in your application's resources (for example
+`src/main/resources/data/catalog.abx`).
 
 ## Load the bundle (Java side)
 
@@ -40,26 +40,26 @@ import com.abstractlang.runtime.AbstractData;
 import com.abstractlang.runtime.AbstractKeys;
 import com.abstractlang.runtime.AbstractObject;
 
-public final class StickerRegistry {
+public final class CatalogLoader {
 
     public void loadAll() {
         byte[] key = AbstractKeys.combine(KeyA.PART, KeyB.PART, KeyC.PART);
         AbstractData data = AbstractBundle.loadResource(
-                StickerRegistry.class, "/data/stickers.abx", key);
+                CatalogLoader.class, "/data/catalog.abx", key);
 
-        for (AbstractObject sticker : data.byTemplate("Sticker")) {
+        for (AbstractObject record : data.byTemplate("Record")) {
             register(
-                    sticker.id(),
-                    sticker.getString("rarity"),
-                    sticker.getInt("variant_count", 0),
-                    sticker.getStrings("flags"));
+                    record.id(),
+                    record.getString("category"),
+                    record.getInt("revision", 0),
+                    record.getStrings("labels"));
 
-            for (AbstractObject entry : sticker.getObjects("lang_values")) {
-                addTranslation(sticker.id(),
+            for (AbstractObject entry : record.getObjects("display_values")) {
+                addDisplayValue(record.id(),
                         entry.getString("key"), entry.getString("value"));
             }
 
-            String slotMode = sticker.getString("slots.1.mode", "generate");
+            String outputMode = record.getString("outputs.1.mode", "generate");
         }
     }
 }
@@ -88,7 +88,7 @@ all of them: `data` holds the objects of the **maximum** version, and
 `overlays` holds every earlier version that differs from it (SPEC 7.5).
 
 ```java
-AbstractData data = AbstractBundle.loadResource(Plugin.class, "/data.abx", key);
+AbstractData data = AbstractBundle.loadResource(CatalogLoader.class, "/data.abx", key);
 
 System.out.println(data.minVersion() + ".." + data.maxVersion());  // e.g. 1..3
 AbstractData forV2 = data.forVersion(2);
@@ -132,7 +132,8 @@ in `proguard-rules.pro`.
 **Option A: copy the sources.** The runtime is seven small files with no
 dependencies. Copy `src/main/java/com/abstractlang/runtime/` into your
 project (relocate the package if you prefer). This is the simplest option
-for Minecraft plugins and it lets ProGuard rename everything.
+when you want ProGuard to rename the runtime classes with the rest of the
+application.
 
 **Option B: Maven local install.**
 

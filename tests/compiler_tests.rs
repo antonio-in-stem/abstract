@@ -15,9 +15,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use abstract_lang::{compile_paths, compile_project, compile_sources, CompileOptions, SourceFile};
 
 #[test]
-#[ignore = "invalid under 1.0: RAW now renders the document envelope and one key per line (SPEC 8.6, A46, A50); example/ is a 0.2.0 project"]
+#[ignore = "invalid under 1.0: RAW now renders the document envelope and one key per line (SPEC 8.6, A46, A50); examples/product-catalog/ originated in 0.2.0"]
 fn compiles_example_project_to_human_readable_data() {
-    let project = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("example");
+    let project = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/product-catalog");
 
     let compiled =
         compile_project(&project, CompileOptions::default()).expect("example should compile");

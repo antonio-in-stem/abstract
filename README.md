@@ -1,4 +1,4 @@
-<p align="center"><img src="design/abstract-identity/abstract-logo.png" width="96" alt="Abstract"></p>
+<p align="center"><img src="editors/vscode/icons/abstract-logo.png" width="96" alt="Abstract"></p>
 
 # Abstract
 
@@ -135,14 +135,11 @@ that every platform or every possible input has been independently verified.
 | `examples/`, `docs/examples/` | Exercises and runnable language examples |
 | `docs/` | Guides, specification and output contracts |
 | `java/` | Compiled-output reader |
-| `site/` | Documentation website sources |
 
 See [contributing](CONTRIBUTING.md) for verification commands and
 [the changelog](CHANGELOG.md) for compatibility changes.
 
 ## License
 
-By **Antonio M.**, part of m-project. Source code is available under the
-[MIT license](LICENSE). The Abstract name and supplied logo are covered
-separately by the [brand policy](BRAND.md); the code license does not transfer
-ownership of the project identity.
+By **Antonio M.** Source code is available under the [MIT license](LICENSE).
+The Abstract name and logo remain the property of Antonio M.

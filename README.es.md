@@ -1,4 +1,4 @@
-<p align="center"><img src="design/abstract-identity/abstract-logo.png" width="96" alt="Abstract"></p>
+<p align="center"><img src="editors/vscode/icons/abstract-logo.png" width="96" alt="Abstract"></p>
 
 # Abstract
 
@@ -60,4 +60,4 @@ independientes. La [guía de release](docs/RELEASE.md) recoge verificaciones y l
 La [documentación principal](README.md) enlaza la especificación y los contratos.
 
 El código se distribuye bajo [MIT](LICENSE), conservando los avisos de autoría.
-El nombre y el nuevo logo tienen una [política separada](BRAND.md).
+El nombre y el logo de Abstract siguen siendo propiedad de Antonio M.
