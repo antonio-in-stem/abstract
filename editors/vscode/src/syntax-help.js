@@ -20,6 +20,7 @@ const HELP = {
   image: ["`image` type", "Accepts an asset image with an allowed format and optional pixel-size constraint.", "icon: image(png 128x128, webp *x256)"],
   ref: ["`ref` type", "Stores the normalized id of an instance of the named schema.", "owner: ref(Person)"],
   nested: ["Nested schema type", "Validates an embedded object against another schema; it does not create a referenced instance.", "owner: $(Person)"],
+  default: ["Schema default assignment", "Supplies the field when authored data does not. The default is validated against the field type and filled before logic runs.", "featured: bool = false"],
   optional: ["`@optional` modifier", "Omits the field from output when no authored, defaulted, or derived value supplies it.", "subtitle: text @optional"],
   tag: ["`@tag` modifier", "Marks one scalar field inside a group as the discriminator used by `#tag` shorthand and keyed-list merging.", "items[] {\n    kind: enum(book, video) @tag\n    title: text\n}"],
   public: ["`@public` modifier", "Nominates this field for an author-defined public contract. Nomination alone does not grant runtime access, mutability, or acceptance by an export profile.", "preview: bool @public = true"],
@@ -93,7 +94,10 @@ const TOKEN_PATTERNS = [
   /&[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.(?:\*|[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_][A-Za-z0-9_-]*)*))?/g,
   /#[A-Za-z0-9_][A-Za-z0-9_-]*/g,
   /derive\?/g,
+  /\b(?:text|int|float)\([^\)\r\n]*\)/g,
+  /\[(?:\d+\.\.(?:\d+)?)?\]/g,
   /::|&&|\|\||==|!=|>=|<=|\.\.|[><!]/g,
+  /=/g,
   /\.\{[A-Za-z0-9_, \t-]*\}/g,
   /\.[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\$[A-Za-z0-9_][A-Za-z0-9_-]*))*(?:\[\d+\])?/g,
   /\([A-Za-z0-9_][A-Za-z0-9_-]*(?:\s*,\s*[A-Za-z0-9_][A-Za-z0-9_-]*)+\)(?=\s*:)/g,
@@ -201,9 +205,19 @@ function classify(text, absoluteOffset, line, token, region) {
     const typeRange = captureRange(field, 3);
     if (contains(typeRange, relativeStart, relativeEnd) && relativeStart === typeRange.start) {
       if (token.text.startsWith("$(")) return "nested";
-      if (["text", "int", "float", "bool", "enum", "file", "image", "ref"].includes(token.text)) return token.text;
+      const type = /^(text|int|float|bool|enum|file|image|ref)\b/.exec(token.text)?.[1];
+      if (type) return type;
     }
     if (token.text.startsWith("[") && contains(captureRange(field, 2), relativeStart, relativeEnd)) return "cardinality";
+    if (token.text === "=") {
+      const tail = mask.slice(field[0].length);
+      const assignment = /^(?:\s+@(?:optional|tag|public|since\(\d+\)|removed\(\d+\)))*\s*(=)(?!=)/d.exec(tail);
+      const range = assignment && captureRange(assignment, 1);
+      if (range) {
+        const start = field[0].length + range.start;
+        if (relativeStart === start && relativeEnd === start + 1) return "default";
+      }
+    }
     if ((["@optional", "@tag", "@public"].includes(token.text) || /^@(since|removed)\(\d+\)$/.test(token.text))
         && relativeStart >= field[0].length && (mask.indexOf("=") < 0 || relativeStart < mask.indexOf("="))) {
       return token.text.startsWith("@optional") ? "optional" : token.text.startsWith("@tag") ? "tag"
@@ -253,9 +267,37 @@ function classify(text, absoluteOffset, line, token, region) {
   return undefined;
 }
 
-function markdown(key) {
+function cardinalityPurpose(syntax) {
+  const presence = " The constraint applies when the field is present; `@optional` may omit the field.";
+  if (syntax === "[]") return `Declares a list that accepts any number of elements, including none.${presence}`;
+  const range = /^\[(\d+)\.\.(\d*)\]$/.exec(syntax || "");
+  if (!range) return HELP.cardinality[1];
+  const min = range[1];
+  if (range[2] === "") return `Declares a list that requires at least ${min} ${min === "1" ? "element" : "elements"} and has no maximum.${presence}`;
+  const max = range[2];
+  if (BigInt(min) === BigInt(max)) return `Declares a list that requires exactly ${max} elements.${presence}`;
+  return `Declares a list that requires ${min} through ${max} elements, inclusive.${presence}`;
+}
+
+function numericRangePurpose(key, syntax) {
+  const constraint = /^(?:text|int|float)\(([^)]*)\)$/.exec(syntax || "")?.[1];
+  if (!constraint) return HELP[key][1];
+  const subject = key === "text" ? "Unicode scalar count" : "numeric value";
+  const single = /^([^,]+)$/.exec(constraint)?.[1].trim();
+  const range = /^(-?(?:\d+(?:\.\d*)?|\.\d+))\.\.(-?(?:\d+(?:\.\d*)?|\.\d+))$/.exec(single || "");
+  let detail;
+  if (range && range[1] === range[2]) detail = `This declaration requires the ${subject} to be exactly ${range[1]}.`;
+  else if (range) detail = `This declaration requires the ${subject} to be from ${range[1]} through ${range[2]}, inclusive.`;
+  else if (/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(single || "")) detail = `This declaration requires the ${subject} to be exactly ${single}.`;
+  else detail = `This declaration accepts the ${subject} when it matches any listed number or inclusive range: \`${constraint}\`.`;
+  return `${HELP[key][1]} ${detail}`;
+}
+
+function markdown(key, syntax) {
   const [title, purpose, example] = HELP[key];
-  return `**${title}**\n\n${purpose}\n\n\`\`\`abstract\n${example}\n\`\`\``;
+  const contextualPurpose = key === "cardinality" ? cardinalityPurpose(syntax)
+    : ["text", "int", "float"].includes(key) ? numericRangePurpose(key, syntax) : purpose;
+  return `**${title}**\n\n${contextualPurpose}\n\n\`\`\`abstract\n${example}\n\`\`\``;
 }
 
 function findSyntaxHelp(text, offset) {
@@ -267,7 +309,7 @@ function findSyntaxHelp(text, offset) {
   const token = tokenAt(line.text, line.offset);
   if (!token) return undefined;
   const key = classify(text, offset, line, token, region);
-  return key ? { key, start: line.start + token.start, end: line.start + token.end, markdown: markdown(key) } : undefined;
+  return key ? { key, start: line.start + token.start, end: line.start + token.end, markdown: markdown(key, token.text) } : undefined;
 }
 
 module.exports = { findSyntaxHelp, markdown };

@@ -11,6 +11,8 @@
     { "include": "#instanceHeader" },
     { "include": "#cloneReference" },
     { "include": "#bodyBlock" },
+    { "include": "#bodyAssignment" },
+    { "include": "#tupleRow" },
     { "include": "#versionAnnotations" },
     { "include": "#decorators" },
     { "include": "#tags" },
@@ -19,6 +21,7 @@
     { "include": "#paths" },
     { "include": "#numbersAndRanges" },
     { "include": "#constants" },
+    { "include": "#continuedBareValue" },
     { "include": "#operators" }
   ],
   "repository": {
@@ -180,7 +183,7 @@
       "name": "meta.block.body.abstract",
       "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)*)\\s*(\\{)\\s*$",
       "beginCaptures": {
-        "1": { "name": "variable.other.field.instance.abstract" },
+        "1": { "name": "variable.other.property.abstract variable.other.field.instance.abstract" },
         "2": { "name": "punctuation.section.block.begin.abstract" }
       },
       "end": "^\\s*(\\})",
@@ -191,13 +194,108 @@
         { "include": "#comments" },
         { "include": "#strings" },
         { "include": "#bodyBlock" },
+        { "include": "#bodyAssignment" },
+        { "include": "#tupleRow" },
         { "include": "#versionAnnotations" },
         { "include": "#tags" },
         { "include": "#interpolationVariables" },
         { "include": "#filePaths" },
         { "include": "#numbersAndRanges" },
         { "include": "#constants" },
+        { "include": "#continuedBareValue" },
         { "include": "#operators" }
+      ]
+    },
+    "bodyAssignment": {
+      "patterns": [
+        {
+          "comment": "Tuple columns are field names; the parenthesized groups after ':' are value rows.",
+          "name": "meta.assignment.tuple.abstract",
+          "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\\{[^}]*\\}))*)\\s*(\\()([^)]*)(\\))\\s*(:)",
+          "beginCaptures": {
+            "1": { "name": "variable.other.property.abstract variable.other.field.instance.abstract" },
+            "2": { "name": "punctuation.section.parameters.begin.abstract" },
+            "3": {
+              "name": "meta.tuple.columns.abstract",
+              "patterns": [
+                { "name": "variable.parameter.tuple.abstract", "match": "[A-Za-z0-9_][A-Za-z0-9_-]*" },
+                { "name": "punctuation.separator.comma.abstract", "match": "," }
+              ]
+            },
+            "4": { "name": "punctuation.section.parameters.end.abstract" },
+            "5": { "name": "punctuation.separator.key-value.abstract" }
+          },
+          "end": "$",
+          "patterns": [
+            { "include": "#assignmentValue" }
+          ]
+        },
+        {
+          "name": "meta.assignment.body.abstract",
+          "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\\{[^}]*\\}))*)\\s*(:)",
+          "beginCaptures": {
+            "1": { "name": "variable.other.property.abstract variable.other.field.instance.abstract" },
+            "2": { "name": "punctuation.separator.key-value.abstract" }
+          },
+          "end": "$",
+          "patterns": [
+            { "include": "#assignmentValue" }
+          ]
+        }
+      ]
+    },
+    "assignmentValue": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#tupleRow" },
+        { "include": "#versionAnnotations" },
+        { "include": "#tags" },
+        { "include": "#cloneReference" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#paths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#bareValues" },
+        { "include": "#operators" }
+      ]
+    },
+    "tupleRow": {
+      "name": "meta.tuple.row.abstract",
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.parens.begin.abstract" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#paths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#bareValues" },
+        { "include": "#operators" }
+      ]
+    },
+    "continuedBareValue": {
+      "comment": "A physical continuation line in a bracketed list; assignments and tuple rows handle their own first lines.",
+      "match": "^\\s*([A-Za-z_*][A-Za-z0-9_@*.+-]*(?:[ \\t]+[A-Za-z0-9_*.+-]+)*)(?=\\s*,?\\s*(?://.*)?$)",
+      "captures": {
+        "1": { "name": "string.unquoted.bare.abstract" }
+      }
+    },
+    "bareValues": {
+      "patterns": [
+        {
+          "name": "string.unquoted.bare.abstract",
+          "match": "(?<![A-Za-z0-9_@*.+-])[A-Za-z_@*][A-Za-z0-9_@*.+-]*(?:[ \\t]+[A-Za-z0-9_*.+-]+)*"
+        }
       ]
     },
     "schemaTypes": {

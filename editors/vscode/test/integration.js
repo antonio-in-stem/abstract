@@ -37,6 +37,15 @@ async function run() {
   assert.deepEqual(proseHovers, [], "syntax help matched a keyword spelling inside a comment");
   console.log("PASS: offline contextual syntax hover works in an untitled buffer with precise ranges and ignores comments");
 
+  const constraintDocument = await vscode.workspace.openTextDocument({ language: "abstract", content:
+    'schema Contact {\ncity: text(1..60) = "Mexico City"\nwheels[4..4]: text\n}\n' });
+  for (const [line, column] of [[1, 18], [2, 7], [2, 8], [2, 10]]) {
+    const constraintHovers = await vscode.commands.executeCommand("vscode.executeHoverProvider", constraintDocument.uri, new vscode.Position(line, column));
+    assert.ok(constraintHovers.length, `missing constraint help at ${line}:${column}`);
+    assert.ok(constraintHovers.some((hover) => hover.contents.some((content) => /default|exactly 4/i.test(content.value || content))),
+      `constraint help did not explain its meaning at ${line}:${column}`);
+  }
+
   if (process.env.ABSTRACT_TEST_RESTRICTED === "1") {
     assert.equal(vscode.workspace.isTrusted, false);
     const fields = await vscode.commands.executeCommand("vscode.executeCompletionItemProvider", uri, new vscode.Position(2, 0));

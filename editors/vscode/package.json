@@ -2,7 +2,7 @@
   "name": "abstract-language",
   "displayName": "Abstract Language",
   "description": "Formatting, semantic refactoring, completions, navigation, highlighting, and compiler diagnostics for Abstract 1.x.",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "publisher": "antonio-in-stem",
   "icon": "icons/abstract-logo.png",
   "author": {

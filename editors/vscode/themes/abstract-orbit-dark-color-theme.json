@@ -77,9 +77,15 @@
       }
     },
     {
-      "scope": ["variable.other.field.schema.abstract", "constant.numeric.field.schema.abstract"],
+      "scope": ["variable.other.field.schema.abstract", "variable.other.field.instance.abstract", "variable.parameter.tuple.abstract", "constant.numeric.field.schema.abstract"],
       "settings": {
         "foreground": "#d8f3ff"
+      }
+    },
+    {
+      "scope": ["string.unquoted.bare.abstract"],
+      "settings": {
+        "foreground": "#ffd58f"
       }
     },
     {

@@ -1,6 +1,8 @@
 # Abstract Language for VS Code
 
-Version 1.6.0 adds offline, contextual syntax hover: language constructs explain
+Version 1.6.1 fills in hover help for defaults and constraints, and distinguishes
+instance keys from bare values, including tuple columns and cells.
+Version 1.6.0 added offline, contextual syntax hover: language constructs explain
 their purpose and show a valid Abstract example without requiring a compiler or
 saved project. Version 1.5.0 added the planned authoring features: formatting,
 compiler-bound rename/references, tuple, tagged-object and asset completion,
@@ -184,7 +186,7 @@ or `ABSTRACT_COMPILER_PATH`. `npm run test:integration` uses an isolated VS Code
 profile and temporary project. By default it downloads the declared minimum
 VS Code 1.92.0; `ABSTRACT_VSCODE_PATH` can select an existing VS Code executable.
 It does not install the extension into your regular profile. The package command
-produces `abstract-language-1.6.0.vsix`; use **Extensions: Install from VSIX** to
+produces `abstract-language-1.6.1.vsix`; use **Extensions: Install from VSIX** to
 install it.
 
 The public-inventory host tests also use a temporary profile. Set

@@ -42,6 +42,45 @@ logic Product {
   for (const [needle, index, key] of cases) assert.equal(help(source, needle, index, 1)?.key, key, needle);
 });
 
+test("documents schema defaults and declaration constraints at every meaningful character", () => {
+  const source = `schema Vehicle {
+city: text(1..60) = "Monterrey"
+wheels[4..4]: $(Wheel)
+reviewers[1..]: text
+labels[2..4]: text
+tags[]: text
+}
+`;
+
+  const assignment = help(source, " = ", 0, 1);
+  assert.equal(assignment?.key, "default");
+  assert.equal(source.slice(assignment.start, assignment.end), "=");
+  assert.match(assignment.markdown, /filled before logic runs/i);
+
+  const numericType = "text(1..60)";
+  for (const inside of [5, 6, 7, 8, 9]) {
+    const result = help(source, numericType, 0, inside);
+    assert.equal(result?.key, "text", `numeric type offset ${inside}`);
+    assert.equal(source.slice(result.start, result.end), numericType);
+    assert.match(result.markdown, /from 1 through 60, inclusive/i);
+  }
+
+  for (const [syntax, explanation] of [
+    ["[4..4]", /exactly 4 elements/i],
+    ["[1..]", /at least 1 element.*no maximum/i],
+    ["[2..4]", /2 through 4 elements, inclusive/i],
+    ["[]", /any number of elements, including none/i],
+  ]) {
+    for (let inside = 0; inside < syntax.length; inside += 1) {
+      const result = help(source, syntax, 0, inside);
+      assert.equal(result?.key, "cardinality", `${syntax} offset ${inside}`);
+      assert.equal(source.slice(result.start, result.end), syntax, `${syntax} hover range`);
+      assert.match(result.markdown, explanation);
+      assert.match(result.markdown, /@optional.*omit the field/i);
+    }
+  }
+});
+
 test("documents logic only in statement and expression roles", () => {
   const source = `schema Product {
 items[]: text @optional
@@ -132,6 +171,19 @@ note: "schema logic derive enum text @public @since(2)"
   assert.equal(help(source, "@since", 0, 1)?.key, "headerTag", "bare @since remains a header tag");
   assert.equal(findSyntaxHelp("schemaThing: text", 2), undefined, "identifier substrings do not match");
   assert.equal(help("schema X {\nvalue: text @optionalAnything\n}\n", "@optionalAnything", 0, 1), undefined);
+  const equals = `schema X {
+note: text = left=right
+}
+logic X {
+derive .note = replacement
+if .note == replacement {
+}
+}
+`;
+  assert.equal(help(equals, "=", 0)?.key, "default", "the declaration assignment is documented");
+  assert.equal(help(equals, "=", 1), undefined, "an equals sign inside the default value is literal data");
+  assert.equal(help(equals, "=", 2), undefined, "a derive assignment is not a schema default");
+  assert.equal(help(equals, "==", 0, 1)?.key, "comparison", "logic equality keeps its operator help");
 });
 
 test("interpolation context distinguishes schema text, values, conditions, and loop operands", () => {
