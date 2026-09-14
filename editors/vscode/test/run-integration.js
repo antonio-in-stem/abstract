@@ -34,13 +34,17 @@ async function main() {
       await workspace.write(`${project}/data/shared-instance.ab`, `Shared :: @id.${project}\nvalue: 7\n`);
       await fs.symlink(path.join(workspace.root, "shared"), path.join(workspace.root, project, "data/shared"), process.platform === "win32" ? "junction" : "dir");
     }
-    if (restricted) await workspace.write("vscode-user/User/settings.json", JSON.stringify({
-      "security.workspace.trust.enabled": true, "security.workspace.trust.startupPrompt": "never"
+    await workspace.write("one/.vscode/settings.json", JSON.stringify({
+      "files.associations": { "*.ab": "abstract", "*.abt": "abstract" }
+    }));
+    await workspace.write("vscode-user/User/settings.json", JSON.stringify({
+      "files.associations": { "*.ab": "swift", "*.abt": "swift" },
+      ...(restricted ? { "security.workspace.trust.enabled": true, "security.workspace.trust.startupPrompt": "never" } : {})
     }));
     const file = await workspace.write("test.code-workspace", JSON.stringify({
       folders: [{ path: "one", name: "one" }, { path: "two", name: "two" }, { path: "symbols", name: "symbols" },
         { path: "semantic", name: "semantic" }, { path: "hover", name: "hover" }, { path: "math", name: "math" }],
-      settings: { "abstract.compilerPath": compiler, "files.associations": { "*.ab": "swift", "*.abt": "swift" } }
+      settings: { "abstract.compilerPath": compiler }
     }));
     const executable = process.env.ABSTRACT_VSCODE_PATH || await downloadAndUnzipVSCode({ version: "1.92.0", cachePath: path.resolve(__dirname, "../.vscode-test") });
     // vscode-test's runTests adds --disable-workspace-trust unconditionally.

@@ -107,3 +107,31 @@ test("TextMate scopes nested calc arithmetic without coloring similarly named da
     assert.ok(dataTokens.some((token) => token.scopes.includes("string.unquoted.bare.abstract")));
   } finally { registry.dispose(); }
 });
+
+test("TextMate scopes the contact screenshot as Abstract instance keys and whole bare values", async () => {
+  const wasm = fs.readFileSync(require.resolve("vscode-oniguruma/release/onig.wasm"));
+  await onig.loadWASM(wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength));
+  const registry = new Registry({
+    onigLib: Promise.resolve({ createOnigScanner: (s) => new onig.OnigScanner(s), createOnigString: (s) => new onig.OnigString(s) }),
+    loadGrammar: async () => JSON.parse(fs.readFileSync(path.join(__dirname, "../syntaxes/abstract.tmLanguage.json"), "utf8"))
+  });
+  try {
+    const grammar = await registry.loadGrammar("source.abstract");
+    let state = INITIAL;
+    const tokenize = (line) => { const result = grammar.tokenizeLine(line, state); state = result.ruleStack; return result.tokens; };
+    tokenize("Person :: @id.ada");
+    for (const [line, key, value] of [
+      ["contact.email: ada@example.test", "contact.email", "ada@example.test"],
+      ["contact.city: London", "contact.city", "London"],
+      ["name: Ada", "name", "Ada"]
+    ]) {
+      const tokens = tokenize(line);
+      assert.deepEqual(tokens.filter((token) => token.scopes.includes("variable.other.field.instance.abstract"))
+        .map((token) => line.slice(token.startIndex, token.endIndex)), [key]);
+      assert.deepEqual(tokens.filter((token) => token.scopes.includes("string.unquoted.bare.abstract"))
+        .map((token) => line.slice(token.startIndex, token.endIndex)), [value]);
+      assert.equal(tokens.some((token) => token.scopes.includes("storage.modifier.header.abstract")), false);
+      assert.equal(tokens.some((token) => token.scopes.includes("variable.other.path.abstract")), false);
+    }
+  } finally { registry.dispose(); }
+});

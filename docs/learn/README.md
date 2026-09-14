@@ -4,6 +4,10 @@ These six exercises teach one problem at a time. Each has a
 starter project to edit and a separate `solution/` project with a short guide.
 Compile a starter while you work; a deliberate error is part of the prompt.
 
+Open [the starter workspace](../../examples/exercises/abstract-starters.code-workspace)
+in VS Code, or [the solution workspace](../../examples/exercises/abstract-solutions.code-workspace)
+when checking your answer. Both explicitly select Abstract for `.ab` and `.abt`.
+
 Use compiler 1.4.0 or newer from the repository root:
 
 ```powershell
@@ -27,3 +31,16 @@ Try the starter first. Read its hint only when stuck, and open `solution/`
 after making an attempt. Arithmetic comes last so you can focus on calculations
 after learning shapes, constraints and composition. Keep starter and solution
 as separate projects; compiling their parent directory together duplicates IDs.
+
+When grouping exercises in a VS Code multi-root `.code-workspace`, put language
+associations in that file's top-level `settings`, not only in each folder's
+`.vscode/settings.json`:
+
+```json
+"settings": {
+  "files.associations": { "*.ab": "abstract", "*.abt": "abstract" }
+}
+```
+
+If an existing window still identifies a file as Swift or another language, run
+**Abstract: Use for .ab and .abt in This Workspace** from the Command Palette.

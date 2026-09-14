@@ -21,9 +21,17 @@ async function run() {
   console.log(`Testing Abstract in VS Code ${vscode.version}`);
 
   assert.equal(document.languageId, "swift", "conflicting user association fixture did not apply");
+  await vscode.workspace.getConfiguration("files").update("associations",
+    { "*.ab": "abstract", "*.abt": "abstract" }, vscode.ConfigurationTarget.Workspace);
+  await eventually(() => document.languageId === "abstract",
+    "root workspace associations did not override the global Swift association in a multi-root workspace");
+  assert.equal(vscode.workspace.getConfiguration("files").get("associations")["*.ab"], "abstract");
+  console.log("PASS: root workspace associations override a global conflict that folder-only settings cannot fix in multi-root mode");
+  await vscode.workspace.getConfiguration("files").update("associations",
+    { "*.ab": "swift", "*.abt": "swift" }, vscode.ConfigurationTarget.Workspace);
+  await eventually(() => document.languageId === "swift", "test could not restore the conflicting workspace association");
   assert.equal(await vscode.commands.executeCommand("abstract.useForWorkspace", uri), true);
-  document = await vscode.workspace.openTextDocument(uri);
-  assert.equal(document.languageId, "abstract", "workspace recovery command did not select Abstract");
+  await eventually(() => document.languageId === "abstract", "workspace recovery command did not select Abstract");
 
   const syntaxDocument = await vscode.workspace.openTextDocument({ language: "abstract", content:
     "schema Scratch {\nlabel: text @optional\n}\n// logic and derive are prose here\n" });
