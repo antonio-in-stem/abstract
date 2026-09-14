@@ -143,9 +143,8 @@ npm run benchmark:analysis
 ```
 
 The benchmark separates client-side project discovery and encoding from a new
-compiler process and includes asset checks. The
-[validation ledger](../../../docs/ai/vscode-analysis-validation.md) records its
-fixture, environment, distributions and limits.
+compiler process and includes asset checks. Record the compiler version,
+fixture and environment alongside results when comparing runs.
 
 The extension bundles no compiler binary, background server or Node runtime
 dependency.

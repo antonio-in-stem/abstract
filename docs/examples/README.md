@@ -92,5 +92,5 @@ their schemas declare.
 | `overlays-multi-match` | conformance coverage for SPEC 7.5; referenced from `raw-data.md` |
 | `formats` | `raw-data.md`, site: `docs/raw.html` |
 | `release-policy` | site: `examples/release-policy.html` |
-| `sticker-pack` | `ai-primer.md`, site: `examples/sticker-pack.html` |
+| `sticker-pack` | [AI authoring guide](../ai/README.md) |
 | `readme-tour` | `README.md`, site: `index.html` |
