@@ -1,0 +1,13 @@
+Book :: @id.earthsea
+    title: "A Wizard of Earthsea"
+    author: ursula_le_guin
+    format: paperback
+    tags: fiction, poetry
+    copies: 2
+
+Book :: @id.giovannis_room
+    title: "Giovanni's Room"
+    author: james_baldwin
+    format: hardcover
+    tags: fiction, essay
+    copies: 1

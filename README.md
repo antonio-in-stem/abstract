@@ -69,6 +69,8 @@ abstract --version
 
 ## Quick start
 
+For a guided progression, use the [beginner, intermediate and advanced examples](examples/README.md).
+
 ```sh
 abstract init m-project          # scaffold a project that compiles
 abstract compile m-project JSON  # validate and emit JSON to stdout

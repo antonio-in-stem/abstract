@@ -1,0 +1,41 @@
+schema Contact {
+    email: text(3..120) @optional
+    city: text(1..60) = "Mexico City"
+}
+
+schema Author {
+    name: text(1..80)
+    contact: $(Contact)
+}
+
+schema Member {
+    name: text(1..80)
+    contact: $(Contact)
+}
+
+schema Book {
+    title: text(1..120)
+    author: ref(Author)
+    format: enum(paperback, hardcover, ebook) = paperback
+    tags[1..4]: enum(fiction, history, science, poetry, essay)
+    copies: int(1..12) = 1
+    tag_count: int(1..4)
+}
+
+schema Loan {
+    book: ref(Book)
+    member: ref(Member)
+    state: enum(open, returned) = open
+    loan_period_days: int(1..60) = 14
+    renewal_allowed: bool = true
+    renewal_count: int(0..3) = 0
+}
+
+logic Book {
+    derive .tag_count = length(.tags)
+}
+
+logic Loan {
+    require .renewal_allowed or .renewal_count == 0
+        else throw "A non-renewable loan cannot have renewal history."
+}
