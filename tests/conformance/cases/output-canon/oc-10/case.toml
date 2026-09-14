@@ -1,0 +1,27 @@
+id = '''OC-10'''
+area = '''output-canon'''
+title = '''--allow-unknown field names are emitted as unquoted YAML/RAW keys, producing invalid YAML or silently vanished fields'''
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''security'''
+source_repro = '''repro/output-canon/oc8-key-injection/ (also references: repro/output-canon/oc34-yaml-key-indicators/)'''
+command = '''note #x: hello
+after: still here'''
+expected_kind = '''undecided'''
+expected_note = '''Output is always parseable YAML and every field the compiler accepted is present in it (as JSON already guarantees).'''
+actual_0_2_0 = '''oc8: JSON is valid (`"note #x": "hello"`), YAML is `note #x: "hello"` and PyYAML fails with `yaml.scanner.ScannerError: while scanning a simple key ... could not find expected ':'` while the compiler exited 0.
+oc34 sweep:
+  - dash    => yaml-ok keys= ['template','id','_ dash']
+  [bracket  => YAML-INVALID: ScannerError
+  {brace    => YAML-INVALID: ScannerError
+  *star     => YAML-INVALID: ComposerError
+  &anchor   => yaml-ok keys= ['template','id']      <-- field silently gone
+  !bang     => YAML-INVALID: ScannerError
+  |pipe     => YAML-INVALID: ScannerError
+  >gt       => YAML-INVALID: ScannerError
+  %pct      => YAML-INVALID: ScannerError
+  @at       => YAML-INVALID: ScannerError
+  'quote    => YAML-INVALID: ScannerError'''
+spec_ref = '''5.4, 8.5, 10.3'''
+status = '''ready'''
+note_1_0 = '''The left side of a body statement ends at the first ':' at bracket depth 0 and every path segment is an identifier (SPEC 5.4), so 'note #x' is an invalid field name and the statement is E316; no undeclared key can reach the emitter. The class of defect is closed twice over: '--allow-unknown' does not exist in 1.0 (SPEC 5.12) and every YAML mapping key is double-quoted and escaped (SPEC 8.5, 8.8). The sibling project oc34-yaml-key-indicators/ is E316 for the same reason ("'quote" is not an identifier). Clarification requested in SPEC-ISSUES-logic-engine.md (N2): E316 versus the generic E210 for a left side that is not a path.'''

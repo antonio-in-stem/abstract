@@ -1,0 +1,16 @@
+Author :: @id.ursula_le_guin
+    name: "Ursula K. Le Guin"
+    contact.email: "ursula@example.test"
+
+Author :: @id.james_baldwin
+    name: "James Baldwin"
+    contact.email: "james@example.test"
+    contact.city: "New York"
+
+Member :: @id.mina
+    name: "Mina Patel"
+    contact.city: "Mexico City"
+
+Member :: @id.noah
+    name: "Noah Chen"
+    contact.email: "noah@example.test"

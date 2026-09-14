@@ -1,0 +1,7 @@
+data: [
+{
+        template: "Loc",
+        id: "l",
+        lang_values: "en_us"
+    }
+]

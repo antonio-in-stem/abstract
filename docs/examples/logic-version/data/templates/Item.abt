@@ -1,0 +1,15 @@
+versions 1..2
+
+schema Item {
+    name: text(1..40)
+    glow: bool @since(2) = false
+    schema_version: int(1..9)
+}
+
+logic Item {
+    derive .schema_version = version
+
+    if version >= 2 {
+        derive .glow = true
+    }
+}

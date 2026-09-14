@@ -1,0 +1,6 @@
+# Canonical output is byte-exact LF on every platform. Keep Git's Windows
+# checkout conversion from changing the reference bytes used by the tests.
+expected.json text eol=lf
+expected.yml text eol=lf
+expected.raw text eol=lf
+expected.normalized.json text eol=lf

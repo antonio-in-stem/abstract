@@ -1,0 +1,31 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Probe",
+      "id": "abs_hit",
+      "probe": "C:/Windows/win.ini",
+      "leak": "present"
+    },
+    {
+      "template": "Probe",
+      "id": "abs_miss",
+      "probe": "C:/Windows/definitely-not-here-9f3a.ini",
+      "leak": "present"
+    },
+    {
+      "template": "Probe",
+      "id": "rel_traversal",
+      "probe": "../../outside-project-marker.ini",
+      "leak": "present"
+    }
+  ],
+  "overlays": []
+}

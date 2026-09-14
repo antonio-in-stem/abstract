@@ -1,0 +1,13 @@
+schema T {
+    id: text(1..40)
+    status: enum(active, disabled)
+}
+
+logic T {
+    if .status == "active" {
+        require .id == "one" else throw "A: id must be one"
+    }
+    }
+    require .status == "active" else throw "B: status must be active"
+    derive .status = active
+}

@@ -1,0 +1,8 @@
+Thing :: @id.nbsp
+    name: a b
+
+Thing :: @id.nel
+    name: ab
+
+Thing :: @id.ls
+    name: a b

@@ -1,0 +1,20 @@
+id = '''LP-025'''
+area = '''lexing-parsing'''
+title = '''The hardcoded `lang` -> `lang_values` rename is applied to every field at every nesting depth, not just tuple arrays'''
+severity = '''design'''
+verdict = '''partial'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/lexing-parsing/bug-26-lang-rename-collision/'''
+command = '''`cd repro/lexing-parsing/bug-26-lang-rename-collision && abstract compile . JSON`'''
+expected_kind = '''undecided'''
+expected_note = '''Either the rename is scoped to tuple-array field names only (as documented), or the docs state that any field named `lang`, anywhere in a schema, is emitted as `lang_values`.'''
+actual_0_2_0 = '''schema declares `lang: enum(en_us, es_es)` at root and `meta { lang: text(1..20) }`.
+output:
+```
+"lang_values": "en_us",
+"meta": { "lang_values": "spanish" }
+```
+Both renamed, exit 0, no warning.'''
+spec_ref = '''4.7, 5.4, 8.3, Appendix A (A.1)'''
+status = '''ready'''
+spec_note = '''Abstract 1.0 has no field renaming of any kind: the schema names the output keys (Appendix A), so the root "lang" and the group field "meta.lang" are independent and both are emitted under their own names. The group is present because a statement wrote under it (4.7).'''

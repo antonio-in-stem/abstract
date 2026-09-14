@@ -1,0 +1,318 @@
+Thing :: @id.a00
+&a01.*
+    name: N0
+
+Thing :: @id.a01
+&a02.*
+    name: N1
+
+Thing :: @id.a02
+&a03.*
+    name: N2
+
+Thing :: @id.a03
+&a04.*
+    name: N3
+
+Thing :: @id.a04
+&a05.*
+    name: N4
+
+Thing :: @id.a05
+&a06.*
+    name: N5
+
+Thing :: @id.a06
+&a07.*
+    name: N6
+
+Thing :: @id.a07
+&a08.*
+    name: N7
+
+Thing :: @id.a08
+&a09.*
+    name: N8
+
+Thing :: @id.a09
+&a10.*
+    name: N9
+
+Thing :: @id.a10
+&a11.*
+    name: N10
+
+Thing :: @id.a11
+&a12.*
+    name: N11
+
+Thing :: @id.a12
+&a13.*
+    name: N12
+
+Thing :: @id.a13
+&a14.*
+    name: N13
+
+Thing :: @id.a14
+&a15.*
+    name: N14
+
+Thing :: @id.a15
+&a16.*
+    name: N15
+
+Thing :: @id.a16
+&a17.*
+    name: N16
+
+Thing :: @id.a17
+&a18.*
+    name: N17
+
+Thing :: @id.a18
+&a19.*
+    name: N18
+
+Thing :: @id.a19
+&a20.*
+    name: N19
+
+Thing :: @id.a20
+&a21.*
+    name: N20
+
+Thing :: @id.a21
+&a22.*
+    name: N21
+
+Thing :: @id.a22
+&a23.*
+    name: N22
+
+Thing :: @id.a23
+&a24.*
+    name: N23
+
+Thing :: @id.a24
+&a25.*
+    name: N24
+
+Thing :: @id.a25
+&a26.*
+    name: N25
+
+Thing :: @id.a26
+&a27.*
+    name: N26
+
+Thing :: @id.a27
+&a28.*
+    name: N27
+
+Thing :: @id.a28
+&a29.*
+    name: N28
+
+Thing :: @id.a29
+&a30.*
+    name: N29
+
+Thing :: @id.a30
+&a31.*
+    name: N30
+
+Thing :: @id.a31
+&a32.*
+    name: N31
+
+Thing :: @id.a32
+&a33.*
+    name: N32
+
+Thing :: @id.a33
+&a34.*
+    name: N33
+
+Thing :: @id.a34
+&a35.*
+    name: N34
+
+Thing :: @id.a35
+&a36.*
+    name: N35
+
+Thing :: @id.a36
+&a37.*
+    name: N36
+
+Thing :: @id.a37
+&a38.*
+    name: N37
+
+Thing :: @id.a38
+&a39.*
+    name: N38
+
+Thing :: @id.a39
+&a40.*
+    name: N39
+
+Thing :: @id.a40
+&a41.*
+    name: N40
+
+Thing :: @id.a41
+&a42.*
+    name: N41
+
+Thing :: @id.a42
+&a43.*
+    name: N42
+
+Thing :: @id.a43
+&a44.*
+    name: N43
+
+Thing :: @id.a44
+&a45.*
+    name: N44
+
+Thing :: @id.a45
+&a46.*
+    name: N45
+
+Thing :: @id.a46
+&a47.*
+    name: N46
+
+Thing :: @id.a47
+&a48.*
+    name: N47
+
+Thing :: @id.a48
+&a49.*
+    name: N48
+
+Thing :: @id.a49
+&a50.*
+    name: N49
+
+Thing :: @id.a50
+&a51.*
+    name: N50
+
+Thing :: @id.a51
+&a52.*
+    name: N51
+
+Thing :: @id.a52
+&a53.*
+    name: N52
+
+Thing :: @id.a53
+&a54.*
+    name: N53
+
+Thing :: @id.a54
+&a55.*
+    name: N54
+
+Thing :: @id.a55
+&a56.*
+    name: N55
+
+Thing :: @id.a56
+&a57.*
+    name: N56
+
+Thing :: @id.a57
+&a58.*
+    name: N57
+
+Thing :: @id.a58
+&a59.*
+    name: N58
+
+Thing :: @id.a59
+&a60.*
+    name: N59
+
+Thing :: @id.a60
+&a61.*
+    name: N60
+
+Thing :: @id.a61
+&a62.*
+    name: N61
+
+Thing :: @id.a62
+&a63.*
+    name: N62
+
+Thing :: @id.a63
+&a64.*
+    name: N63
+
+Thing :: @id.a64
+&a65.*
+    name: N64
+
+Thing :: @id.a65
+&a66.*
+    name: N65
+
+Thing :: @id.a66
+&a67.*
+    name: N66
+
+Thing :: @id.a67
+&a68.*
+    name: N67
+
+Thing :: @id.a68
+&a69.*
+    name: N68
+
+Thing :: @id.a69
+&a70.*
+    name: N69
+
+Thing :: @id.a70
+&a71.*
+    name: N70
+
+Thing :: @id.a71
+&a72.*
+    name: N71
+
+Thing :: @id.a72
+&a73.*
+    name: N72
+
+Thing :: @id.a73
+&a74.*
+    name: N73
+
+Thing :: @id.a74
+&a75.*
+    name: N74
+
+Thing :: @id.a75
+&a76.*
+    name: N75
+
+Thing :: @id.a76
+&a77.*
+    name: N76
+
+Thing :: @id.a77
+&a78.*
+    name: N77
+
+Thing :: @id.a78
+&a79.*
+    name: N78
+
+Thing :: @id.a79
+    name: N79

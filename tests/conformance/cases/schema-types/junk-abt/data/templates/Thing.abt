@@ -1,0 +1,6 @@
+this is not a schema line
+random { garbage }
+id: text(1..40)
+schema Thing {
+    id: text(1..40)
+}

@@ -1,0 +1,24 @@
+id = '''DTE-03'''
+area = '''docs-tests-examples'''
+title = '''`--skip-assets` silently changes compiled DATA, not just validation, because `exists` becomes unconditionally true'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/skip-assets-exists/'''
+command = '''cd .../repro/docs-tests-examples/skip-assets-exists && abstract compile data JSON
+abstract compile data JSON --skip-assets
+manual: ./no_such_manual.pdf'''
+expected_kind = '''undecided'''
+expected_note = '''`--skip-assets` skips the file-existence check but leaves derived values identical, or at minimum warns that `exists` results are unreliable in this mode.'''
+actual_0_2_0 = '''Without the flag: exit 1, `File not found at Asset.manual: './no_such_manual.pdf' ...`. With `--skip-assets`: exit 0 and `"has_manual": true` is emitted — a value that is provably wrong, from a compile that reports success.'''
+spec_ref = '''4.4.6, 4.4.7, 6.7, 7.3 (steps 5 and 7), 9.5, 10.4 (E421)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON               -> expected-error.txt
+compile data JSON --skip-assets -> expected-skip-assets.json
+1.0 settles this: "exists" is a presence test that never touches the filesystem (6.7), so
+".manual exists" is true in both runs and has_manual is true in both. The on-disk check for
+"manual" is a schema check (E421) that only --skip-assets suppresses (9.5). The compiled
+bytes are therefore identical whenever the compile succeeds, which is the guarantee the
+audit asked for. assets/icon.png is a 29-byte 16x16 PNG and satisfies image(png 16x16).
+'''

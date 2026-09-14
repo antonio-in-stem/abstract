@@ -1,0 +1,14 @@
+id = '''ADV2-01'''
+area = '''adversarial-2'''
+title = '''A body-statement annotation above the project range reports E430 instead of E603'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+expected_kind = '''error'''
+spec_ref = '''4.12, 5.13, 7.2, 10.6, 11.1'''
+expected_note = '''SPEC 4.12 fixes the rule for every version annotation: "n MUST be within the project range (min <= n <= max), otherwise E603". SPEC 11.1 then pins the precedence explicitly - "E603 before E430 and E440" - and that pair can only arise on a body statement, because E430 exists nowhere else. `@since(9)` in a project declared `versions 1..3` is therefore E603 at the annotation, not E430.'''
+actual_1_0 = '''exit 1 with
+  data/items/x.ab:3:5: error[E430]: This statement can never apply: v exists in versions 1..3, the statement is annotated none.
+No E603 is reported anywhere. `check_statements` in src/resolve.rs resolves the annotation window against the project range and never validates the numbers it contains, so an out-of-range annotation collapses to the empty set and is reported as a contradiction with the field instead of as an out-of-range version. The message compounds this: the {b} substitution of the E430 template renders "none", so the diagnostic does not even name the annotation the author wrote.'''
+status = '''ready'''
+note_1_0 = '''E603 is implemented for schema field annotations (schema.rs) and for instance version windows (resolve.rs check_instance_window) but not for body-statement annotations. See ADV2-02 and ADV2-03 for the other two shapes of the same gap.'''

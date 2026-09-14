@@ -1,0 +1,25 @@
+id = '''L19'''
+area = '''language-design'''
+title = '''Identifier normalization follows three different rules in one file, and case folding is ASCII-only so unicode field names half-normalize'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case9/ (also references: repro/language-design/case9b/)'''
+command = '''&foo.*
+&Foo.*
+TÍTULO: hola'''
+expected_kind = '''undecided'''
+expected_note = '''One documented identifier rule. Either identifiers are ASCII-only and that is enforced everywhere (including ids), or folding is full Unicode (`to_lowercase`) everywhere.'''
+actual_0_2_0 = '''Field names: ASCII-folded. Enum values: ASCII-folded. Instance ids: verbatim, case-sensitive. Non-ASCII names fold only their ASCII characters.'''
+spec_ref = '''3.3, 5.3, 10.2 (E206), 10.4 (E403), A.1 (A29, A32)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)      -> expected-error.txt
+compile data JSON (cwd = l19/case9b)     -> case9b/expected-error.txt (two diagnostics)
+1.0 has one identifier rule and applies it everywhere: identifiers are ASCII, normalisation is
+ASCII-lowercase then "-" to "_", and it is applied to field names, enum members, path
+segments, tag names, clone targets, ref values and instance ids alike (3.3, 5.3, A.1 A29).
+Non-ASCII identifier characters are E206 (A.1 A32), which case9b hits twice - once in the
+instance field name and once in the schema field name, in discovery order. The primary tree is
+a rejection case for an unrelated reason: a clone precedes the first header (E403).
+'''

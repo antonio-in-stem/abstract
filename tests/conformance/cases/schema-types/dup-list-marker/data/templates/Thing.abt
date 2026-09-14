@@ -1,0 +1,4 @@
+schema Thing {
+    id: text(1..40)
+    t[][]: text(1..5)
+}

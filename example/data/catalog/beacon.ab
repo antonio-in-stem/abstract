@@ -1,0 +1,9 @@
+// A clone statement goes directly under its instance header, before any body
+// statement (SPEC 5.7). It copies everything atlas authored; the statements
+// below then replace what differs.
+
+Product :: @id.beacon, @status.draft, @tier.standard
+&atlas.*
+    name: Beacon Export
+    tags: [experimental, internal]
+    capabilities: [#export(availability: alpha), #audit]

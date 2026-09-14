@@ -1,0 +1,25 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Thing",
+      "id": "base",
+      "name": "BaseName",
+      "note": "BaseNote"
+    },
+    {
+      "template": "Thing",
+      "id": "child",
+      "name": "BaseName",
+      "note": "ChildNote"
+    }
+  ],
+  "overlays": []
+}

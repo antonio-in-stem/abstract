@@ -1,0 +1,15 @@
+id = '''cli-23'''
+area = '''cli-project'''
+title = '''Windows verbatim `\\?\` prefix leaks into every asset error message'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/cli-project/case-direct-assets/ (also references: repro/cli-project/case-capdata/, repro/cli-project/case-assets-in-data/)'''
+command = '''../../project/target/release/abstract.exe case-direct-assets/data/items/a.ab case-direct-assets/data/templates/Item.abt JSON'''
+expected_kind = '''document'''
+expected_note = "resolved to 'C:\\Users\\...\\assets\\textures\\icon.png'"
+actual_0_2_0 = "resolved to '\\\\?\\repro\\cli-project\\case-direct-assets\\data\\items\\assets\\textures\\icon.png'"
+spec_ref = '''2.3, 5.9, 9.8'''
+status = '''ready'''
+command_1_0 = '''compile data/items/a.ab JSON   (variants: compile case-capdata/Data JSON, which succeeds; compile case-assets-in-data/data JSON, which is E421)'''
+expected_1_0 = '''The invocation that produced this finding was the three-argument direct form, which is removed (Appendix A53); its replacement resolves the project by walking up to the data directory, so the asset is found and the primary tree simply compiles. The message defect is closed by SPEC 9.8 and SPEC 5.9 together: diagnostics print the source path relative to the project root with forward slashes, absolute, canonical and extended-length platform paths must not appear, and the resolved asset path is printed in project-relative form. The case-assets-in-data variant is the runnable proof, because it is the one that still produces a path in a diagnostic.'''

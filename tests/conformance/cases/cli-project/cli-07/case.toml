@@ -1,0 +1,19 @@
+id = '''cli-07'''
+area = '''cli-project'''
+title = '''Unrecognized options and unrecognized positional tokens are silently ignored; a mistyped format falls back to JSON'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/cli-project/case-flags/'''
+command = '''../../project/target/release/abstract.exe compile case-flags/data RAWW
+... compile case-flags/data RAW
+... compile case-flags/data JSON --skip-asset
+... compile case-flags/data JSON --nonsense
+... compile case-flags/data XML'''
+expected_kind = '''error'''
+expected_note = '''An unknown option or an unknown format keyword is an error listing the accepted values; only an ABSENT format falls back to JSON.'''
+actual_0_2_0 = '''`RAWW` -> JSON output, exit 0 (RAW produces the different `data: [` RAW form). `--skip-asset`, `--nonsense`, `XML` -> exit 0, no diagnostic.'''
+spec_ref = '''9.1, 9.2, 9.3, 9.6, 10.8'''
+status = '''ready'''
+command_1_0 = '''compile data RAWW'''
+expected_1_0 = '''The argument parser is strict and nothing is silently ignored (SPEC 9.1). Primary invocation: RAWW is not one of JSON, YML, YAML or RAW and, with another positional present, a last positional that is neither a format keyword nor a valid input path is E805 (SPEC 9.2), exit code 2. The other invocations of this finding: compile data XML is E805; compile data JSON --skip-asset is E802; compile data JSON --nonsense is E802; compile data RAW is the one that succeeds and renders the RAW form of SPEC 8.6. Only an absent format falls back to JSON.'''

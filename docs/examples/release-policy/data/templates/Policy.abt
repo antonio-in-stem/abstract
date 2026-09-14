@@ -1,0 +1,11 @@
+schema Policy {
+    level: enum(open, guarded, sealed)
+    reviewers[1..]: text(1..40)
+    window_days: int(1..90) = 14
+    notes: text(1..120) @optional
+}
+
+logic Policy {
+    require .level != "sealed" or length(.reviewers) >= 2
+        else throw "A sealed policy needs at least two reviewers."
+}

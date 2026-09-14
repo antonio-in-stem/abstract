@@ -1,0 +1,22 @@
+id = '''DTE-05'''
+area = '''docs-tests-examples'''
+title = '''`abstract bundle --key <secret> --plain` silently discards the key and writes an UNENCRYPTED bundle'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/docs-tests-examples/bundle-flags/'''
+command = '''cd .../repro/docs-tests-examples/bundle-flags && abstract bundle data --key "secret pass" --plain --out both.abx
+abstract unbundle both.abx'''
+expected_kind = '''error'''
+expected_note = '''Error: `--key and --plain are mutually exclusive` (exit 1), or at minimum a loud warning that the supplied key is being ignored.'''
+actual_0_2_0 = '''`abstract: wrote both.abx (116 bytes, 1 item(s), plain)` exit 0; `abstract unbundle both.abx` with NO key prints the full compiled JSON. Supplying the same key afterwards is then refused with `bundle claims to be unencrypted but a key was provided; refusing the downgrade`, so the operator's own key no longer opens their own bundle.'''
+spec_ref = '''9.2, 9.9, Appendix D.1 (item 1)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case. "bundle" is optional tooling that 9.9 explicitly leaves
+undefined, so the outcome of "abstract bundle ..." is not fixed by the spec: an
+implementation that does not ship bundle reports E801, and one that does is bound only by
+Appendix D.1 item 1 (--key together with --plain is a usage error; a supplied key is never
+discarded). Verify as a tooling test against D.1, not as a compiler golden.
+The data/ tree itself is a valid 1.0 project (one T instance, id a, name Alpha).
+'''

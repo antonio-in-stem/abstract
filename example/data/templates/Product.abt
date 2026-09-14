@@ -1,0 +1,30 @@
+schema Product {
+    id: text(1..40)
+    name: text(1..80)
+    status: enum(draft, active, retired)
+    tier: enum(free, standard, premium)
+    release_year: int(2000..2100)
+    tags[]: enum(core, experimental, internal, public, ai_ready) @optional
+
+    owner {
+        team: text(1..50)
+        contact: text(1..80)
+    }
+
+    capabilities[] {
+        id: enum(search, sync, export, audit, automation, analytics) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}
+
+logic Product {
+    // 'capabilities' is a required list, which an empty list satisfies;
+    // 'exists' is false for an empty list, so this rule is not the schema's
+    // (SPEC 6.7).
+    require .capabilities exists
+        else throw "A product declares at least one capability."
+
+    if .status == "retired" {
+        derive .tier = free
+    }
+}

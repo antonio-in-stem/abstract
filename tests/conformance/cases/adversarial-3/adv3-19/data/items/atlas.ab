@@ -1,0 +1,3 @@
+T :: @id.atlas
+    name: a
+    copy(tier): (ok), (ok), ("😀é😀a")

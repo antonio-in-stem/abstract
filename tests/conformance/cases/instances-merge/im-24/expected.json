@@ -1,0 +1,33 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Thing",
+      "id": "item1",
+      "name": "Item 1"
+    },
+    {
+      "template": "Thing",
+      "id": "item10",
+      "name": "Item 10"
+    },
+    {
+      "template": "Thing",
+      "id": "item2",
+      "name": "Item 2"
+    },
+    {
+      "template": "Thing",
+      "id": "item20",
+      "name": "Item 20"
+    }
+  ],
+  "overlays": []
+}

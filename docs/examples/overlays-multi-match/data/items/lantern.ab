@@ -1,0 +1,7 @@
+// An instance window that ends before the base version: lantern is in no
+// base document at all, so it reaches a consumer only through an overlay.
+
+Item :: @removed(3)
+    name: Lantern
+    icon: textures/item.png
+    legacy_tint: 10

@@ -1,0 +1,11 @@
+schema Q {
+    id: text(1..40)
+    desc: text @optional
+    email: text @optional
+    url: text @optional
+    tags[]: text @optional
+    caps[] {
+        id: enum(search, sync) @tag
+        availability: enum(alpha, stable) = stable
+    }
+}

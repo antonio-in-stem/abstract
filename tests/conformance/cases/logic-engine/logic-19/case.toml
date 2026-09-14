@@ -1,0 +1,24 @@
+id = '''LOGIC-19'''
+area = '''logic-engine'''
+title = '''A loop variable spelled with capitals resolves in dynamic paths but is not interpolated into derive values or throw messages'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L20-loopvar-case-mismatch/'''
+command = '''repro/logic-engine/L20-loopvar-case-mismatch — cd repro/logic-engine/L20-loopvar-case-mismatch && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''note should be "filled slot head" (or the capitalised variable should be an error), consistent with the require on the previous line that did resolve `.slots.$Slot`.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "T",
+      "id": "one",
+      "slots": { "head": "manual" },
+      "note": "filled slot $Slot"
+    }
+  ]
+}
+EXIT=0'''
+spec_ref = '''6.5, 6.9, 8.4'''
+status = '''ready'''
+note_1_0 = '''The loop variable is used consistently as '$Slot'. As a dynamic path segment its value is converted to a segment by normalising its text (SPEC 6.5), so '.slots.$Slot' reads slots.head; in the derive value it substitutes the same bound value (SPEC 6.9), so note is 'filled slot head'. Read side and write side agree.'''

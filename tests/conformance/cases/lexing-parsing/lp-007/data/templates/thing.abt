@@ -1,0 +1,11 @@
+schema Thing {
+    id: text(1..40)
+    name: text(1..40) @optional
+    tags[]: text(1..40) @optional
+    note: text(1..200) @optional
+    icon: text(1..200) @optional
+    data: text(1..200) @optional
+    owner {
+        team: text(1..50) @optional
+    }
+}

@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compiler:
+    name: Compiler artifact (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: abstract-linux-x64
+            stage: cp target/release/abstract abstract-linux-x64
+          - os: windows-latest
+            asset: abstract-windows-x64.exe
+            stage: Copy-Item target\release\abstract.exe abstract-windows-x64.exe
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify release tag matches Cargo version
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          test "${GITHUB_REF_NAME#v}" = "$version"
+      - run: cargo test --locked
+      - run: cargo build --release --locked --bin abstract
+      - name: Name release asset
+        run: ${{ matrix.stage }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
+
+  vscode:
+    name: VS Code extension artifact
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: cargo build --locked --bin abstract
+        working-directory: .
+      - run: npm test
+      - run: npm run package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: abstract-language-vsix
+          path: editors/vscode/*.vsix
+          if-no-files-found: error
+
+  github-release:
+    name: Publish GitHub release
+    needs: [compiler, vscode]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Record release checksums
+        working-directory: release-assets
+        run: sha256sum abstract-linux-x64 abstract-windows-x64.exe abstract-language-*.vsix > SHA256SUMS.txt
+      - name: Create draft release from verified artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release-assets/* \
+            --title "Abstract $GITHUB_REF_NAME" \
+            --draft \
+            --generate-notes

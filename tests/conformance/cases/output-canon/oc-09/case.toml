@@ -1,0 +1,19 @@
+id = '''OC-09'''
+area = '''output-canon'''
+title = '''`--out` silently overwrites a source .ab/.abt file, destroying it'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc35-out-overwrite/'''
+command = '''T :: @id.a
+label: precious source'''
+expected_kind = '''error'''
+expected_note = '''abstract: refusing to write output to 'data/items/a.ab': it is one of the compiled source files (exit 1), source untouched.'''
+actual_0_2_0 = '''exit 0, `abstract: wrote data/items/a.ab (json)`. The source file now contains the JSON document, and the next compile fails with:
+  abstract: data/items/a.ab:1: statement '{ "data": [ { "template": "T", "id": "a", "label": "precious source" } ] }' appears before any instance header (expected 'Template :: ...' first)'''
+spec_ref = '''9.4, 9.6, 10.8'''
+status = '''ready'''
+expected_files = '''expected-error.txt'''
+command_1_0 = '''compile . JSON --out data/items/a.ab'''
+
+note_1_0 = '''The destination is a discovered source file, so it is refused with E808 and exit 2, and the source is untouched (SPEC 9.4: a compiler never overwrites its own inputs and never writes a file it would read on the next run). The expectation depends on argv, which `command_1_0` supplies: the runner takes the argument vector from that field, and because it names `--out` it runs over a copy of the tree, so the corpus is never written to whatever the outcome. data/items/a.ab had been captured from the 0.2.0 repro after the destructive write had already replaced it with JSON; it holds the two-line source the case describes, so the project parses and the case tests the refusal rather than the wreckage.'''

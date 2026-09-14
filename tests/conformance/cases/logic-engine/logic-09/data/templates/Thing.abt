@@ -1,0 +1,9 @@
+schema Thing {
+    id: text(1..40)
+    kind: text(1..40)
+}
+
+logic Thing {
+    derive .id = "duplicate"
+    derive .template = "Widget"
+}

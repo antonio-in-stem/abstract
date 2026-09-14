@@ -1,0 +1,20 @@
+id = '''OC-06'''
+area = '''output-canon'''
+title = '''A schema declaring both `lang` and `lang_values` silently collapses them into one output key, losing one field's value'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc3-lang-collision/ (also references: repro/output-canon/oc22-dup-field/)'''
+command = '''lang
+lang_values
+abstract.exe compile . JSON'''
+expected_kind = '''undecided'''
+expected_note = '''data/templates/T.abt:4: duplicate output field 'lang_values' in schema block ('lang' is emitted as 'lang_values')'''
+actual_0_2_0 = '''With `lang: FROM_LANG` then `lang_values: FROM_LANG_VALUES`:
+  { "template": "T", "id": "a", "lang_values": "FROM_LANG_VALUES" }   (FROM_LANG lost)
+With the assignments swapped:
+  { "template": "T", "id": "a", "lang_values": "FROM_LANG" }          (FROM_LANG_VALUES lost, and the surviving value is now published under the wrong field's name)
+Both exit 0; `abstract lint .` prints `abstract: ok`.'''
+spec_ref = '''8.2, 8.3, 8.4'''
+status = '''ready'''
+note_1_0 = '''The lang -> lang_values output rename is removed in 1.0 (Appendix A, A6): fields are emitted under their declared names, in declaration order (SPEC 8.3), so both values survive. The sibling project oc22-dup-field/ is a rejection case: 'my-field', 'my_field' and 'MY_FIELD' all normalise to 'my_field' (SPEC 3.3), so its schema is E302 at the second declaration and E302 again at the third (SPEC 4.3).'''

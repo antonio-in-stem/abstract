@@ -1,0 +1,91 @@
+// All names, IDs, registration marks and engineering values are synthetic fixtures.
+Car :: @id.aurora_demo, @trim.touring, @active
+    model: aurora_estate_uk
+    owner: alex_demo
+    market: uk_ireland
+    steering_position: right
+    vin: SYNTHETICVIN00001
+    registration: DEMO-001
+    exterior_color: aurora_blue
+    accent_colors: accent_*
+    hero: ./images/aurora-estate.png
+    gallery: ./images/{aurora-estate,abstract-logo}.png
+    documents: ./documents/{owner-guide,service-summary}.txt
+    powertrain {
+        architecture: plug_in_hybrid
+        fuel: petrol_electric
+        driven_wheels: all
+        transmission: automatic_8
+        power_kw: 210
+        torque_nm: 430
+        battery_kwh: 24.5
+        consumption_l_per_100km: 1.8
+    }
+    performance {
+        source: synthetic_demo
+        zero_to_100_kmh_s: 7.2
+        top_speed_kmh: 220
+        efficiency_wh_km: 168
+        note: Synthetic values for compiler demonstration only
+    }
+    wheels(position, rim_diameter_in, width_in, material, pressure_kpa): [
+        (front_left, 19, 8.0, alloy, 250),
+        (front_right, 19, 8.0, alloy, 250),
+        (rear_left, 19, 8.5, alloy, 260),
+        (rear_right, 19, 8.5, alloy, 260),
+    ]
+    tires(manufacturer, family, width_mm, aspect_ratio, rim_diameter_in, season): [
+        (Fictional Rubber Co, QuietRoad, 235, 45, 19, all_season),
+        (Fictional Rubber Co, QuietRoad, 235, 45, 19, all_season),
+        (Fictional Rubber Co, QuietRoad, 255, 40, 19, all_season),
+        (Fictional Rubber Co, QuietRoad, 255, 40, 19, all_season),
+    ]
+    reference_seat {
+        position: driver
+        upholstery: recycled_textile
+        color: charcoal
+        heated: true
+        ventilation: true
+        adjustment_axes: 12
+    }
+    seats: [
+        #driver(upholstery: recycled_textile, color: charcoal, heated, ventilation, adjustment_axes: 12),
+        #front_passenger(upholstery: recycled_textile, color: charcoal, heated, ventilation),
+        #rear_left(upholstery: fabric, color: stone),
+        #rear_center(upholstery: fabric, color: stone),
+        #rear_right(upholstery: fabric, color: stone),
+    ]
+    climate {
+        air_conditioning: true
+        temperature_unit: celsius
+        zones: [#driver(target_temperature_c: 21.0), #front_passenger(target_temperature_c: 21.5), #rear(target_temperature_c: 22.0)]
+    }
+    features: [
+        #airbags(level: enhanced, notes.detail: Synthetic restraint-system record, notes.verified: true),
+        #abs,
+        #lane_assist(level: premium),
+        #heated_seats,
+        #parking_camera,
+    ]
+    wheel_checks.{front_left, front_right, rear_left, rear_right}: true
+    labels.{1, 2}: ${id}_fleet
+    legacy_inventory_code: LEGACY-DEMO
+    software_channel: beta @since(2) @removed(3)
+    software_channel: stable @since(3)
+
+Car :: @id.aurora_continental @trim.executive @since(2)
+&aurora_demo.*
+    model: aurora_estate_eu
+    owner: aurora_fleet
+    market: continental_europe
+    steering_position: left
+    vin: SYNTHETICVIN00002
+    registration: DEMO-EU-2
+    exterior_color: glacier_white
+
+Car :: @id.aurora_sport_preview @trim.sport @since(2) @removed(3)
+&aurora_demo
+&aurora_continental.performance
+    vin: SYNTHETICVIN00003
+    registration: DEMO-SP-3
+    exterior_color: ember_red

@@ -1,0 +1,16 @@
+schema Powertrain {
+    kind: enum(electric, gasoline)
+    battery @optional {
+        capacity_kwh: int(1..200)
+    }
+    fuel @optional {
+        tank_litres: int(1..120)
+    }
+}
+
+// TODO: constrain each kind to its permitted fields with logic Powertrain.
+
+schema Vehicle {
+    name: text(1..50)
+    powertrain: $(Powertrain)
+}

@@ -1,0 +1,19 @@
+id = '''OC-25'''
+area = '''output-canon'''
+title = '''Huge and tiny floats expand to 300+ digit decimal literals, and JSON output size is quadratic in nesting depth'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc9-bigfloat/ (also references: repro/output-canon/oc33-deep-recursion/)'''
+command = '''huge
+tiny
+wc -c out.json'''
+expected_kind = '''document'''
+expected_note = '''Documented behaviour, or exponential notation for extreme magnitudes (both JSON and YAML accept 1e300).'''
+actual_0_2_0 = '''round-trips: True True
+huge literal chars: 303
+tiny literal chars: 302
+(and a 500-deep single-field document is 514,616 bytes)'''
+spec_ref = '''3.7, 8.4, 8.7'''
+status = '''ready'''
+note_1_0 = '''Floats are rendered as the shortest decimal string that round-trips, in scientific notation outside 1e-6 <= |value| < 1e21: one digit, '.', at least one fractional digit, 'e', an explicit sign and the exponent with no leading zeros (SPEC 8.7). 1.0e300 renders as 1.0e+300 and 1.0e-300 as 1.0e-300, so the 300-digit literals are gone. The sibling project oc33-deep-recursion/ is a rejection case: its assignment path has 1002 segments against a limit of 64, so it is E209 (SPEC 3.7) and the quadratic-size document is unreachable.'''

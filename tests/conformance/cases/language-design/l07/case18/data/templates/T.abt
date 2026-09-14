@@ -1,0 +1,5 @@
+schema T {
+    template: text @optional
+    id: text @optional
+    version: text @optional
+}

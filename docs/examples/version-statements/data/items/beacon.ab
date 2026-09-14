@@ -1,0 +1,4 @@
+Item :: @id.beacon
+    name: Beacon
+    legacy_tint: 200   @removed(2)
+    legacy_tint: 250   @since(2)

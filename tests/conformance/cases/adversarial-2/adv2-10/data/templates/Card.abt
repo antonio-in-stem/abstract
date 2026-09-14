@@ -1,0 +1,13 @@
+schema Card {
+    name: text(1..40)
+    label: text @optional
+    caps[] {
+        id: enum(search, sync) @tag
+    }
+}
+
+logic Card {
+    for $c in .caps {
+        derive .label = cap-$c
+    }
+}

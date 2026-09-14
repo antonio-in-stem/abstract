@@ -1,0 +1,30 @@
+id = '''LOGIC-09'''
+area = '''logic-engine'''
+title = '''derive can overwrite .id and .template, producing duplicate ids and a template name that was never validated'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L05-derive-overwrites-id/'''
+command = '''repro/logic-engine/L05-derive-overwrites-id — cd repro/logic-engine/L05-derive-overwrites-id && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''Either `.id` / `.template` are rejected as derive targets, or the uniqueness check is re-run after logic. Instances one.ab and two.ab must not both emit id "duplicate", and `template` must name the schema that validated the record ("T").'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Widget",
+      "id": "duplicate",
+      "kind": "first"
+    },
+    {
+      "template": "Widget",
+      "id": "duplicate",
+      "kind": "second"
+    }
+  ]
+}
+EXIT=0
+
+(Same duplicate ids in YML and RAW output; `Widget` is not a declared schema.)'''
+spec_ref = '''4.11, 6.4, 10.5'''
+status = '''ready'''
+note_1_0 = ''''template' and 'id' are envelope keys written by the compiler and can never be a derive target (SPEC 6.4, 6.13). Both statements are E504, reported in source order, at P3, so no instance is ever compiled with a forged id or template.'''

@@ -1,0 +1,4 @@
+Thing :: @id.y
+    note: hello
+    name: $note
+    tags: start $name end

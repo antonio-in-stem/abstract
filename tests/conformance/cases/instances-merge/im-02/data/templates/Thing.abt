@@ -1,0 +1,4 @@
+schema Thing {
+    lang: text(1..40)
+    lang_values: text(1..40)
+}

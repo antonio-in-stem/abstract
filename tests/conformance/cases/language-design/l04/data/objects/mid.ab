@@ -1,0 +1,5 @@
+Thing :: @id.mid_a
+    name: MidA
+&base.*
+Thing :: @id.mid_b
+    name: MidB

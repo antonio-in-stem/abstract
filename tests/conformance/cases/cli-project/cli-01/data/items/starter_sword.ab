@@ -1,0 +1,7 @@
+// Your first instance. Compile the project with:
+//   abstract compile . JSON
+Item :: @id.starter_sword, @rarity.common
+    name: Starter Sword
+    price: 9.5
+    tags: starter
+    stats.power: 12

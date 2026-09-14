@@ -1,0 +1,5 @@
+Product :: @id.atlas, @status.active
+    title: Atlas Search
+    flags: core, promo
+    owner.team: Knowledge Systems
+    owner.contact: systems@example.com

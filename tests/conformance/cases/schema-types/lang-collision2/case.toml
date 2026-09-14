@@ -1,0 +1,22 @@
+id = '''lang-collision2'''
+area = '''schema-types'''
+title = '''The undocumented `lang` -> `lang_values` output rename lets two distinct schema fields alias one output key; one field's value is silently dropped'''
+severity = '''minor'''
+verdict = '''partial'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/lang-collision2/ (also references: repro/schema-types/lang-collision/, repro/schema-types/lang-alias/, repro/schema-types/lang-suggest/)'''
+command = '''abstract compile repro/schema-types/lang-collision2/data JSON
+Related runs: repro/schema-types/lang-collision/ (same schema with lang:text + lang_values:int -> bogus error "Type mismatch at Thing.lang: expected text, but received a int value"); repro/schema-types/lang-alias/ (instance writes `lang_values:` for a schema that only declares `lang` -> accepted); repro/schema-types/lang-suggest/ (typo `langs` -> "Declared fields: id, lang_values, template, id." and no suggestion for the obvious `lang`).'''
+expected_kind = '''document'''
+expected_note = '''Either a parse error ("field 'lang_values' collides with the output name of field 'lang'") or both values preserved.'''
+actual_0_2_0 = '''exit 0, output:
+{
+  "data": [
+    { "template": "Thing", "id": "a", "lang_values": "abc" }
+  ]
+}
+— the value assigned to `lang` is silently gone, and the text(1..40) constraint declared on `lang` was never applied to anything.'''
+spec_ref = '''5.12, 8.2, 8.3, 8.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variants: compile lang-collision/data JSON, compile lang-alias/data JSON, compile lang-suggest/data JSON)'''
+expected_1_0 = '''The lang to lang_values output rename does not exist in 1.0, so lang and lang_values are two ordinary independent fields and both reach the output under their declared names, in declaration order (SPEC 8.3). Primary: both values are emitted and each is checked against its own range. lang-collision: lang is text and lang_values is int, and both compile. lang-alias: the schema declares only lang, so writing lang_values is E409 with no suggestion, because the distance from lang_values to lang is 7. lang-suggest: E409 with the suggestion lang.'''

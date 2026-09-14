@@ -1,0 +1,21 @@
+id = '''DTE-19'''
+area = '''docs-tests-examples'''
+title = "A truncated PNG with a valid signature is reported as 'unrecognized image signature'"
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/docs-tests-examples/png-24-bytes/'''
+command = '''cd .../repro/docs-tests-examples/png-24-bytes && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''`png file header is truncated (need at least 24 bytes, found 23)` or similar.'''
+actual_0_2_0 = '''`abstract: items/a23.ab: Invalid image at Icon.art: './tiny23.png': unrecognized image signature (expected png, jpg, gif, bmp, or webp)` — the signature was in fact recognised.'''
+spec_ref = '''4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)      -> expected-error.txt
+compile data JSON (cwd = dte-19/only24)  -> only24/expected.json
+Same tree as DTE-18, read from the other side: 4.4.7.1 requires a file that matches a
+signature but is too short to be reported as E422 with "note: file is truncated.", and a file
+that matches no signature to be reported as E422 naming the first bytes found. The two
+conditions can never be confused.
+'''

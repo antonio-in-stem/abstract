@@ -1,0 +1,18 @@
+id = '''numbered-yaml'''
+area = '''schema-types'''
+title = '''Numbered keys (the documented `slots { 1: ... 2: ... }` idiom) become integer keys in YAML output but string keys in JSON output'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/numbered-yaml/'''
+command = '''abstract compile repro/schema-types/numbered-yaml/data JSON
+  abstract compile repro/schema-types/numbered-yaml/data YML'''
+expected_kind = '''document'''
+expected_note = '''Both formats represent the key identically (as the string "1").'''
+actual_0_2_0 = '''JSON:  "slots": { "1": "alpha", "2": "beta" }
+YML:   slots:\n      1: "alpha"\n      2: "beta"
+PyYAML safe_load of the YML gives: yaml keys: [(1, 'int'), (2, 'int')]'''
+spec_ref = '''4.9, 8.3, 8.4, 8.5'''
+status = '''ready'''
+command_1_0 = '''compile data JSON  and  compile data YML   (two invocations, two expected files)'''
+expected_1_0 = '''A numbered key is an ordinary field name, never an array index (SPEC 4.9). In JSON it is a string key; in YAML every mapping key is double-quoted, always, which is exactly what makes a field named 1 unambiguous (SPEC 8.5). expected.json and expected.yml carry the same data, which is the cross-format equivalence SPEC 11.3 requires.'''

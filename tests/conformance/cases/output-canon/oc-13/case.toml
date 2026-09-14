@@ -1,0 +1,22 @@
+id = '''OC-13'''
+area = '''output-canon'''
+title = '''RAW emits a blank line for an empty project (`data: [\n\n]`), where JSON and YAML emit `[]`'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc5-raw-empty/'''
+command = '''cd repro/output-canon/oc5-raw-empty
+rm -f data/items/*.ab
+abstract compile . RAW | cat -A
+abstract compile . JSON
+abstract compile . YML | cat -A'''
+expected_kind = '''undecided'''
+expected_note = '''RAW: `data: []` (matching JSON's `"data": []` and YAML's `data: []`).'''
+actual_0_2_0 = '''RAW  (cat -A): data: [$
+              $
+              ]$
+JSON: {\n  "data": []\n}
+YAML (cat -A): data: []$'''
+spec_ref = '''2.4, 8.1, 8.6'''
+status = '''ready'''
+note_1_0 = '''Expected bytes are for the project as it stands, with both instances. The empty variant the 0.2.0 repro produced by deleting the .ab files is not reachable in 1.0: discovery that collects zero source files is E103, and an empty directory is never a valid empty project (SPEC 2.4). An empty 'data' array is reachable only in single-file mode (SPEC 8.1), where RAW renders it as 'data: []' - never as a blank line - because an empty array is '[]' (SPEC 8.6).'''

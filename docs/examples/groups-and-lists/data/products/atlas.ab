@@ -1,0 +1,7 @@
+Product :: @id.atlas
+    title: Atlas Search
+    owner {
+        team: Knowledge Systems
+    }
+    tags: core, public
+    capabilities: [#search, #export(availability: alpha)]

@@ -1,0 +1,19 @@
+schema Brand {
+    id: text(2..32)
+    name: text(2..60) @public
+    legal_name: text(2..80) @optional
+    country: enum(norwyn, selvara, united_states)
+    founded_year: int(1800..2100)
+    active: bool = true
+}
+
+schema Owner {
+    id: text(2..32)
+    display_name: text(2..60) @public
+    owner_kind: enum(individual, fleet, museum)
+    home_market: enum(uk_ireland, continental_europe, north_america)
+    contact @optional {
+        email: text(5..80) @optional
+        phone: text(7..24) @optional
+    }
+}

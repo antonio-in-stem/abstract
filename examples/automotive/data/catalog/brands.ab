@@ -1,0 +1,10 @@
+Brand :: @id.northstar
+    name: Northstar Motor Works
+    legal_name: Northstar Mobility Group
+    country: norwyn
+    founded_year: 1987
+
+Brand :: @id.velora
+    name: Velora Automobili
+    country: selvara
+    founded_year: 2004

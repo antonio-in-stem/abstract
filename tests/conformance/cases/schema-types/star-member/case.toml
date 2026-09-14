@@ -1,0 +1,21 @@
+id = '''star-member'''
+area = '''schema-types'''
+title = '''Enum members ending in '*' are unreachable, and the two-pass validation re-expands them, duplicating list entries'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/star-member/'''
+command = '''abstract compile repro/schema-types/star-member/data JSON'''
+expected_kind = '''error'''
+expected_note = '''`tags: ["a*"]` yields exactly ["a*"] (or the '*' member is rejected at schema-parse time as an illegal member).'''
+actual_0_2_0 = '''exit 0:
+      "tags": [
+        "a*",
+        "ab",
+        "ab"
+      ]
+— three entries from one input element, with "ab" duplicated by the second validation pass.'''
+spec_ref = '''3.5, 4.4.5, 5.6, 10.2'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''An enum member is an identifier (SPEC 4.4.5, and enum_type in GRAMMAR.ebnf), so a quoted string in a member position is E210 at templates/Thing.abt:3. The star is not an identifier character, so an enum member can never end with one and a wildcard can never shadow a member (SPEC 5.6). The double expansion is unreachable in 1.0 for a second reason: interpretation is idempotent, so the re-validation of SPEC 7.3 step 7 cannot expand an already expanded value again.'''

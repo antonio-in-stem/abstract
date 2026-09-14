@@ -1,0 +1,20 @@
+id = '''LP-002'''
+area = '''lexing-parsing'''
+title = '''A `&clone` line written after its instance header is silently ignored, dropping all inherited fields'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/lexing-parsing/bug-24-clone-after-header-dropped/'''
+command = '''`cd repro/lexing-parsing/bug-24-clone-after-header-dropped && abstract compile . JSON` (and `... lint .`)'''
+expected_kind = '''error'''
+expected_note = '''Either the clone applies to the enclosing instance (most useful), or it is a compile error such as "clone reference '&base.*' must appear before the instance header it applies to" with a line number. A clone that resolves to nothing must never be silent.'''
+actual_0_2_0 = '''child.ab:
+```
+Thing :: @id.child
+    &base.*
+    note: ChildNote
+```
+output for `child`: `{ "template": "Thing", "id": "child", "tags": [], "note": "ChildNote" }` — `name: BaseName` from `base` was never inherited. Exit code 0. `abstract lint .` -> `abstract: ok`.'''
+spec_ref = '''5.1, 5.7, 7.3 step 1, 8.2, 8.3, 2.7'''
+status = '''ready'''
+spec_note = '''1.0 reverses the 0.2.0 position rule: 5.7 requires a clone to appear immediately after the header and before any body statement, which is exactly what child.ab writes, so the case is accepted. Indentation is insignificant (3.1). "note" is a plain assignment and replaces the cloned value (5.7, Merging); "tags" is an absent optional list and is omitted, not [] (4.6, 8.9). Order is (template, id) per 2.7.'''

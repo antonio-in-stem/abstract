@@ -1,0 +1,7 @@
+// An instance window that starts at the base version: beacon is in the base
+// and in no earlier version, so it is listed in the overlay's 'removed'.
+
+Item :: @since(3)
+    name: Beacon
+    icon: textures/item.png
+    glow: true

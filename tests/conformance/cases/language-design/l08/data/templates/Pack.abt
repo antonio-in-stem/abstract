@@ -1,0 +1,11 @@
+schema Pack {
+    id: text(1..40)
+    owner {
+        team: text @optional
+        contact: text @optional
+    }
+    slots {
+        one: text @optional
+        two: text @optional
+    }
+}

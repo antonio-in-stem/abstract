@@ -1,0 +1,20 @@
+
+> abstract-language@1.2.0 test:integration
+> node test/run-integration.js
+
+- Resolving version...
+√ Validated version: 1.92.0
+√ Found existing install in C:\Users\PC\Repositories\abstract-vscode\editors\vscode\.vscode-test\vscode-win32-x64-archive-1.92.0
+[main 2026-09-08T00:18:57.315Z] Error: Error mutex already exists
+    at yt.U (C:\Users\PC\Repositories\abstract-vscode\editors\vscode\.vscode-test\vscode-win32-x64-archive-1.92.0\resources\app\out\vs\code\electron-main\main.js:114:71122)
+Failed to fetch chat participant registry {}
+
+[main 2026-09-08T00:18:57.308Z] update#setState disabled
+[main 2026-09-08T00:18:57.310Z] update#ctor - updates are disabled by the environment
+Started local extension host with pid 52788.
+Started initializing default profile extensions in extensions installation folder. file:///c%3A/Users/PC/AppData/Local/Temp/abstract-vscode-uQQotb/vscode-extensions
+Completed initializing default profile extensions in extensions installation folder. file:///c%3A/Users/PC/AppData/Local/Temp/abstract-vscode-uQQotb/vscode-extensions
+Loading development extension at c:\Users\PC\Repositories\abstract-vscode\editors\vscode
+Testing Abstract in VS Code 1.92.0
+PASS: Restricted Mode keeps completions and suppresses compiler diagnostics/commands
+[main 2026-09-08T00:19:03.316Z] Extension host with pid 52788 exited with code: 0, signal: unknown.

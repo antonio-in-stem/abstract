@@ -1,0 +1,5 @@
+Page :: @id.home
+    title: Home
+    flags: hat_*
+    images: ./art/{hero,thumb}.png
+    copy(key, value): (en_us, Welcome), (es_*, Bienvenido)

@@ -1,0 +1,7 @@
+schema Thing {
+    name: text(1..40)
+}
+
+logic Thing {
+    require true else throw "never reached"
+}

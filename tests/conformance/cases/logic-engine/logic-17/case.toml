@@ -1,0 +1,23 @@
+id = '''LOGIC-17'''
+area = '''logic-engine'''
+title = ''''contains' on a text field is exact equality, not substring — content-policy guards silently never fire'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/logic-engine/L08-contains-on-text-is-equality/'''
+command = '''repro/logic-engine/L08-contains-on-text-is-equality — cd repro/logic-engine/L08-contains-on-text-is-equality && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''body is "hello there, this text is forbidden by policy", so the `not ... contains "forbidden"` guard should fail and the `contains "hello"` branch should derive banned.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Doc",
+      "id": "one",
+      "body": "hello there, this text is forbidden by policy"
+    }
+  ]
+}
+EXIT=0'''
+spec_ref = '''6.8, 6.12, 10.5'''
+status = '''ready'''
+note_1_0 = ''''contains' with a string on both sides is a substring test, compared exactly (SPEC 6.8). '.body contains "forbidden"' is true, so 'not ... contains ...' is false and the require fails with E515 and exit 1. Compilation stops there, so the 'contains "hello"' branch never runs.'''

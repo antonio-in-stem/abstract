@@ -1,0 +1,4 @@
+Thing :: @id.alpha
+    label: Real Alpha
+    template: TotallyDifferent
+    id: beta

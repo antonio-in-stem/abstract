@@ -1,0 +1,4 @@
+schema Node {
+    tags[]: text @optional
+    child: $(Node) @optional
+}

@@ -1,0 +1,9 @@
+schema Label {
+    caption: text(1..40)
+    shout: bool = false
+}
+
+logic Label {
+    require length(.caption) <= 20 or not .shout
+        else throw "A shouted label must be short."
+}

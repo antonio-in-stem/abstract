@@ -1,0 +1,6 @@
+&base.*
+
+S :: @id.base_v2
+    name: Base
+    new_field: only_in_v2
+    legacy_flag:

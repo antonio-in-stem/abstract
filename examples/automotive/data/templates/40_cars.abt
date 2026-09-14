@@ -1,0 +1,96 @@
+schema Car {
+    id: text(3..40)
+    model: ref(VehicleModel)
+    owner: ref(Owner)
+    market: enum(uk_ireland, continental_europe, north_america)
+    steering_position: enum(left, right)
+    trim: enum(touring, executive, sport)
+    active: bool = true
+    vin: text(17)
+    registration: text(2..16)
+    exterior_color: enum(aurora_blue, glacier_white, obsidian_black, ember_red)
+    accent_colors[1..4]: enum(accent_blue, accent_black, accent_silver, accent_red)
+    hero: image(png 1536x1024)
+    gallery[2..3]: image(png, jpg)
+    documents[1..3]: file(txt, pdf)
+    powertrain: $(Powertrain)
+    performance: $(PerformanceSnapshot)
+    wheels[4..4]: $(Wheel)
+    tires[4..4]: $(Tire)
+    reference_seat: $(Seat)
+    seats[2..5] {
+        position: enum(driver, front_passenger, rear_left, rear_center, rear_right) @tag
+        upholstery: enum(fabric, synthetic, leather, recycled_textile)
+        color: enum(charcoal, stone, red) = charcoal
+        heated: bool = false
+        ventilation: bool @optional
+        adjustment_axes: int(0..24) = 4
+    }
+    climate {
+        air_conditioning: bool = true
+        temperature_unit: enum(celsius, fahrenheit) = celsius
+        zones[1..4] {
+            position: enum(driver, front_passenger, rear) @tag
+            target_temperature_c: float(16.0..30.0)
+            enabled: bool = true
+        }
+    }
+    features[1..8] {
+        code: enum(airbags, abs, lane_assist, heated_seats, parking_camera) @tag
+        enabled: bool = true
+        level: enum(standard, enhanced, premium) = standard
+        notes @optional {
+            detail: text(1..100) = "Synthetic feature record"
+            verified: bool = false
+        }
+    }
+    wheel_checks {
+        front_left: bool
+        front_right: bool
+        rear_left: bool
+        rear_right: bool
+    }
+    labels {
+        1: text(1..40)
+        2: text(1..40) @optional
+        3: text(1..40) @optional
+    }
+    seat_count: int(2..5)
+    wheel_count: int(4)
+    display_label: text(3..100)
+    schema_version: int(1..3)
+    logic_echo: text @optional
+    legacy_inventory_code: text @removed(3) @optional
+    software_channel: enum(beta, stable) @since(2) @optional
+}
+
+logic Car {
+    derive .seat_count = length(.seats)
+    derive .wheel_count = length(.wheels)
+    derive? .display_label = ${id}_$trim
+    derive .schema_version = version
+
+    require length(.vin) == 17 else throw "VINs in this synthetic corpus contain 17 characters."
+    require .wheels[0].rim_diameter_in >= 12 else throw "The first wheel must have a supported rim size."
+    require .features.code contains "airbags" else throw "Every demo car includes airbags."
+    require not .accent_colors contains "forbidden" else throw "Reserved demo colour."
+    require .performance.minimum_valid_speed_kmh < .performance.top_speed_kmh else throw "Performance speed bounds are reversed."
+
+    if .market == "uk_ireland" {
+        require .steering_position == "right" else throw "UK and Ireland means right-hand drive in this corpus."
+    } else if .market == "continental_europe" {
+        require .steering_position == "left" else throw "Continental Europe means left-hand drive in this corpus."
+    } else {
+        require .steering_position exists else throw "A steering position is required."
+    }
+
+    for $feature in .features {
+        require $feature.code != "forbidden" else throw "Feature $feature is reserved."
+    }
+    for $corner in [front_left, front_right, rear_left, rear_right] {
+        require .wheel_checks.$corner == true else throw "Wheel check $corner failed."
+    }
+    for $mode in [touring] {
+        derive? .logic_echo = $mode
+    }
+}

@@ -1,0 +1,25 @@
+id = '''OC-04'''
+area = '''output-canon'''
+title = '''Two-segment assignment onto an existing scalar is silently discarded - the value never appears in output and no error is raised'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc2-path-panic/'''
+command = '''label: hello
+label.sub: boom'''
+expected_kind = '''error'''
+expected_note = '''A compile error naming data/items/beta.ab and the line, e.g. "cannot assign 'label.sub': 'label' already holds a text value" (or, if sub-paths onto scalars are simply not a feature, "Unknown field 'label.sub'").'''
+actual_0_2_0 = '''Both orders: exit 0, and the output is
+{
+  "data": [
+    {
+      "template": "T2",
+      "id": "beta",
+      "label": "hello"
+    }
+  ]
+}
+The value `boom` is nowhere in the output and nothing was printed to stderr.'''
+spec_ref = '''2.7, 5.4, 5.10, 5.12, 10.4, 11.1'''
+status = '''ready'''
+note_1_0 = '''Identical inputs to OC-03 and the identical outcome; OC-04 pins the silently-discarded-write half of the same defect. Both statements are E443. In data/items/alpha.ab, 'owner.team' traverses a value that is not an object; in data/items2/beta.ab, 'label.sub' traverses the scalar field 'label'. E443 is reported in preference to the E412 that 'owner: plain text' would also raise on a $(Schema) field (SPEC 11.1 fixes the pair E443 before E412). Instances are visited in (template, id) order (SPEC 2.7, 7.3), so the T2/beta diagnostic precedes the Thing/alpha one; both ids are E443, so the file is order-independent. The four sibling projects resolve as follows: case-b ('label:' then 'label.sub:') is E443; case-c (the same two statements in the reverse order) is also E443, because a non-final path segment naming a field the schema declares as a scalar can never be traversed and SPEC 1.2 P4 forbids silently dropping the statement; case-d is E409 for the unknown field 'regionn' with the suggestion 'region' (SPEC 9.8); case-e ('label.sub.deep') is E443.'''

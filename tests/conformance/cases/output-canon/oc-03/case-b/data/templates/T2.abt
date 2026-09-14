@@ -1,0 +1,4 @@
+schema T2 {
+    id: text(1..80)
+    label: text(1..200)
+}

@@ -1,0 +1,6 @@
+schema T {
+    name: text(1..40)
+    copy[] {
+        tier: text(1..3)
+    }
+}

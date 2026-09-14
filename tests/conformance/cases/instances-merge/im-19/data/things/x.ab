@@ -1,0 +1,3 @@
+Thing :: @id.x
+name: X
+caps: [#search(availability: alpha), #search(availability: stable), #s*]

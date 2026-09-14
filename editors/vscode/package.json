@@ -1,0 +1,249 @@
+{
+  "name": "abstract-language",
+  "displayName": "Abstract Language",
+  "description": "Write and validate families of objects in Abstract with schema-aware completion, live diagnostics, navigation and checked refactoring.",
+  "version": "1.7.2",
+  "publisher": "antonio-in-stem",
+  "icon": "icons/abstract-logo.png",
+  "author": {
+    "name": "Antonio M."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/antonio-in-stem/abstract"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "files": [
+    "package.json",
+    "LICENSE.txt",
+    "icons/*.json",
+    "icons/*.svg",
+    "icons/abstract-logo.png",
+    "language-configuration.json",
+    "syntaxes/**",
+    "themes/**",
+    "src/**",
+    "BRAND.md",
+    "CHANGELOG.md",
+    "docs/**"
+  ],
+  "activationEvents": [
+    "onLanguage:abstract",
+    "workspaceContains:**/*.ab",
+    "workspaceContains:**/*.abt"
+  ],
+  "main": "./src/extension.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:integration": "node test/run-integration.js",
+    "test:integration:public": "node test/run-public-integration.js",
+    "benchmark": "node test/performance.js",
+    "benchmark:analysis": "node test/analysis-performance.js",
+    "package": "vsce package --no-dependencies"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Editing features are available. Running the configured compiler requires workspace trust.",
+      "restrictedConfigurations": [
+        "abstract.compilerPath"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "abstract.inspectPublicFields",
+        "title": "Abstract: Inspect Public Fields",
+        "enablement": "isWorkspaceTrusted && editorLangId == abstract"
+      },
+      {
+        "command": "abstract.compileCurrentProject",
+        "title": "Abstract: Compile Current Project",
+        "enablement": "isWorkspaceTrusted && editorLangId == abstract"
+      },
+      {
+        "command": "abstract.lintCurrentProject",
+        "title": "Abstract: Lint Current Project",
+        "enablement": "isWorkspaceTrusted && editorLangId == abstract"
+      },
+      {
+        "command": "abstract.useForWorkspace",
+        "title": "Abstract: Use for .ab and .abt in This Workspace"
+      },
+      {
+        "command": "abstract.showDiagnosticStatus",
+        "title": "Abstract: Show Diagnostic Status"
+      }
+    ],
+    "languages": [
+      {
+        "id": "abstract",
+        "aliases": [
+          "Abstract",
+          "abstract"
+        ],
+        "extensions": [
+          ".ab",
+          ".abt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "abstract",
+        "scopeName": "source.abstract",
+        "path": "./syntaxes/abstract.tmLanguage.json"
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "abstractSchemaKeyword",
+        "superType": "keyword",
+        "description": "Abstract schema block keywords."
+      },
+      {
+        "id": "abstractSchemaType",
+        "superType": "type",
+        "description": "Abstract schema primitive types."
+      },
+      {
+        "id": "abstractSchemaModifier",
+        "superType": "modifier",
+        "description": "Abstract schema decorators."
+      },
+      {
+        "id": "abstractSchemaField",
+        "superType": "property",
+        "description": "Abstract schema field declarations."
+      },
+      {
+        "id": "abstractLogicKeyword",
+        "superType": "keyword",
+        "description": "Abstract logic control keywords."
+      },
+      {
+        "id": "abstractLogicOperator",
+        "superType": "operator",
+        "description": "Abstract logic operators."
+      },
+      {
+        "id": "abstractLogicPath",
+        "superType": "variable",
+        "description": "Abstract logic root and variable paths."
+      },
+      {
+        "id": "abstractInterpolationVariable",
+        "superType": "variable",
+        "description": "Abstract $variables used in logic and interpolated paths."
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "abstract",
+        "scopes": {
+          "abstractSchemaKeyword": [
+            "keyword.declaration.schema.abstract"
+          ],
+          "abstractSchemaType": [
+            "support.type.primitive.schema.abstract"
+          ],
+          "abstractSchemaModifier": [
+            "storage.modifier.schema.abstract"
+          ],
+          "abstractSchemaField": [
+            "variable.other.field.schema.abstract"
+          ],
+          "abstractLogicKeyword": [
+            "keyword.control.logic.abstract"
+          ],
+          "abstractLogicOperator": [
+            "keyword.operator.logical.logic.abstract"
+          ],
+          "abstractLogicPath": [
+            "variable.other.path.abstract"
+          ],
+          "abstractInterpolationVariable": [
+            "variable.other.interpolation.abstract"
+          ]
+        }
+      }
+    ],
+    "themes": [
+      {
+        "label": "Abstract Orbit Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/abstract-orbit-dark-color-theme.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[abstract]": {
+        "editor.semanticHighlighting.enabled": true,
+        "editor.defaultFormatter": "antonio-in-stem.abstract-language"
+      }
+    },
+    "iconThemes": [
+      {
+        "id": "abstract-file-icons",
+        "label": "Abstract File Icons",
+        "path": "./icons/abstract-file-icon-theme.json"
+      }
+    ],
+    "configuration": {
+      "title": "Abstract",
+      "properties": {
+        "abstract.compilerPath": {
+          "scope": "resource",
+          "type": "string",
+          "default": "abstract",
+          "description": "Path to the abstract compiler binary used for linting."
+        },
+        "abstract.projectPath": {
+          "scope": "resource",
+          "type": "string",
+          "default": "",
+          "description": "Optional Abstract project path to lint. Empty means the project the open file belongs to: the parent of the nearest ancestor directory named 'data'."
+        },
+        "abstract.outputFormat": {
+          "scope": "resource",
+          "type": "string",
+          "default": "JSON",
+          "enum": [
+            "JSON",
+            "YML",
+            "YAML",
+            "RAW"
+          ],
+          "description": "Format used by the Abstract compile command."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.9.1",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.2.0"
+  },
+  "homepage": "https://github.com/antonio-in-stem/abstract",
+  "bugs": {
+    "url": "https://github.com/antonio-in-stem/abstract/issues"
+  },
+  "keywords": [
+    "abstract",
+    "schema",
+    "validation",
+    "data"
+  ]
+}

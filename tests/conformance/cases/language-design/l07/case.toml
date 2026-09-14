@@ -1,0 +1,37 @@
+id = '''L07'''
+area = '''language-design'''
+title = '''Compiled output carries no schema/version/provenance metadata, and `template`/`id` are reserved keys that an instance can silently overwrite'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case24/ (also references: repro/language-design/case18/)'''
+command = '''# no metadata anywhere:
+./project/target/release/abstract.exe compile repro/language-design/case24/data JSON
+OUTPUT: { "data": [ { "template": "Sticker", "id": "shulker", ... } ] }
+./project/target/release/abstract.exe compile repro/language-design/case24/data YML
+OUTPUT: data:\n  - template: "Sticker"\n    id: "shulker"\n ...
+# a schema can hijack the discriminator (case18/data/templates/T.abt declares template/id/version):
+./project/target/release/abstract.exe compile repro/language-design/case18/data JSON
+OUTPUT: { "data": [ { "template": "my_own_value", "id": "t1", "version": "2" } ] }
+-> AbstractData.byTemplate("T") will never find this object.
+# a variant's asset path is unresolvable without a recorded root:
+./project/target/release/abstract.exe compile repro/language-design/case24/overlays/v2/data JSON
+OUTPUT: { "data": [ { "template":"Sticker","id":"shulker_v2","rarity":"mythic","icon":"./textures/shulker_v2.png" } ] }
+-> "./textures/..." is identical in the base and the overlay output; only the compiler knew the roots differed.'''
+expected_kind = '''undecided'''
+expected_note = '''The compiled document should identify the compiler, the schema versions it was produced against, the available data versions and their asset roots, and the default version — and `template`/`id` should be enforced as reserved.'''
+actual_0_2_0 = '''Root object is `{"data": [...]}` with no metadata; `template` is silently overwritable by a schema field of the same name; relative asset paths carry no root.'''
+spec_ref = '''4.11, 5.9, 8.1, 8.2, 10.3 (E314), A.1 (A7), A.3 (A46)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile . JSON (cwd = case root)        -> expected.json
+compile data JSON (cwd = l07/case18)    -> case18/expected-error.txt (two diagnostics)
+The metadata half is answered by the envelope: every document carries abstract.format,
+abstract.compiler and abstract.versions, plus data and overlays (8.1, A.3 A46). The
+reserved-key half is answered by 4.11: declaring "template" is E314, and declaring "id" as
+anything other than "id: text" or "id: text(a..b)" with no modifier and no default is E314 as
+well, so case18's schema produces two P3 diagnostics and the instance is never compiled. The
+primary tree compiles the base project only, because the discovery root is the data directory
+and overlays/ lies outside it; asset values are emitted verbatim and are resolved against
+<project root>/assets by the single rule of 5.9.
+'''

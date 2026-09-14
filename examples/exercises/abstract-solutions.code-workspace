@@ -1,0 +1,28 @@
+{
+  "folders": [
+    {
+      "path": "01-task-schema/solution"
+    },
+    {
+      "path": "02-package-rules/solution"
+    },
+    {
+      "path": "03-reusable-contact/solution"
+    },
+    {
+      "path": "04-versioned-lamp/solution"
+    },
+    {
+      "path": "05-powertrain-variants/solution"
+    },
+    {
+      "path": "06-invoice-arithmetic/solution"
+    }
+  ],
+  "settings": {
+    "files.associations": {
+      "*.ab": "abstract",
+      "*.abt": "abstract"
+    }
+  }
+}

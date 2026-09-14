@@ -1,0 +1,4 @@
+&MyThing.*
+
+T :: @id.c
+    name: C

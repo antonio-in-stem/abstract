@@ -1,0 +1,36 @@
+schema Address {
+    city: text(1..60)
+    country: enum(mx, us, ca)
+}
+
+schema Customer {
+    name: text(1..80)
+    address: $(Address)
+}
+
+schema Line {
+    sku: text(1..20)
+    kind: enum(service, goods)
+    quantity: int(1..99)
+    unit_price_cents: int(1..100000)
+    total_cents: int(1..9900000)
+}
+
+schema Invoice {
+    number: text(1..30)
+    status: enum(draft, issued, paid)
+    currency: enum(mxn, usd, cad)
+    customer: $(Customer)
+    lines[1..8]: $(Line)
+    total_cents: int(1..9900000)
+}
+
+logic Line {
+    derive .total_cents = calc(.quantity * .unit_price_cents)
+}
+
+logic Invoice {
+    derive .total_cents = calc(sum(.lines.total_cents))
+    require .total_cents <= 500000
+        else throw "Invoice total exceeds the 500000-cent approval limit."
+}

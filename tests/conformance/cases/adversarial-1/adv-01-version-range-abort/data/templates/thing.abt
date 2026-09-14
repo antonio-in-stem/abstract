@@ -1,0 +1,5 @@
+versions 1..2000000000
+
+schema Thing {
+    name: text(1..40)
+}

@@ -1,0 +1,33 @@
+id = '''L22'''
+area = '''language-design'''
+title = '''Tuple-array syntax is detected by the presence of any parenthesis on the left, and a tuple list missing its parentheses silently compiles to an empty array'''
+severity = '''critical'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case22/'''
+command = '''# incidental parens on the left:
+# a1.ab:  A :: @id.a1 / name (draft): Atlas / pairs(key, value): (a, 1), (b, 2)
+./project/target/release/abstract.exe compile repro/language-design/case22/data JSON
+OUTPUT: abstract: objects/a1.ab: Type mismatch at A.name: expected text, but received a list value. Wrap the value in quotes to keep it as text.
+# missing parens on the right -> silent empty array:
+# a1.ab:  A :: @id.a1 / name: Atlas / pairs(key, value): a, 1
+./project/target/release/abstract.exe compile repro/language-design/case22/data JSON
+OUTPUT (exit 0): { "template":"A","id":"a1","name":"Atlas","pairs":[] }
+(Arity IS checked when parens are present, and that message is good:)
+# pairs(key, value): (a, 1), (b, 2, 3)
+OUTPUT: abstract: objects/a1.ab:3: tuple arity mismatch in 'pairs': declared 2 column(s) (key, value), found a tuple with 3 value(s)'''
+expected_kind = '''error'''
+expected_note = '''A tuple-array left side should require the parenthesis to close at the end of the left side and to follow the field name with no gap; and a tuple-array assignment whose right side contains no `(...)` group should be an error, never an empty array.'''
+actual_0_2_0 = '''Any `(` on the left triggers tuple mode; a right side with no parentheses yields `[]` silently.'''
+spec_ref = '''5.5, 10.2 (E210), 10.4 (E416, E417), A.1 (A66)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+The staged tree is the benign variant (no tuple constructs), so it compiles: "pairs: []" is an
+explicit empty list on a list group with no cardinality (4.6). The defects the case reports are
+closed by 5.5 and A.1 A66: a tuple array is written "name(col, ...)" with a field path before
+the "(" and the closing paren last, so incidental parentheses on the left cannot switch a
+statement into tuple mode; rows must be separated by depth-0 commas and each row is
+parenthesised, so a right side with no "(...)" group is E210 rather than an empty array; and
+arity and duplicate columns are E416 and E417.
+'''

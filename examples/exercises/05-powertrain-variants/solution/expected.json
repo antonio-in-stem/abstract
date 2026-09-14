@@ -1,0 +1,35 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.4.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Vehicle",
+      "id": "quiet_car",
+      "name": "Quiet Car",
+      "powertrain": {
+        "kind": "electric",
+        "battery": {
+          "capacity_kwh": 60
+        }
+      }
+    },
+    {
+      "template": "Vehicle",
+      "id": "road_car",
+      "name": "Road Car",
+      "powertrain": {
+        "kind": "gasoline",
+        "fuel": {
+          "tank_litres": 50
+        }
+      }
+    }
+  ],
+  "overlays": []
+}

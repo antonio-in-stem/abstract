@@ -1,0 +1,3 @@
+Item :: @id.x
+    name: N
+    v: a  @removed(9)

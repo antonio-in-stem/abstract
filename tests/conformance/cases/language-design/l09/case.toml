@@ -1,0 +1,22 @@
+id = '''L09'''
+area = '''language-design'''
+title = '''`@field.value` in a header and `field.value:` in a body mean opposite things — the same dotted notation is a value separator in one place and a path separator in the other'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case3/'''
+command = '''owner { team: text }'''
+expected_kind = '''undecided'''
+expected_note = '''Either the header supports nested paths (`@owner.team.core`, unambiguous because the last segment is the value — brittle), or, better, the header uses a different separator from the body so the two cannot be confused, e.g. `@owner=team` / `@id=atlas`, keeping `.` exclusively for paths everywhere.'''
+actual_0_2_0 = '''`.` is a value separator in headers and a path separator in bodies; header tags cannot address nested fields, and the failure is a downstream type error that never mentions the header.'''
+spec_ref = '''5.2, 5.4, 8.3, 10.4 (E429, E438), A.1 (A67)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt (two diagnostics: h2 then h3)
+1.0 keeps the two notations distinct and makes the conflict loud instead of resolving it: a
+header tag and a body statement that write the same path are E429, and so are two body
+statements (5.2, 5.4). h2 and h3 are therefore both rejected; h1 alone would compile, with
+"@version.1.2.3" splitting at the first dot after the tag name and the value interpreted by
+the field's declared type (5.2, A.1 A67). A header tag can never reach a nested field: that is
+E438, which names the construct, so the failure mode the case describes is gone.
+'''

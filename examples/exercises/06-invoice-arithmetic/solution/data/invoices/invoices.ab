@@ -1,0 +1,3 @@
+Invoice :: @id.inv_001
+    number: INV-001
+    lines(quantity, unit_price_cents): (2, 150), (1, 120)

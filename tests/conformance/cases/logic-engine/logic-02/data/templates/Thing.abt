@@ -1,0 +1,18 @@
+schema Thing {
+    id: text(1..40)
+    status: enum(active, disabled)
+    label: text(1..40) @optional
+}
+
+logic thing {
+    require .status == "active" else throw "status must be active"
+    derive .label = "derived-by-lowercase-block"
+}
+
+logic Thnig {
+    require .status == "active" else throw "status must be active (typo block)"
+}
+
+logic Widget {
+    require false else throw "schema Widget does not exist at all"
+}

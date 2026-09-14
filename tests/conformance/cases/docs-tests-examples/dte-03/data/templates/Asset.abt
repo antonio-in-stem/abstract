@@ -1,0 +1,14 @@
+schema Asset {
+    id: text(1..40)
+    image: image(png 16x16)
+    manual: file(pdf) @optional
+    has_manual: bool = false
+}
+
+logic Asset {
+    if .manual exists {
+        derive .has_manual = true
+    }
+    require .image exists
+        else throw "every asset needs its image on disk"
+}

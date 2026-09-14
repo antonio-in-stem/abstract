@@ -1,0 +1,7 @@
+schema Brand {
+    name: text
+}
+
+schema Model {
+    brand: ref(Brand)
+}

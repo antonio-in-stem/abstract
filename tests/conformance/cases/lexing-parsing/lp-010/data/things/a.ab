@@ -1,0 +1,3 @@
+Thing :: @id.a
+    id: b
+    name: FromA

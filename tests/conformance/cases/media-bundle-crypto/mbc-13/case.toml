@@ -1,0 +1,20 @@
+id = '''mbc-13'''
+area = '''media-bundle-crypto'''
+title = '''Docs state PNG probing reads '26 bytes'; actual buffer is a fixed 32 bytes and PNG needs only 24 (26 is BMP's gate)'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/media-bundle-crypto/case09-media-truncation-vp8l/'''
+command = '''repro/media-bundle-crypto/case09-media-truncation-vp8l demonstrates the gates empirically (PNG accepted from its first 24 bytes; the doc's 26 is BMP's); code inspection src/media.rs:69,73,82.'''
+expected_kind = '''undecided'''
+expected_note = '''Doc should say a small fixed header (32 bytes) is read, with correct per-format minimums, or drop the exact number.'''
+actual_0_2_0 = '''Docs say 26 bytes for PNG; code reads 32 and PNG parses from 24.'''
+spec_ref = '''4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+4.4.7.1 replaces the disputed number with a per-format table: PNG needs 24 bytes, BMP 26, GIF
+10, VP8L 25, VP8 and VP8X 30, and the compiler reads at most 65536 bytes from the head of the
+file and never depends on the file's total length. The staged tree fails on assets/trunc.png,
+a 10-byte PNG that is E422 with "note: file is truncated."; assets/padded.webp passes.
+'''

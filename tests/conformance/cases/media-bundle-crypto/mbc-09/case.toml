@@ -1,0 +1,19 @@
+id = '''mbc-09'''
+area = '''media-bundle-crypto'''
+title = '''AbstractKeys.fromHex leaks java.lang.NumberFormatException on non-hex digits instead of AbstractDataException'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/media-bundle-crypto/case11-fromhex-exception/'''
+command = '''AbstractKeys.fromHex("zz01...1e1f")'''
+expected_kind = '''undecided'''
+expected_note = '''AbstractDataException('hex keys must be 64 hexadecimal digits').'''
+actual_0_2_0 = '''Uncaught java.lang.NumberFormatException.'''
+spec_ref = '''9.9, Appendix D.2 (item 9)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case: Appendix D.2 item 9 is the binding requirement - fromHex(null)
+and non-hexadecimal digits must surface as the runtime's own exception type, never as
+NullPointerException or NumberFormatException. Verify as a tooling test. The data/ tree is a
+valid 1.0 project.
+'''

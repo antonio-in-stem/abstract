@@ -1,0 +1,12 @@
+schema T {
+    id: text(1..40)
+    tags[]: text(1..20)
+    other[]: text(1..20)
+    scalar_a: text(1..20)
+    scalar_b: text(1..20)
+}
+
+logic T {
+    require .scalar_a == .scalar_b else throw "SCALARS differ (case-insensitive compare failed)"
+    require .tags == .other else throw "ARRAYS differ (case-sensitive compare failed)"
+}

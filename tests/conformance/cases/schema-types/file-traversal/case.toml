@@ -1,0 +1,19 @@
+id = '''file-traversal'''
+area = '''schema-types'''
+title = '''file()/image() paths are never confined to the project: `../../` escapes the project root, is existence-checked, and is copied verbatim into compiled output'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/schema-types/file-traversal/ (also references: repro/schema-types/file-traversal-outside/, repro/schema-types/file-oracle/)'''
+command = '''abstract compile repro/schema-types/file-traversal/data JSON
+  abstract bundle repro/schema-types/file-traversal/data --out .../out.abx --key testkey
+Oracle variant: repro/schema-types/file-oracle/ uses `icon: ../../../../../../Windows/win.ini` with `file(ini)`.'''
+expected_kind = '''error'''
+expected_note = '''An asset path that escapes the project directory should be rejected with an error naming the offending value; at minimum it should never be dereferenced.'''
+actual_0_2_0 = '''compile: exit 0, output contains "icon": "../../file-traversal-outside/secret.png" (the file outside the project was found and accepted).
+bundle: abstract: wrote .../out.abx (170 bytes, 1 item(s), sealed)
+file-oracle: abstract: items/a.ab: File not found at Thing.icon: '../../../../../../Windows/win.ini' resolved to '\\?\C:/Windows/win.ini'. ...  <- discloses the absolute build path and probes arbitrary locations'''
+spec_ref = '''5.9, 10.4'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variant: compile file-oracle/data JSON)'''
+expected_1_0 = '''An asset value that contains a parent segment is E424 (SPEC 5.9), so nothing outside the assets directory is ever probed and the traversal never reaches the output. The variant raises E424 twice, in the instance order of SPEC 2.7 (Thing/a then Thing/b), and neither path is opened. E424 carries the note that names the assets directory and the parent-of-data rule.'''

@@ -1,0 +1,4 @@
+schema Shared {
+    id: text(1..40)
+    name: text @optional
+}

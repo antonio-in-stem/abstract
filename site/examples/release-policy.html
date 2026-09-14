@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Release policy - Abstract</title>
+    <meta name="description" content="A small policy schema showing enum levels, list cardinality, defaults and a single logic rule.">
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="index.html" aria-current="page">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Example</p>
+        <h1>Release policy.</h1>
+        <p class="lede">How much a schema can say on its own, and where a logic block takes over.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Examples</span>
+            <nav>
+                <a href="index.html">All examples</a>
+                <a href="product-catalog.html">Product catalog</a>
+                <a href="release-policy.html" aria-current="page">Release policy</a>
+                <a href="sticker-pack.html">Sticker pack</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+<p>Project: <code>docs/examples/release-policy</code>. A small object that shows how much a schema can say without any extra syntax: an enum vocabulary, a list that must not be empty, a default, an optional note, and one rule that only makes sense as logic.</p>
+<h2><code>data/templates/Policy.abt</code></h2>
+<pre><code>schema Policy {
+    level: enum(open, guarded, sealed)
+    reviewers[1..]: text(1..40)
+    window_days: int(1..90) = 14
+    notes: text(1..120) @optional
+}
+
+logic Policy {
+    require .level != "sealed" or length(.reviewers) &gt;= 2
+        else throw "A sealed policy needs at least two reviewers."
+}</code></pre>
+<p><code>reviewers[1..]</code> is a list with a minimum cardinality: an empty list is E445, and an absent one is E411 because the field is required. The <code>require</code> expresses what the schema cannot &mdash; a relationship between two fields.</p>
+<h2><code>data/policies/default_policy.ab</code></h2>
+<pre><code>Policy :: @id.default_policy
+    level: guarded
+    reviewers: platform, security
+    window_days: 30</code></pre>
+<p><code>reviewers: platform, security</code> is a bare comma-separated list &mdash; the same thing as <code>[platform, security]</code>.</p>
+<h2><code>data/policies/sealed_policy.ab</code></h2>
+<pre><code>Policy :: @id.sealed_policy
+    level: sealed
+    reviewers: [platform, security]
+    notes: "Requires two sign-offs before release."</code></pre>
+<p>The note is quoted because it contains no comma but does end in a period; quoting is always safe. <code>window_days</code> is absent, so its default of 14 is filled in.</p>
+<h2>Compiled</h2>
+<pre><code>{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Policy",
+      "id": "default_policy",
+      "level": "guarded",
+      "reviewers": ["platform", "security"],
+      "window_days": 30
+    },
+    {
+      "template": "Policy",
+      "id": "sealed_policy",
+      "level": "sealed",
+      "reviewers": ["platform", "security"],
+      "window_days": 14,
+      "notes": "Requires two sign-offs before release."
+    }
+  ],
+  "overlays": []
+}</code></pre>
+<p><code>notes</code> appears only on the second object: an absent optional field is omitted, never emitted as null or as an empty string.</p>
+<h2>Break it</h2>
+<pre><code>Policy :: @id.thin_policy
+    level: sealed
+    reviewers: platform</code></pre>
+<pre><code>data/templates/Policy.abt:9:9: error[E515]: Policy logic: A sealed policy needs at least two reviewers.
+  note: data/policies/thin_policy.ab:1:1: instance 'thin_policy' declared here.
+  note: compiling version 1.</code></pre>
+<p>The diagnostic points at the <code>require</code> in the template and names the instance that failed it. Exit code 1; nothing is written to stdout.</p>
+        </article>
+    </div>
+</main>
+
+<footer class="footer"><p>Source: <code>docs/examples/release-policy</code> in the repository.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

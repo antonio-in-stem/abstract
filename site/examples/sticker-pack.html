@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sticker pack - Abstract</title>
+    <meta name="description" content="The full Abstract feature set in one project: references, keyed lists, clones, wildcards, tuple arrays, logic, versions and overlays.">
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="index.html" aria-current="page">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Example</p>
+        <h1>Sticker pack.</h1>
+        <p class="lede">Two schemas, four instances, and almost every construct in the language &mdash; including two versions reduced into a single overlay.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Examples</span>
+            <nav>
+                <a href="index.html">All examples</a>
+                <a href="product-catalog.html">Product catalog</a>
+                <a href="release-policy.html">Release policy</a>
+                <a href="sticker-pack.html" aria-current="page">Sticker pack</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+<p>Project: <code>docs/examples/sticker-pack</code>, which is the worked example of the specification&rsquo;s Appendix C. It exercises an explicit <code>id</code> declaration, groups, a reference, a keyed list, defaults, two versions, an instance window, a clone, interpolation, wildcards, tuple arrays, logic and overlays &mdash; in about forty lines.</p>
+<h2>Layout</h2>
+<pre><code>sticker-pack/
+  assets/
+    textures/
+      frost.png            128x128 PNG
+      ember.png            128x128 PNG
+  data/
+    templates/
+      Pack.abt
+    packs/
+      winter_2026.ab
+      spring_2026.ab
+    stickers/
+      frost.ab
+      ember.ab</code></pre>
+<h2><code>data/templates/Pack.abt</code></h2>
+<pre><code>versions 1..2
+
+schema Pack {
+    id: text(3..24)
+    title: text(1..40)
+    tier: enum(free, plus) = free
+    slot_count: int(1..9) @optional
+}
+
+schema Sticker {
+    pack: ref(Pack)
+    title: text(1..60)
+    icon: image(png 128x128)
+    rarity: enum(common, rare, epic) = common
+    glow: bool @since(2) = false
+    tint: int(0..255) @optional @removed(2)
+    owner {
+        team: text(1..40)
+        contact: text(1..60) @optional
+    }
+    tags[]: enum(core_ui, core_game, promo) @optional
+    copy[] {
+        key: enum(en_us, es_es, es_mx) @tag
+        value: text(1..80)
+    }
+}
+
+logic Sticker {
+    derive? .owner.contact = support@example.com
+
+    if .rarity == "epic" {
+        require .tags contains "promo"
+            else throw "Epic stickers must carry the promo tag."
+    }
+
+    for $lang in [es_es, es_mx] {
+        require .copy.key contains $lang
+            else throw "Missing $lang copy."
+    }
+}</code></pre>
+<h2>The two packs</h2>
+<pre><code>Pack :: @tier.plus
+    title: Winter 2026
+    slot_count: 3</code></pre>
+<pre><code>Pack :: @since(2)
+    title: Spring 2026</code></pre>
+<p>Neither header carries <code>@id</code>, so each id comes from its file stem: <code>winter_2026</code> and <code>spring_2026</code>. Both are 11 Unicode scalar values, so both satisfy the declared <code>id: text(3..24)</code>.</p>
+<p><code>@since(2)</code> at the end of the second header is an instance <strong>window</strong>, not a header tag &mdash; the identifier is followed immediately by <code>(</code>, and that one character is the whole distinction. <code>spring_2026</code> exists in version 2 only.</p>
+<h2>The two stickers</h2>
+<pre><code>Sticker :: @id.frost, @rarity.rare
+    pack: winter_2026
+    title: Frost
+    icon: ./textures/$id.png
+    tint: 200
+    owner.team: Studio A
+    tags: core_*
+    copy(key, value): (en_us, Frost), (es_*, Escarcha)</code></pre>
+<pre><code>Sticker :: @id.ember, @rarity.epic
+&amp;frost.*
+    title: Ember
+    tags: [core_ui, promo]
+    copy(key, value): (en_us, Ember), (es_*, Brasa)</code></pre>
+<h2>Every non-obvious step</h2>
+<ol><li><code>$id</code> interpolates to <code>frost</code>, so <code>icon</code> resolves to <code>assets/textures/frost.png</code>, which must be a 128x128 PNG or the compile fails with E422 or E423.</li><li><code>core_*</code> expands, in the enum&rsquo;s declared order, to <code>core_ui, core_game</code>.</li><li><code>es_*</code> clones the whole tuple row into <code>es_es</code> and <code>es_mx</code>, keeping the other cell.</li><li><code>tint</code> exists only in version 1, so the statement that assigns it applies only there. No annotation is needed: a statement&rsquo;s applicability set is clipped to its field&rsquo;s existence set.</li><li><code>ember</code> clones frost&rsquo;s <em>authored</em> data, including the raw text <code>./textures/$id.png</code>. Interpolation runs after cloning, so ember&rsquo;s icon becomes <code>./textures/ember.png</code>.</li><li>Ember&rsquo;s own header and statements then override <code>rarity</code>, <code>title</code>, <code>tags</code> and <code>copy</code> by plain assignment &mdash; a keyed list an instance writes itself replaces the cloned one rather than merging with it.</li><li><code>derive? .owner.contact</code> fires for both stickers, because <code>contact</code> is optional with no default.</li><li>Ember is <code>epic</code>, so the guarded <code>require</code> runs and its <code>promo</code> tag satisfies it.</li></ol>
+<h2>Compiled, version 2 (the base)</h2>
+<pre><code>"data": [
+  { "template": "Pack", "id": "spring_2026", "title": "Spring 2026", "tier": "free" },
+  {
+    "template": "Pack", "id": "winter_2026", "title": "Winter 2026",
+    "tier": "plus", "slot_count": 3
+  },
+  {
+    "template": "Sticker", "id": "ember",
+    "pack": "winter_2026", "title": "Ember",
+    "icon": "./textures/ember.png", "rarity": "epic", "glow": false,
+    "owner": { "team": "Studio A", "contact": "support@example.com" },
+    "tags": ["core_ui", "promo"],
+    "copy": [
+      { "key": "en_us", "value": "Ember" },
+      { "key": "es_es", "value": "Brasa" },
+      { "key": "es_mx", "value": "Brasa" }
+    ]
+  },
+  {
+    "template": "Sticker", "id": "frost",
+    "pack": "winter_2026", "title": "Frost",
+    "icon": "./textures/frost.png", "rarity": "rare", "glow": false,
+    "owner": { "team": "Studio A", "contact": "support@example.com" },
+    "tags": ["core_ui", "core_game"],
+    "copy": [
+      { "key": "en_us", "value": "Frost" },
+      { "key": "es_es", "value": "Escarcha" },
+      { "key": "es_mx", "value": "Escarcha" }
+    ]
+  }
+]</code></pre>
+<h2>And the overlay for version 1</h2>
+<pre><code>"overlays": [
+  {
+    "versions": { "min": 1, "max": 1 },
+    "data": [ /* ember and frost, each carrying tint: 200 and no glow */ ],
+    "removed": [ "spring_2026" ]
+  }
+]</code></pre>
+<p>The project range is <code>1..2</code>, so the base is version 2 and the only version to reduce is 1. <code>ember</code> and <code>frost</code> each differ from the base throughout <code>1..1</code> &mdash; they carry <code>tint</code> and lack <code>glow</code> &mdash; and <code>spring_2026</code> does not exist in version 1 while the base carries it, so it becomes a <strong>removal</strong> over the same range. All three entries share the range, so they land in one overlay. <code>winter_2026</code> has no version-scoped field and no window, so it is identical in both versions and appears in no overlay.</p>
+<p>A consumer running version 1 applies that one overlay: replace <code>ember</code> and <code>frost</code>, delete <code>spring_2026</code>, keep <code>winter_2026</code> from the base. A consumer running version 2 matches no overlay and uses <code>data</code> unchanged.</p>
+<p>The complete byte-exact document, including the elided overlay objects, is in <code>docs/examples/sticker-pack/expected.json</code>.</p>
+<h2>A failing compile</h2>
+<p>Change ember&rsquo;s tags to <code>tags: [core_ui]</code> and the guarded <code>require</code> fails:</p>
+<pre><code>data/templates/Pack.abt:32:9: error[E515]: Sticker logic: Epic stickers must carry the promo tag.
+  note: data/stickers/ember.ab:1:1: instance 'ember' declared here.
+  note: compiling version 1.</code></pre>
+<p>Version 1 is named because versions are compiled in ascending order and the same <code>require</code> fails in both.</p>
+        </article>
+    </div>
+</main>
+
+<footer class="footer"><p>Source: <code>docs/examples/sticker-pack</code>; specification: Appendix C of <code>docs/SPEC.md</code>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

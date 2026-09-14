@@ -1,0 +1,11 @@
+schema T {
+    id: text(1..40)
+    label: text(1..60)
+    ok: bool = false
+}
+
+logic T {
+    if .label exists {
+        derive .ok = true
+    }
+}

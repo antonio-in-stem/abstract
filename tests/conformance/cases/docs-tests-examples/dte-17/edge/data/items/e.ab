@@ -1,0 +1,5 @@
+T :: @id.e
+    n: 1_0
+    f: 1.0
+    b: true
+    txt: "x"

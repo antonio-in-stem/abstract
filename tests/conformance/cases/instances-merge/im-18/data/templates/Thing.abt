@@ -1,0 +1,5 @@
+schema Thing {
+    name: text(1..40)
+    label: text(1..60)
+    icon: text(1..60)
+}

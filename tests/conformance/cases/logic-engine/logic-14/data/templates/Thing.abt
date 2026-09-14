@@ -1,0 +1,18 @@
+schema Thing {
+    id: text(1..40)
+    owner {
+        team: text(1..40)
+    }
+    tags[]: text(1..20)
+    copy_of_team: text(1..40) @optional
+    copy_of_team2: text(1..40) @optional
+    copy_of_id: text(1..40) @optional
+    len_of_tags: text(1..40) @optional
+}
+
+logic Thing {
+    derive .copy_of_team  = .owner.team      // intent: copy the nested value
+    derive .copy_of_team2 = $owner.team      // intent: copy the nested value
+    derive .copy_of_id    = $id              // this one actually works
+    derive .len_of_tags   = length(.tags)    // intent: the number of tags
+}

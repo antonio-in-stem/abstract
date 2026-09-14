@@ -1,0 +1,3 @@
+Thing :: @id.alpha
+    owner: plain text
+    owner.team: Knowledge

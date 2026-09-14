@@ -1,0 +1,6 @@
+schema Meta {
+    id: text(1..40)
+    owner: text(1..60)
+    version: int(1..999)
+    description: text(1..160)
+}

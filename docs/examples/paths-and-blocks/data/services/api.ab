@@ -1,0 +1,7 @@
+Service :: @id.api
+    title: API
+    limits.{soft, hard}: 10
+    owner {
+        team: Platform
+        contact: platform@example.com
+    }

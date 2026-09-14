@@ -1,0 +1,9 @@
+schema N {
+    id: text(1..40)
+    note: text @optional
+    count: int @optional
+    slots {
+        1: text @optional
+        2: text @optional
+    }
+}

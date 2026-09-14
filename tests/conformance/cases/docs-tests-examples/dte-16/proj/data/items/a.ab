@@ -1,0 +1,3 @@
+T :: @id.a
+    doc: ../../outside_secret.txt
+    absdoc: C:/Windows/win.ini

@@ -1,0 +1,18 @@
+id = '''LOGIC-26'''
+area = '''logic-engine'''
+title = "A single-line 'logic X { ... }' is unsupported and reports the misleading error 'logic block was not closed'"
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/logic-engine/L25-oneline-logic-block-dropped/'''
+command = '''repro/logic-engine/L25-oneline-logic-block-dropped — cd repro/logic-engine/L25-oneline-logic-block-dropped && abstract compile data JSON'''
+expected_kind = '''undecided'''
+expected_note = '''Either the one-line form works, or the error says "logic statements must each be on their own line (templates/T.abt:6)".'''
+actual_0_2_0 = '''abstract: templates/T.abt: logic block was not closed
+EXIT=1
+--- lint ---
+abstract: templates/T.abt: logic block was not closed
+EXIT=1'''
+spec_ref = '''3.6, 6.3, 10.2'''
+status = '''ready'''
+note_1_0 = '''A block's '{' MUST be the last token of its logical line and its '}' MUST be the first token of a logical line (SPEC 3.6, 6.3); the grammar spells this as logic_decl = "logic", schema_name, "{", NL, logic_body, "}". The one-line form is therefore E210 at the token after the '{', with a position, not a 'block was not closed' report at the end of the file.'''

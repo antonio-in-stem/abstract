@@ -1,0 +1,29 @@
+id = '''L24'''
+area = '''language-design'''
+title = '''Unknown-field diagnostics list `template` and repeat `id` as declared fields, and asset errors print Windows `\\?\` UNC paths'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/language-design/case2/ (also references: repro/language-design/case24/)'''
+command = '''./project/target/release/abstract.exe compile repro/language-design/case2/data JSON
+OUTPUT: abstract: objects/braced.ab: Unknown field 'owner { team' at Pack. Declared fields: id, owner, slots, template, id.
+^^^^^^^^^^^^^ ^^
+./project/target/release/abstract.exe compile repro/language-design/case24/overlays/v2/data JSON
+OUTPUT: abstract: stickers/shulker.ab: File not found at Sticker.icon: './textures/shulker_v2.png' resolved to '\\?\repro\language-design\case24\overlays\v2\assets\textures\shulker_v2.png'. The schema declares file(...), so the file must exist.
+(also note the mangled field name 'owner { team' — see L08 for the cause: multi-line statements are joined before the error is built)'''
+expected_kind = '''undecided'''
+expected_note = ''''Declared fields: id, owner, slots.' — schema fields only, deduplicated. And a plain `C:\Users\...` path in asset errors.'''
+actual_0_2_0 = '''`template` is listed as a declarable field and `id` appears twice; canonicalized UNC prefixes leak into user-facing paths.'''
+spec_ref = '''4.7, 5.9, 5.12, 9.8, 10.4 (E409, E411)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)       -> expected-error.txt
+compile case24 JSON                       -> case24/expected.json
+Kept as a rejection case for an unrelated reason (the same tree as L08): the required group
+"slots" is absent in braced.ab, which is E411. The diagnostics defects the case reports are
+closed by the spec text itself: 5.12 fixes the declared-fields note to list exactly the fields
+declared by the schema or group in scope, in declaration order, never "template" and never a
+declared "id" at root; 9.8 requires every path in a diagnostic to be project-relative with "/"
+separators and forbids absolute, canonical and extended-length platform paths; and 5.9 requires
+the resolved asset path to be printed in project-relative form.
+'''

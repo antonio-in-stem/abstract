@@ -1,0 +1,18 @@
+id = '''cli-29'''
+area = '''cli-project'''
+title = '''`--max-errors 0` is E812: the flag takes an integer from 1 to 10000 and there is no "no limit" spelling'''
+severity = '''minor'''
+kind = '''ruling'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+command_1_0 = '''lint . --max-errors 0'''
+spec_ref = '''9.3, 10.8'''
+expected_note = '''SPEC 9.3 bounds `--max-errors` at 1..10000 inclusive, and anything else is E812 with a message that names the bound. The unbounded form could not be implemented without a message that denied its own condition: `--max-errors 99999999999999999999` is a decimal integer greater than or equal to 0, so an implementation that rejected it had to say so in a sentence describing the value it had just refused as acceptable. Bounding the flag removes the class rather than the one value.
+
+`0` goes with it. "0 means no limit" made the flag's own domain discontinuous, and a limit of 10000 is more diagnostics than any run produces; a project that needs more is not being read by a person.
+
+The same identifier and the same message now cover every refusal: a non-integer, `0`, a value above the bound, and an integer too large to represent.'''
+spec_note = '''The exit code is 2, the usage code of SPEC 9.6, unchanged. `--max-errors 1` and `--max-errors 10000` are both accepted, and the default is still 20.'''
+actual_1_0 = '''exit 2: `abstract: error[E812]: Flag '--max-errors' requires a decimal integer from 1 to 10000; found '0'.`'''

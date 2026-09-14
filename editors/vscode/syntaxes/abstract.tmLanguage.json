@@ -1,0 +1,543 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Abstract",
+  "scopeName": "source.abstract",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#versionsDeclaration" },
+    { "include": "#schemaBlock" },
+    { "include": "#logicBlock" },
+    { "include": "#instanceHeader" },
+    { "include": "#cloneReference" },
+    { "include": "#bodyBlock" },
+    { "include": "#bodyAssignment" },
+    { "include": "#tupleRow" },
+    { "include": "#versionAnnotations" },
+    { "include": "#decorators" },
+    { "include": "#tags" },
+    { "include": "#interpolationVariables" },
+    { "include": "#filePaths" },
+    { "include": "#paths" },
+    { "include": "#numbersAndRanges" },
+    { "include": "#constants" },
+    { "include": "#continuedBareValue" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.abstract",
+          "match": "(?:^|(?<=[ \\t]))//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.abstract",
+          "begin": "\"",
+          "end": "\"|$",
+          "patterns": [
+            {
+              "name": "constant.character.escape.abstract",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "versionsDeclaration": {
+      "patterns": [
+        {
+          "match": "^\\s*(versions)\\s+(\\d+)\\s*(\\.\\.)\\s*(\\d+)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.declaration.versions.abstract" },
+            "2": { "name": "constant.numeric.integer.abstract" },
+            "3": { "name": "keyword.operator.range.abstract" },
+            "4": { "name": "constant.numeric.integer.abstract" }
+          }
+        }
+      ]
+    },
+    "schemaBlock": {
+      "name": "meta.block.schema.abstract",
+      "begin": "\\b(schema)\\s+([A-Za-z][A-Za-z0-9_]*)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.schema.abstract" },
+        "2": { "name": "entity.name.type.schema.abstract" },
+        "3": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "^\\s*(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#groupField" },
+        { "include": "#schemaTypes" },
+        { "include": "#schemaReferences" },
+        { "include": "#versionAnnotations" },
+        { "include": "#schemaDecorators" },
+        { "include": "#schemaFieldDeclarations" },
+        { "include": "#tags" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#operators" }
+      ]
+    },
+    "groupField": {
+      "comment": "A group or list group nests a field list inside braces, to the depth SPEC 3.7 allows.",
+      "name": "meta.block.group.abstract",
+      "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*)((?:\\[[^\\]]*\\])?)((?:\\s+@[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\([^)]*\\))?)*)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "variable.other.field.schema.abstract" },
+        "2": { "name": "meta.cardinality.abstract", "patterns": [{ "include": "#cardinality" }] },
+        "3": { "patterns": [{ "include": "#versionAnnotations" }, { "include": "#schemaDecorators" }] },
+        "4": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#groupField" },
+        { "include": "#schemaTypes" },
+        { "include": "#schemaReferences" },
+        { "include": "#versionAnnotations" },
+        { "include": "#schemaDecorators" },
+        { "include": "#schemaFieldDeclarations" },
+        { "include": "#tags" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#operators" }
+      ]
+    },
+    "logicBlock": {
+      "name": "meta.block.logic.abstract",
+      "begin": "\\b(logic)\\s+([A-Za-z][A-Za-z0-9_]*)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.logic.abstract" },
+        "2": { "name": "entity.name.type.logic.abstract" },
+        "3": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "^\\s*(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#logicNestedBlock" },
+        { "include": "#logicBody" }
+      ]
+    },
+    "logicNestedBlock": {
+      "comment": "if / else if / else / for bodies nest inside a logic block.",
+      "name": "meta.block.logic.nested.abstract",
+      "begin": "(\\{)\\s*$",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#logicNestedBlock" },
+        { "include": "#logicBody" }
+      ]
+    },
+    "logicBody": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#calculation" },
+        { "include": "#logicKeywords" },
+        { "include": "#logicOperators" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#paths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#operators" }
+      ]
+    },
+    "instanceHeader": {
+      "patterns": [
+        {
+          "name": "meta.instance.header.abstract",
+          "match": "^\\s*([A-Za-z][A-Za-z0-9_]*)\\s*(::)",
+          "captures": {
+            "1": { "name": "entity.name.type.instance.abstract" },
+            "2": { "name": "keyword.operator.declaration.abstract" }
+          }
+        }
+      ]
+    },
+    "bodyBlock": {
+      "comment": "An instance body block is sugar for dotted paths: owner { team: X }.",
+      "name": "meta.block.body.abstract",
+      "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)*)\\s*(\\{)\\s*$",
+      "beginCaptures": {
+        "1": { "name": "variable.other.property.abstract variable.other.field.instance.abstract" },
+        "2": { "name": "punctuation.section.block.begin.abstract" }
+      },
+      "end": "^\\s*(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#bodyBlock" },
+        { "include": "#bodyAssignment" },
+        { "include": "#tupleRow" },
+        { "include": "#versionAnnotations" },
+        { "include": "#tags" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#continuedBareValue" },
+        { "include": "#operators" }
+      ]
+    },
+    "calculation": {
+      "name": "meta.expression.calculation.abstract",
+      "begin": "\\b(calc)(\\()",
+      "beginCaptures": {
+        "1": { "name": "support.function.calculation.abstract" },
+        "2": { "name": "punctuation.section.parens.begin.abstract" }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.parens.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#calculationGroup" },
+        { "include": "#calculationTokens" }
+      ]
+    },
+    "calculationGroup": {
+      "begin": "\\(",
+      "beginCaptures": { "0": { "name": "punctuation.section.parens.begin.abstract" } },
+      "end": "\\)",
+      "endCaptures": { "0": { "name": "punctuation.section.parens.end.abstract" } },
+      "patterns": [
+        { "include": "#calculationGroup" },
+        { "include": "#calculationTokens" }
+      ]
+    },
+    "calculationTokens": {
+      "patterns": [
+        { "include": "#comments" },
+        { "name": "support.function.numeric.abstract", "match": "\\b(?:abs|min|max|clamp|div|round|floor|ceil|sqrt|pow|sum|avg|length)(?=\\s*\\()" },
+        { "name": "variable.language.version.abstract", "match": "(?<![.$\\w])version\\b" },
+        { "include": "#paths" },
+        { "name": "variable.other.loop.abstract", "match": "\\$[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)*" },
+        { "include": "#numbersAndRanges" },
+        { "name": "keyword.operator.arithmetic.abstract", "match": "[+*/%-]" },
+        { "name": "punctuation.separator.comma.abstract", "match": "," }
+      ]
+    },
+    "bodyAssignment": {
+      "patterns": [
+        {
+          "comment": "Tuple columns are field names; the parenthesized groups after ':' are value rows.",
+          "name": "meta.assignment.tuple.abstract",
+          "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\\{[^}]*\\}))*)\\s*(\\()([^)]*)(\\))\\s*(:)",
+          "beginCaptures": {
+            "1": { "name": "variable.other.property.abstract variable.other.field.instance.abstract" },
+            "2": { "name": "punctuation.section.parameters.begin.abstract" },
+            "3": {
+              "name": "meta.tuple.columns.abstract",
+              "patterns": [
+                { "name": "variable.parameter.tuple.abstract", "match": "[A-Za-z0-9_][A-Za-z0-9_-]*" },
+                { "name": "punctuation.separator.comma.abstract", "match": "," }
+              ]
+            },
+            "4": { "name": "punctuation.section.parameters.end.abstract" },
+            "5": { "name": "punctuation.separator.key-value.abstract" }
+          },
+          "end": "$",
+          "patterns": [
+            { "include": "#assignmentValue" }
+          ]
+        },
+        {
+          "name": "meta.assignment.body.abstract",
+          "begin": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\\{[^}]*\\}))*)\\s*(:)",
+          "beginCaptures": {
+            "1": { "name": "variable.other.property.abstract variable.other.field.instance.abstract" },
+            "2": { "name": "punctuation.separator.key-value.abstract" }
+          },
+          "end": "$",
+          "patterns": [
+            { "include": "#assignmentValue" }
+          ]
+        }
+      ]
+    },
+    "assignmentValue": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#tupleRow" },
+        { "include": "#versionAnnotations" },
+        { "include": "#tags" },
+        { "include": "#cloneReference" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#paths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#bareValues" },
+        { "include": "#operators" }
+      ]
+    },
+    "tupleRow": {
+      "name": "meta.tuple.row.abstract",
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.parens.begin.abstract" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.abstract" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#interpolationVariables" },
+        { "include": "#filePaths" },
+        { "include": "#paths" },
+        { "include": "#numbersAndRanges" },
+        { "include": "#constants" },
+        { "include": "#bareValues" },
+        { "include": "#operators" }
+      ]
+    },
+    "continuedBareValue": {
+      "comment": "A physical continuation line in a bracketed list; assignments and tuple rows handle their own first lines.",
+      "match": "^\\s*([A-Za-z_*][A-Za-z0-9_@*.+-]*(?:[ \\t]+[A-Za-z0-9_*.+-]+)*)(?=\\s*,?\\s*(?://.*)?$)",
+      "captures": {
+        "1": { "name": "string.unquoted.bare.abstract" }
+      }
+    },
+    "bareValues": {
+      "patterns": [
+        {
+          "name": "string.unquoted.bare.abstract",
+          "match": "(?<![A-Za-z0-9_@*.+-])[A-Za-z_@*][A-Za-z0-9_@*.+-]*(?:[ \\t]+[A-Za-z0-9_*.+-]+)*"
+        }
+      ]
+    },
+    "schemaTypes": {
+      "patterns": [
+        {
+          "comment": "The seven type keywords that take arguments (SPEC 4.4).",
+          "name": "support.type.primitive.schema.abstract",
+          "match": "\\b(text|int|float|enum|file|image|ref)\\b(?=\\s*\\()"
+        },
+        {
+          "comment": "The four that may also stand bare after ':'.",
+          "name": "support.type.primitive.bare.schema.abstract",
+          "match": "(?<=:)\\s*\\b(text|int|float|bool)\\b(?!\\s*\\()"
+        }
+      ]
+    },
+    "schemaReferences": {
+      "patterns": [
+        {
+          "comment": "$(Schema): a nested object validated against another schema.",
+          "name": "support.type.reference.schema.abstract",
+          "match": "\\$\\([A-Za-z][A-Za-z0-9_]*\\)"
+        }
+      ]
+    },
+    "schemaDecorators": {
+      "patterns": [
+        {
+          "name": "storage.modifier.schema.abstract",
+          "match": "@(optional|public|tag)\\b"
+        }
+      ]
+    },
+    "versionAnnotations": {
+      "patterns": [
+        {
+          "comment": "@since(n) and @removed(n) on a field, a statement or an instance header.",
+          "match": "(@(?:since|removed))\\s*(\\()\\s*(\\d+)\\s*(\\))",
+          "captures": {
+            "1": { "name": "storage.modifier.version.abstract" },
+            "2": { "name": "punctuation.section.abstract" },
+            "3": { "name": "constant.numeric.integer.abstract" },
+            "4": { "name": "punctuation.section.abstract" }
+          }
+        }
+      ]
+    },
+    "cardinality": {
+      "patterns": [
+        {
+          "comment": "List cardinality: [], [1..], [2..4].",
+          "match": "(\\[)\\s*(\\d+)?\\s*(\\.\\.)?\\s*(\\d+)?\\s*(\\])",
+          "captures": {
+            "1": { "name": "punctuation.section.abstract" },
+            "2": { "name": "constant.numeric.integer.abstract" },
+            "3": { "name": "keyword.operator.range.abstract" },
+            "4": { "name": "constant.numeric.integer.abstract" },
+            "5": { "name": "punctuation.section.abstract" }
+          }
+        }
+      ]
+    },
+    "schemaFieldDeclarations": {
+      "patterns": [
+        {
+          "match": "^\\s*([A-Za-z0-9_][A-Za-z0-9_-]*)((?:\\[[^\\]]*\\])?)(?=\\s*[:{@])",
+          "captures": {
+            "1": { "name": "variable.other.field.schema.abstract" },
+            "2": { "patterns": [{ "include": "#cardinality" }] }
+          }
+        },
+        {
+          "name": "constant.numeric.field.schema.abstract",
+          "match": "^\\s*([0-9]+)(?=\\s*:)"
+        }
+      ]
+    },
+    "logicKeywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.logic.abstract",
+          "match": "\\bderive\\?|\\b(if|require|else|throw|for|in|derive|not)\\b"
+        }
+      ]
+    },
+    "logicOperators": {
+      "patterns": [
+        {
+          "comment": "`version` is the one built-in value of the logic language (SPEC 6.6).",
+          "name": "variable.language.version.abstract",
+          "match": "(?<![.$\\w])version\\b(?!\\s*:)"
+        },
+        {
+          "name": "keyword.operator.logical.logic.abstract",
+          "match": "\\b(contains|exists|length|and|or)\\b|&&|\\|\\||==|!=|>=|<=|>|<|!(?=[(.\\w])"
+        }
+      ]
+    },
+    "decorators": {
+      "patterns": [
+        {
+          "name": "storage.modifier.header.abstract",
+          "match": "@[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_*.-]+)?"
+        }
+      ]
+    },
+    "tags": {
+      "patterns": [
+        {
+          "name": "constant.other.symbol.abstract",
+          "match": "#[A-Za-z0-9_][A-Za-z0-9_-]*(?=\\b|\\()"
+        }
+      ]
+    },
+    "cloneReference": {
+      "patterns": [
+        {
+          "name": "variable.other.clone.abstract",
+          "match": "&[A-Za-z0-9_][A-Za-z0-9_-]*\\.\\*"
+        },
+        {
+          "name": "variable.other.clone.member.abstract",
+          "match": "&[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_][A-Za-z0-9_-]*)?"
+        }
+      ]
+    },
+    "interpolationVariables": {
+      "patterns": [
+        {
+          "name": "constant.character.escape.interpolation.abstract",
+          "match": "\\$\\$"
+        },
+        {
+          "name": "variable.other.interpolation.abstract",
+          "match": "\\$\\{[A-Za-z0-9_][A-Za-z0-9_-]*\\}|\\$[A-Za-z0-9_][A-Za-z0-9_-]*"
+        }
+      ]
+    },
+    "filePaths": {
+      "patterns": [
+        {
+          "name": "string.unquoted.path.file.abstract",
+          "match": "(?<!\\S)(?:\\.?[\\\\/])?(?:[A-Za-z0-9_$.*{}-]+[\\\\/])+[A-Za-z0-9_$.*{},-]+\\.[A-Za-z0-9]+"
+        }
+      ]
+    },
+    "paths": {
+      "patterns": [
+        {
+          "name": "variable.other.path.abstract",
+          "match": "\\.[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?:[A-Za-z0-9_][A-Za-z0-9_-]*|\\$[A-Za-z0-9_][A-Za-z0-9_-]*))*"
+        }
+      ]
+    },
+    "numbersAndRanges": {
+      "patterns": [
+        {
+          "name": "constant.numeric.range.abstract",
+          "match": "\\b\\d+(?:\\.\\d+)?\\.\\.\\d+(?:\\.\\d+)?\\b"
+        },
+        {
+          "comment": "An image size token: 128x128, 1024x*.",
+          "name": "constant.numeric.size.abstract",
+          "match": "\\b(?:\\d+|\\*)x(?:\\d+|\\*)(?![\\w.])"
+        },
+        {
+          "name": "constant.numeric.float.abstract",
+          "match": "(?<![\\w.])[-+]?\\d+\\.\\d+(?:[eE][+-]?\\d+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.abstract",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.abstract",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.default.abstract",
+          "match": "\\b(default)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.abstract",
+          "match": "::|\\.\\.|="
+        },
+        {
+          "name": "punctuation.separator.abstract",
+          "match": "[:,]"
+        },
+        {
+          "name": "punctuation.section.abstract",
+          "match": "[{}()\\[\\]]"
+        }
+      ]
+    }
+  }
+}

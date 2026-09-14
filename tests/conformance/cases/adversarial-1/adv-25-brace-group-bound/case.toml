@@ -1,0 +1,18 @@
+id = '''ADV-25'''
+area = '''adversarial-1'''
+title = '''A brace pattern with nine groups is E435; eight is the bound'''
+severity = '''minor'''
+kind = '''ruling'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+command_1_0 = '''compile . JSON --skip-assets'''
+spec_ref = '''3.6, 5.8, 10.4'''
+expected_note = '''SPEC 5.8 bounds one pattern at 8 groups; a ninth is E435. Without the bound a one-line source demands a number of paths exponential in its own length, which is the one thing brace expansion can be made to do that no other construct in the language can.
+
+The bound belongs to E435 because it is a fault of the pattern, alongside an empty alternative and a nested group. SPEC 5.8's table separates the two levels the corpus had conflated: a `{` or `}` that does not BALANCE is E203/E205 lexically, for a value of any type (SPEC 3.6), and E435 is reserved for a balanced pattern that is nevertheless malformed. So E435 is now reported only where a pattern is expanded, and never stands in for an unbalanced brace the lexer has already refused.
+
+The case runs with `--skip-assets`, so it is the pattern that is refused rather than the files it would name.'''
+spec_note = '''Eight groups is already the largest asset list an author writes by hand, and the product of eight two-alternative groups is 256 paths.'''
+actual_1_0 = '''exit 1: `data/items/x.ab:3:5: error[E435]: Invalid brace pattern '...': a pattern holds at most 8 groups.`'''

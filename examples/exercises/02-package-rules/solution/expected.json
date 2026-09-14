@@ -1,0 +1,27 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.4.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Package",
+      "id": "blue_box",
+      "name": "Blue Box",
+      "state": "queued",
+      "weight": 4
+    },
+    {
+      "template": "Package",
+      "id": "red_box",
+      "name": "Red Box",
+      "state": "sent",
+      "weight": 4
+    }
+  ],
+  "overlays": []
+}

@@ -1,0 +1,44 @@
+{
+  "measurement": "fresh-process end-to-end compile and JSON output",
+  "results": [
+    {
+      "lines": 100,
+      "warmups": 1,
+      "samples_ms": [
+        7.9257,
+        7.6424,
+        7.4381,
+        7.2536,
+        7.6338
+      ],
+      "median_ms": 7.6338,
+      "json_bytes": 10774
+    },
+    {
+      "lines": 1000,
+      "warmups": 1,
+      "samples_ms": [
+        15.2325,
+        17.6661,
+        14.8184,
+        14.8421,
+        14.5295
+      ],
+      "median_ms": 14.8421,
+      "json_bytes": 105299
+    },
+    {
+      "lines": 5000,
+      "warmups": 1,
+      "samples_ms": [
+        42.6932,
+        42.3172,
+        42.6001,
+        42.6886,
+        41.8422
+      ],
+      "median_ms": 42.6001,
+      "json_bytes": 525408
+    }
+  ]
+}

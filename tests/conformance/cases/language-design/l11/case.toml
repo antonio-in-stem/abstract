@@ -1,0 +1,39 @@
+id = '''L11'''
+area = '''language-design'''
+title = '''`$var` interpolation runs before schema defaults are filled and only sees root scalars, so `$defaulted_field` silently stays literal in the output; an undefined `$var` is never reported'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case6/ (also references: repro/language-design/case5/)'''
+command = '''cat repro/language-design/case6/data/templates/Var.abt   # tier: text = gold ; logic derives .derived and .from_derived = "uses $derived"
+cat repro/language-design/case6/data/objects/v.ab        # path: ./textures/$tier/$id.png ; nested.kind: special ; from_nested: "kind is $nested"
+./project/target/release/abstract.exe compile repro/language-design/case6/data JSON --skip-assets
+OUTPUT (exit 0):
+{ "template":"Var","id":"v","tier":"gold",
+"path":"./textures/$tier/v.png",        <-- $tier NOT resolved (default not yet applied); $id WAS resolved
+"nested":{"kind":"special"},
+"from_nested":"kind is $nested",        <-- non-scalar root field: never resolves
+"derived":"D1",
+"from_derived":"uses D1" }              <-- same $-syntax DOES resolve inside logic
+# undefined variable is silently literal:
+./project/target/release/abstract.exe compile repro/language-design/case5/data JSON
+OUTPUT: { "template":"Item","id":"a","owner":{"team":"core"},"label":"a-$missing-a" }'''
+expected_kind = '''error'''
+expected_note = '''`$tier` should resolve to "gold"; `$missing` should be a compile error ("unknown variable '$missing' at objects/a.ab:3; root scalar fields are: id, owner..."); `$nested` should either resolve to a path or be an error, not pass through.'''
+actual_0_2_0 = '''Defaulted fields are invisible to interpolation; non-scalar roots pass through literally; unknown variables pass through literally; the same syntax behaves differently in .ab bodies vs logic derive values.'''
+spec_ref = '''4.10, 5.11, 7.3 (steps 2 and 4), 6.9, 10.4 (E425), A.1 (A18, A19)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON --skip-assets (cwd = case root) -> expected-error.txt (two diagnostics)
+compile data JSON (cwd = l11/case5)               -> case5/expected-error.txt
+An unknown variable is E425 and never survives into output (5.11, A.1 A18). The variable table
+is the instance root fields whose syntax value is Bare or Quoted, built in 7.3 step 2 BEFORE
+defaults, so "$tier" (supplied only by a schema default) is not a variable and is E425, and
+"$nested" names a group and is not a variable either, which is a second E425.
+IMPORTANT: this contradicts the design decisions record item F/L11, which says the table
+is built after defaults; the spec text wins and the contradiction is reported in
+SPEC-ISSUES-docs-tests-examples.md issue 3.
+case5 has a second open question: "$id-" consumes the maximal identifier-character run, which
+includes "-" (5.11, A.1 A19), and the resulting name ends with "-". The expectation assumes
+E425 for that name; see SPEC-ISSUES issue 4. "$missing" is E425 under every reading.
+'''

@@ -1,0 +1,24 @@
+id = '''L12'''
+area = '''language-design'''
+title = '''No compiler-validated cross-instance references: `$(Schema)` is a shape reference, not a link, so every relationship between instances is untyped free text'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''missing-feature'''
+source_repro = '''repro/language-design/case5/ (also references: repro/language-design/case9/)'''
+command = '''&foo.*'''
+expected_kind = '''undecided'''
+expected_note = '''A declared reference type, e.g. `parent: ref(Item)` or `parent: &(Item)`, validated against the instance id map, with the same 'Unknown target ... did you mean' diagnostic clones already get.'''
+actual_0_2_0 = '''References are plain text; dangling references compile silently; only clones validate ids.'''
+spec_ref = '''4.4.8, 5.1, 5.3, 10.4 (E403, E425, E431, E432), A.4'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)     -> expected-error.txt
+compile data JSON (cwd = l12/case9)     -> case9/expected-error.txt
+The feature this design case asks for exists in 1.0: ref(Schema) is a validated cross-instance
+link whose target must exist (E431) and must carry the named template (E432), with the same
+suggestion machinery clones get (4.4.8, A.4). The staged trees do not use it, so each keeps
+its own outcome: the primary tree is the L11 case5 tree and fails on the unknown interpolation
+variable (E425), and case9 puts a clone before the first header, which is E403 (5.1). In a
+corrected case9, @id.MyThing normalises to the id mything and @id. with a quoted 42 is the id 42, since
+ids are identifiers and are never type-inferred (5.3).
+'''

@@ -1,0 +1,16 @@
+id = '''OC-20'''
+area = '''output-canon'''
+title = '''A zero-column tuple array `field(): ()` is accepted and silently produces an array containing one empty object'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/output-canon/oc12-empty-object/'''
+command = '''caps[] @optional { name: text(1..80) @optional }
+T :: @id.a
+caps(): ()'''
+expected_kind = '''error'''
+expected_note = '''data/items/a.ab:2: tuple array 'caps' declares no columns (exit 1).'''
+actual_0_2_0 = '''exit 0, JSON: "caps": [ {} ]  and RAW: caps: [{}]  (and YAML: caps:\n        -  i.e. a null element, see OC-07).'''
+spec_ref = '''5.5, 10.4'''
+status = '''ready'''
+note_1_0 = '''A tuple array MUST declare at least one column and every row MUST contain at least one cell, so 'caps(): ()' is E416 with note: a tuple array declares at least one column (SPEC 5.5). The array containing one empty object is unreachable, and so is the YAML null element of OC-07.'''

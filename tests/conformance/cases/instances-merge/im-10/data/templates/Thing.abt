@@ -1,0 +1,4 @@
+schema Thing {
+    name: text(1..40) = "unnamed"
+    tags[]: text(1..40) @optional
+}

@@ -1,0 +1,3 @@
+schema Market {
+    steering_position: enum(left, right)
+}

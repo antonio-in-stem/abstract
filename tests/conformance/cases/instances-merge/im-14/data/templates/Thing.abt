@@ -1,0 +1,4 @@
+schema Thing {
+    NOMBRE: text(1..40)
+    TAMAÑO: text(1..40)
+}

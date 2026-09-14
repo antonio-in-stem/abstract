@@ -1,0 +1,7 @@
+schema Thing {
+    id: text(1..40)
+    lang: enum(en_us, es_es)
+    meta {
+        lang: text(1..20)
+    }
+}

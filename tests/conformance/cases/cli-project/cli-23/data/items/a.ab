@@ -1,0 +1,3 @@
+Item :: @id.a
+    name: Alpha
+    icon: ./textures/icon.png

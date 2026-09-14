@@ -1,0 +1,4 @@
+&base.*
+
+Thing :: @id.before
+    name: Before

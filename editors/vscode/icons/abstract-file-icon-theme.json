@@ -1,0 +1,26 @@
+{
+  "iconDefinitions": {
+    "_file": {
+      "iconPath": "./file.svg"
+    },
+    "_folder": {
+      "iconPath": "./folder.svg"
+    },
+    "_folder_open": {
+      "iconPath": "./folder-open.svg"
+    },
+    "_abstract_instance": {
+      "iconPath": "./abstract-data.svg"
+    },
+    "_abstract_template": {
+      "iconPath": "./abstract-template.svg"
+    }
+  },
+  "file": "_file",
+  "folder": "_folder",
+  "folderExpanded": "_folder_open",
+  "fileExtensions": {
+    "ab": "_abstract_instance",
+    "abt": "_abstract_template"
+  }
+}

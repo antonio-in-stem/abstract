@@ -1,0 +1,3 @@
+Thing :: @id.a
+    a: hi
+    b: 0.5

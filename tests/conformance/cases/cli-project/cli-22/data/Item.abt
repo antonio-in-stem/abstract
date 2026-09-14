@@ -1,0 +1,4 @@
+schema Item {
+    id: text(1..40)
+    icon: image(png)
+}

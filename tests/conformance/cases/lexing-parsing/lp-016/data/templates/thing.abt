@@ -1,0 +1,4 @@
+schema Thing {
+    id: int(1..999)
+    name: text(1..40) @optional
+}

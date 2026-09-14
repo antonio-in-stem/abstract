@@ -1,0 +1,12 @@
+Book :: @id.the_hobbit
+    title: "The Hobbit"
+    author: "J. R. R. Tolkien"
+    status: finished
+    pages: 310
+    favorite: true
+
+Book :: @id.a_wizard_of_earthsea
+    title: "A Wizard of Earthsea"
+    author: "Ursula K. Le Guin"
+    status: reading
+    pages: 205

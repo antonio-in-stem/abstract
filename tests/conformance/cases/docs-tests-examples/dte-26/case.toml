@@ -1,0 +1,21 @@
+id = '''DTE-26'''
+area = '''docs-tests-examples'''
+title = '''`length()` on a non-array returns 1, so `length(.text_field) == n` is a silently always-false guard'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''ux'''
+source_repro = '''repro/docs-tests-examples/logic-length-nonarray/'''
+command = '''cd .../repro/docs-tests-examples/logic-length-nonarray && abstract compile data JSON
+name: Alpha'''
+expected_kind = '''error'''
+expected_note = '''Either 5 (string length) or a compile error saying `length()` requires a list operand.'''
+actual_0_2_0 = '''exit 0 with only `"len1": "hit"` — `length("Alpha") == 1`.'''
+spec_ref = '''6.10, 10.5 (E514), A.2 (A38)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected.json
+length() on a text value yields its number of Unicode scalar values (6.10), so length(.name)
+is 5 for "Alpha" and only len5 is derived. E514 is a static check for arguments whose declared
+type is neither a list nor text, so length(.name) is legal here. 0.2.0 returned 1 for every
+scalar (A.2 A38).
+'''

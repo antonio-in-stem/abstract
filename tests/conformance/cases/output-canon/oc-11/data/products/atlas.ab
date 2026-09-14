@@ -1,0 +1,5 @@
+Product :: @id.atlas
+    status: active
+    price: 19.5
+    featured: true
+    tags: core, public

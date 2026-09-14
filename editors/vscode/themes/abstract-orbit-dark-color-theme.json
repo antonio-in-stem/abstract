@@ -1,0 +1,147 @@
+{
+  "$schema": "vscode://schemas/color-theme",
+  "name": "Abstract Orbit Dark",
+  "type": "dark",
+  "semanticHighlighting": true,
+  "colors": {
+    "editor.background": "#0b1020",
+    "editor.foreground": "#dbe7ff",
+    "editorLineNumber.foreground": "#50617f",
+    "editorLineNumber.activeForeground": "#a9c7ff",
+    "editorCursor.foreground": "#f8d86b",
+    "editor.selectionBackground": "#29466f99",
+    "editor.inactiveSelectionBackground": "#22334d88",
+    "editorBracketMatch.background": "#1f3654",
+    "editorBracketMatch.border": "#77d0ff",
+    "editorIndentGuide.background1": "#23314b",
+    "editorIndentGuide.activeBackground1": "#566b90"
+  },
+  "semanticTokenColors": {
+    "abstractSchemaKeyword": {
+      "foreground": "#77d0ff",
+      "fontStyle": "bold"
+    },
+    "abstractSchemaType": "#9ee8ff",
+    "abstractSchemaModifier": "#58e6d9",
+    "abstractSchemaField": "#d8f3ff",
+    "abstractLogicKeyword": {
+      "foreground": "#ff8fc7",
+      "fontStyle": "bold"
+    },
+    "abstractLogicOperator": "#ffcf70",
+    "abstractLogicPath": "#f7b7ff"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment.line.double-slash.abstract"],
+      "settings": {
+        "foreground": "#6f819f",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": ["string.quoted.double.abstract"],
+      "settings": {
+        "foreground": "#ffd58f"
+      }
+    },
+    {
+      "scope": ["constant.character.escape.abstract"],
+      "settings": {
+        "foreground": "#ff9f7a"
+      }
+    },
+    {
+      "scope": ["keyword.declaration.schema.abstract"],
+      "settings": {
+        "foreground": "#77d0ff",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": ["entity.name.type.schema.abstract", "entity.name.type.instance.abstract"],
+      "settings": {
+        "foreground": "#b6e7ff"
+      }
+    },
+    {
+      "scope": ["support.type.primitive.schema.abstract", "support.type.reference.schema.abstract"],
+      "settings": {
+        "foreground": "#9ee8ff"
+      }
+    },
+    {
+      "scope": ["storage.modifier.schema.abstract"],
+      "settings": {
+        "foreground": "#58e6d9"
+      }
+    },
+    {
+      "scope": ["variable.other.field.schema.abstract", "variable.other.field.instance.abstract", "variable.parameter.tuple.abstract", "constant.numeric.field.schema.abstract"],
+      "settings": {
+        "foreground": "#d8f3ff"
+      }
+    },
+    {
+      "scope": ["string.unquoted.bare.abstract"],
+      "settings": {
+        "foreground": "#ffd58f"
+      }
+    },
+    {
+      "scope": ["keyword.declaration.logic.abstract", "keyword.control.logic.abstract"],
+      "settings": {
+        "foreground": "#ff8fc7",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": ["entity.name.type.logic.abstract"],
+      "settings": {
+        "foreground": "#ffc0df"
+      }
+    },
+    {
+      "scope": ["keyword.operator.logical.logic.abstract", "keyword.operator.arithmetic.abstract"],
+      "settings": {
+        "foreground": "#ffcf70"
+      }
+    },
+    {
+      "scope": ["support.function.calculation.abstract", "support.function.numeric.abstract"],
+      "settings": {
+        "foreground": "#86e1c3"
+      }
+    },
+    {
+      "scope": ["variable.other.path.abstract"],
+      "settings": {
+        "foreground": "#f7b7ff"
+      }
+    },
+    {
+      "scope": ["storage.modifier.header.abstract", "constant.other.symbol.abstract", "variable.other.clone.abstract", "variable.other.clone.member.abstract"],
+      "settings": {
+        "foreground": "#bfa9ff"
+      }
+    },
+    {
+      "scope": ["constant.numeric.range.abstract", "constant.numeric.integer.abstract"],
+      "settings": {
+        "foreground": "#a7f08c"
+      }
+    },
+    {
+      "scope": ["constant.language.boolean.abstract", "constant.language.default.abstract"],
+      "settings": {
+        "foreground": "#ffb86b"
+      }
+    },
+    {
+      "scope": ["keyword.operator.assignment.abstract", "punctuation.separator.abstract", "punctuation.section.abstract"],
+      "settings": {
+        "foreground": "#8fa8d6"
+      }
+    }
+  ]
+}

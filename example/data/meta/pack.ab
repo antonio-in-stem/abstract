@@ -1,0 +1,2 @@
+Meta :: @id.sample_catalog, @owner.example_team, @version.1
+    description: "A compact generic project showing schemas, instances, lists, tags, clones, and RAW output."

@@ -1,0 +1,8 @@
+Package :: @id.blue_box
+    name: Blue Box
+    weight: 30
+
+Package :: @id.red_box
+    name: Red Box
+    state: waiting
+    weight: 4

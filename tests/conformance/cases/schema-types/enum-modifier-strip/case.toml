@@ -1,0 +1,21 @@
+id = '''enum-modifier-strip'''
+area = '''schema-types'''
+title = '''@optional/@tag stripping is not parenthesis-aware: a token inside enum(...) is deleted from the type and silently turns the field optional'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/schema-types/enum-modifier-strip/'''
+command = '''abstract compile repro/schema-types/enum-modifier-strip/data JSON'''
+expected_kind = '''error'''
+expected_note = '''Either the token is treated as an ordinary enum value (so the required field `c` is missing -> error), or a parse error. Not a silent change of the field's optionality.'''
+actual_0_2_0 = '''exit 0:
+{
+  "data": [
+    { "template": "Thing", "id": "a" }
+  ]
+}
+— `c` was declared without @optional yet its absence was accepted, and the enum lost a member.'''
+spec_ref = '''3.1, 4.4.5, 10.2'''
+status = '''ready'''
+command_1_0 = '''compile data JSON'''
+expected_1_0 = '''1.0 has a real tokenizer, so nothing is stripped by text search. enum_type in GRAMMAR.ebnf is enum ( identifier { , identifier } ), and the adjacency rule of SPEC 3.1 makes the at-sign plus the following identifier one modifier token, which is not an identifier. A modifier token inside an argument list is therefore E210 (a token that is not valid here) at templates/Thing.abt:3, not a silently dropped member and not a silently optional field. E306 does not apply: its two message forms cover only an empty member list and a duplicate member.'''

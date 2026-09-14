@@ -1,0 +1,19 @@
+id = '''mbc-03'''
+area = '''media-bundle-crypto'''
+title = '''Json.java has no nesting-depth limit: deep JSON throws uncaught StackOverflowError, violating the AbstractDataException contract'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/media-bundle-crypto/case06-json-robustness/'''
+command = '''java -Xss512k -cp ... JsonExp'''
+expected_kind = '''undecided'''
+expected_note = '''A clean AbstractDataException('nesting too deep') or a documented depth cap.'''
+actual_0_2_0 = '''Uncaught java.lang.StackOverflowError propagates out of Json.parse.'''
+spec_ref = '''9.9, Appendix D.2 (items 6, 8)'''
+status = '''manual'''
+expectation_1_0 = '''
+Not a language conformance case: the case exercises the Java runtime's JSON reader, which 9.9
+leaves outside the language. Appendix D.2 item 6 requires a nesting-depth limit reported as the
+runtime's own exception type and never as StackOverflowError, and item 8 requires every parsing
+failure to surface as that same type. The case ships no Abstract sources.
+'''

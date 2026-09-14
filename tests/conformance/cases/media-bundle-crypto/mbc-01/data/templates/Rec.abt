@@ -1,0 +1,4 @@
+schema Rec {
+    id: text(1..40)
+    doc: file(ini, txt)
+}

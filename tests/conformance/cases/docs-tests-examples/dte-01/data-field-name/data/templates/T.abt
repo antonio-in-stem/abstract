@@ -1,0 +1,5 @@
+schema T {
+    id: text(1..40)
+    data: text(1..40)
+    name: text(1..40)
+}

@@ -1,0 +1,31 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Thing",
+      "id": "x",
+      "name": "hello",
+      "tags": [
+        "start $note end"
+      ],
+      "note": "hello"
+    },
+    {
+      "template": "Thing",
+      "id": "y",
+      "name": "hello",
+      "tags": [
+        "start $note end"
+      ],
+      "note": "hello"
+    }
+  ],
+  "overlays": []
+}

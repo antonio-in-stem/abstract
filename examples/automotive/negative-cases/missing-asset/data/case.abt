@@ -1,0 +1,3 @@
+schema Photo {
+    hero: image(png)
+}

@@ -1,0 +1,38 @@
+
+> abstract-language@1.2.0 test
+> node --test test/*.test.js
+
+✔ real compiler analyzes unsaved instance/schema together and keeps relative assets at the actual root (417.376ms)
+✔ overlay replacement happens before disk UTF-8 decoding and permits an unsaved new source (156.4783ms)
+✔ compiler ranges distinguish disk BOM metadata from exact overlay text and count supplementary UTF-16 units (228.3059ms)
+✔ foreign, ignored, and duplicate canonical overlays are refused without changing disk (523.1314ms)
+✔ discovered junction aliases keep canonical diagnostic targets and allow their overlays (130.7738ms)
+✔ compiler rejects malformed wire payloads and declares bounded diagnostic truncation (449.7202ms)
+✔ client rejects lossy Unicode and bounded-input violations before starting a process (57.811ms)
+✔ process cancellation terminates a running process and marks its response unusable (84.2067ms)
+✔ capability negotiation distinguishes old compiler support from broken executables (69.746ms)
+✔ responses with mismatched request ids or malformed ranges never reach diagnostics (0.5954ms)
+✔ accepted dotted-path edits preserve byte-exact compiler output in all formats and versions (1110.6951ms)
+✔ TextMate highlights legal numeric/hyphen fields and recovers after an unterminated physical string (54.6844ms)
+✔ lexical masking keeps URLs and handles even and odd escape runs (1.8377ms)
+✔ schemas preserve exact names, normalize identifiers, list cardinalities and nested shapes (15.5475ms)
+✔ root and nested field completion obey scope and forbid list traversal (4.0175ms)
+✔ schema-directed values include normalized enums, bool, ref ids and #tag members (5.4189ms)
+✔ strings and comments do not offer unrelated fields (0.8055ms)
+✔ current buffer and ambiguous schema declarations are handled conservatively (0.5548ms)
+✔ definitions resolve exact schema, normalized nested fields and ref ids (1.2754ms)
+✔ completion replaces the whole token and preserves existing punctuation (0.3903ms)
+✔ multiline enum declarations and header continuation stay one statement (0.3577ms)
+✔ type and modifier completion does not invent callable primitive syntax (0.7214ms)
+✔ nested logic and else bodies keep the schema context for dotted paths (0.5193ms)
+✔ dotted-path refactor preserves annotation and value bytes, skips comments on braces and list paths (1.7429ms)
+✔ discovery matches data casing, ignored directories, source extensions and link cycles (62.3364ms)
+✔ unsaved and newly created buffers replace disk sources without crossing project boundaries (49.8649ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2419.8916

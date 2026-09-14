@@ -1,0 +1,23 @@
+id = '''DTE-14'''
+area = '''docs-tests-examples'''
+title = '''The `template` output field can be overwritten by an instance assignment or by a schema field, breaking the documented output contract'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/template-field-override/ (also references: repro/docs-tests-examples/final-round4/)'''
+command = '''cd .../repro/docs-tests-examples/template-field-override && abstract compile data JSON
+template: NotT
+cd .../repro/docs-tests-examples/final-round4 && abstract compile data JSON
+template: text(1..40)'''
+expected_kind = '''undecided'''
+expected_note = '''An error such as `'template' is a reserved output field and cannot be assigned` (and the same for a schema declaring it), or the compiler-generated value winning.'''
+actual_0_2_0 = '''Both exit 0. First: `{"template": "NotT", "id": "x", "name": "Alpha"}` — validated against schema `T`, labelled `NotT`. Second: `{"template": "mine", "id": "x", "color": "green"}`.'''
+spec_ref = '''4.11, 5.4, 8.2, 10.3 (E314), 10.4 (E410), A.1 (A7, A8)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)              -> expected-error.txt
+compile data JSON (cwd = dte-14/final-round4)    -> final-round4/expected-error.txt
+"template" is an envelope key: assigning it is E410 (5.4, A.1 A8) and declaring it is E314
+(4.11, A.1 A7). In final-round4 the schema defect is found in P3, which runs before the
+instance is compiled, so E314 is reported and the E410 on the instance line is not reached.
+'''

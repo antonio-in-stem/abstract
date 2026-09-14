@@ -1,0 +1,16 @@
+id = '''OC-22'''
+area = '''output-canon'''
+title = '''file() values accept ../ traversal outside the project and absolute machine paths, and the raw string is published into the compiled data'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/output-canon/oc28-file-traversal/'''
+command = '''img: file(png)'''
+expected_kind = '''error'''
+expected_note = '''A file() value that resolves outside the project root (or is absolute) is rejected, or at least normalized to a project-relative form.'''
+actual_0_2_0 = '''Both compile with exit 0 and emit the authored string verbatim:
+  "img": "../../secret_outside.png"
+  "img": "repro/output-canon/secret_outside.png"'''
+spec_ref = '''5.9, 9.5, 10.4'''
+status = '''ready'''
+note_1_0 = '''An asset value MUST be relative, with no drive prefix, no UNC prefix, no leading '/' or '\' and no '..' segment; anything else is E424 (SPEC 5.9). The absolute value here is rejected before any probe, and E424 carries the note naming where assets live. The path-confinement check is not skipped by --skip-assets (SPEC 9.5), so no out-of-project path is ever probed or published. The '../../secret_outside.png' variant of the same case is E424 for the same rule.'''

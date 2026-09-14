@@ -1,0 +1,6 @@
+schema Thing {
+    name: text(1..40) = "unnamed"
+    tier: int(1..10) = 1
+    data: text(1..40) @optional
+    note: text(1..40) @optional
+}

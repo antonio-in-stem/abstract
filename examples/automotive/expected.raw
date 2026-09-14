@@ -1,0 +1,1528 @@
+abstract: {
+    format: 1,
+    compiler: "1.4.0",
+    versions: {
+        min: 1,
+        max: 3
+    }
+},
+data: [
+    {
+        template: "Brand",
+        id: "northstar",
+        name: "Northstar Motor Works",
+        legal_name: "Northstar Mobility Group",
+        country: "norwyn",
+        founded_year: 1987,
+        active: true
+    },
+    {
+        template: "Brand",
+        id: "velora",
+        name: "Velora Automobili",
+        country: "selvara",
+        founded_year: 2004,
+        active: true
+    },
+    {
+        template: "Car",
+        id: "aurora_continental",
+        model: "aurora_estate_eu",
+        owner: "aurora_fleet",
+        market: "continental_europe",
+        steering_position: "left",
+        trim: "executive",
+        active: true,
+        vin: "SYNTHETICVIN00002",
+        registration: "DEMO-EU-2",
+        exterior_color: "glacier_white",
+        accent_colors: ["accent_blue", "accent_black", "accent_silver", "accent_red"],
+        hero: "./images/aurora-estate.png",
+        gallery: ["./images/aurora-estate.png", "./images/abstract-logo.png"],
+        documents: ["./documents/owner-guide.txt", "./documents/service-summary.txt"],
+        powertrain: {
+            architecture: "plug_in_hybrid",
+            fuel: "petrol_electric",
+            driven_wheels: "all",
+            transmission: "automatic_8",
+            power_kw: 210,
+            torque_nm: 430,
+            battery_kwh: 24.5,
+            consumption_l_per_100km: 1.8
+        },
+        performance: {
+            source: "synthetic_demo",
+            minimum_valid_speed_kmh: 0,
+            zero_to_100_kmh_s: 7.2,
+            top_speed_kmh: 220,
+            efficiency_wh_km: 168,
+            note: "Synthetic values for compiler demonstration only"
+        },
+        wheels: [
+            {
+                position: "front_left",
+                rim_diameter_in: 19,
+                width_in: 8.0,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 250
+            },
+            {
+                position: "front_right",
+                rim_diameter_in: 19,
+                width_in: 8.0,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 250
+            },
+            {
+                position: "rear_left",
+                rim_diameter_in: 19,
+                width_in: 8.5,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 260
+            },
+            {
+                position: "rear_right",
+                rim_diameter_in: 19,
+                width_in: 8.5,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 260
+            }
+        ],
+        tires: [
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 235,
+                aspect_ratio: 45,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            },
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 235,
+                aspect_ratio: 45,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            },
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 255,
+                aspect_ratio: 40,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            },
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 255,
+                aspect_ratio: 40,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            }
+        ],
+        reference_seat: {
+            position: "driver",
+            upholstery: "recycled_textile",
+            color: "charcoal",
+            heated: true,
+            ventilation: true,
+            adjustment_axes: 12
+        },
+        seats: [
+            {
+                position: "driver",
+                upholstery: "recycled_textile",
+                color: "charcoal",
+                heated: true,
+                ventilation: true,
+                adjustment_axes: 12
+            },
+            {
+                position: "front_passenger",
+                upholstery: "recycled_textile",
+                color: "charcoal",
+                heated: true,
+                ventilation: true,
+                adjustment_axes: 4
+            },
+            {
+                position: "rear_left",
+                upholstery: "fabric",
+                color: "stone",
+                heated: false,
+                adjustment_axes: 4
+            },
+            {
+                position: "rear_center",
+                upholstery: "fabric",
+                color: "stone",
+                heated: false,
+                adjustment_axes: 4
+            },
+            {
+                position: "rear_right",
+                upholstery: "fabric",
+                color: "stone",
+                heated: false,
+                adjustment_axes: 4
+            }
+        ],
+        climate: {
+            air_conditioning: true,
+            temperature_unit: "celsius",
+            zones: [
+                {
+                    position: "driver",
+                    target_temperature_c: 21.0,
+                    enabled: true
+                },
+                {
+                    position: "front_passenger",
+                    target_temperature_c: 21.5,
+                    enabled: true
+                },
+                {
+                    position: "rear",
+                    target_temperature_c: 22.0,
+                    enabled: true
+                }
+            ]
+        },
+        features: [
+            {
+                code: "airbags",
+                enabled: true,
+                level: "enhanced",
+                notes: {
+                    detail: "Synthetic feature record",
+                    verified: true
+                }
+            },
+            {
+                code: "abs",
+                enabled: true,
+                level: "standard"
+            },
+            {
+                code: "lane_assist",
+                enabled: true,
+                level: "premium"
+            },
+            {
+                code: "heated_seats",
+                enabled: true,
+                level: "standard"
+            },
+            {
+                code: "parking_camera",
+                enabled: true,
+                level: "standard"
+            }
+        ],
+        wheel_checks: {
+            front_left: true,
+            front_right: true,
+            rear_left: true,
+            rear_right: true
+        },
+        labels: {
+            1: "aurora_continental_fleet",
+            2: "aurora_continental_fleet"
+        },
+        seat_count: 5,
+        wheel_count: 4,
+        display_label: "aurora_continental_executive",
+        schema_version: 3,
+        logic_echo: "touring",
+        software_channel: "stable"
+    },
+    {
+        template: "Car",
+        id: "aurora_demo",
+        model: "aurora_estate_uk",
+        owner: "alex_demo",
+        market: "uk_ireland",
+        steering_position: "right",
+        trim: "touring",
+        active: true,
+        vin: "SYNTHETICVIN00001",
+        registration: "DEMO-001",
+        exterior_color: "aurora_blue",
+        accent_colors: ["accent_blue", "accent_black", "accent_silver", "accent_red"],
+        hero: "./images/aurora-estate.png",
+        gallery: ["./images/aurora-estate.png", "./images/abstract-logo.png"],
+        documents: ["./documents/owner-guide.txt", "./documents/service-summary.txt"],
+        powertrain: {
+            architecture: "plug_in_hybrid",
+            fuel: "petrol_electric",
+            driven_wheels: "all",
+            transmission: "automatic_8",
+            power_kw: 210,
+            torque_nm: 430,
+            battery_kwh: 24.5,
+            consumption_l_per_100km: 1.8
+        },
+        performance: {
+            source: "synthetic_demo",
+            minimum_valid_speed_kmh: 0,
+            zero_to_100_kmh_s: 7.2,
+            top_speed_kmh: 220,
+            efficiency_wh_km: 168,
+            note: "Synthetic values for compiler demonstration only"
+        },
+        wheels: [
+            {
+                position: "front_left",
+                rim_diameter_in: 19,
+                width_in: 8.0,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 250
+            },
+            {
+                position: "front_right",
+                rim_diameter_in: 19,
+                width_in: 8.0,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 250
+            },
+            {
+                position: "rear_left",
+                rim_diameter_in: 19,
+                width_in: 8.5,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 260
+            },
+            {
+                position: "rear_right",
+                rim_diameter_in: 19,
+                width_in: 8.5,
+                material: "alloy",
+                rim_design: "aero_disc",
+                pressure_kpa: 260
+            }
+        ],
+        tires: [
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 235,
+                aspect_ratio: 45,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            },
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 235,
+                aspect_ratio: 45,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            },
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 255,
+                aspect_ratio: 40,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            },
+            {
+                manufacturer: "Fictional Rubber Co",
+                family: "QuietRoad",
+                width_mm: 255,
+                aspect_ratio: 40,
+                rim_diameter_in: 19,
+                season: "all_season",
+                run_flat: false
+            }
+        ],
+        reference_seat: {
+            position: "driver",
+            upholstery: "recycled_textile",
+            color: "charcoal",
+            heated: true,
+            ventilation: true,
+            adjustment_axes: 12
+        },
+        seats: [
+            {
+                position: "driver",
+                upholstery: "recycled_textile",
+                color: "charcoal",
+                heated: true,
+                ventilation: true,
+                adjustment_axes: 12
+            },
+            {
+                position: "front_passenger",
+                upholstery: "recycled_textile",
+                color: "charcoal",
+                heated: true,
+                ventilation: true,
+                adjustment_axes: 4
+            },
+            {
+                position: "rear_left",
+                upholstery: "fabric",
+                color: "stone",
+                heated: false,
+                adjustment_axes: 4
+            },
+            {
+                position: "rear_center",
+                upholstery: "fabric",
+                color: "stone",
+                heated: false,
+                adjustment_axes: 4
+            },
+            {
+                position: "rear_right",
+                upholstery: "fabric",
+                color: "stone",
+                heated: false,
+                adjustment_axes: 4
+            }
+        ],
+        climate: {
+            air_conditioning: true,
+            temperature_unit: "celsius",
+            zones: [
+                {
+                    position: "driver",
+                    target_temperature_c: 21.0,
+                    enabled: true
+                },
+                {
+                    position: "front_passenger",
+                    target_temperature_c: 21.5,
+                    enabled: true
+                },
+                {
+                    position: "rear",
+                    target_temperature_c: 22.0,
+                    enabled: true
+                }
+            ]
+        },
+        features: [
+            {
+                code: "airbags",
+                enabled: true,
+                level: "enhanced",
+                notes: {
+                    detail: "Synthetic feature record",
+                    verified: true
+                }
+            },
+            {
+                code: "abs",
+                enabled: true,
+                level: "standard"
+            },
+            {
+                code: "lane_assist",
+                enabled: true,
+                level: "premium"
+            },
+            {
+                code: "heated_seats",
+                enabled: true,
+                level: "standard"
+            },
+            {
+                code: "parking_camera",
+                enabled: true,
+                level: "standard"
+            }
+        ],
+        wheel_checks: {
+            front_left: true,
+            front_right: true,
+            rear_left: true,
+            rear_right: true
+        },
+        labels: {
+            1: "aurora_demo_fleet",
+            2: "aurora_demo_fleet"
+        },
+        seat_count: 5,
+        wheel_count: 4,
+        display_label: "aurora_demo_touring",
+        schema_version: 3,
+        logic_echo: "touring",
+        software_channel: "stable"
+    },
+    {
+        template: "Owner",
+        id: "alex_demo",
+        display_name: "Alex Example",
+        owner_kind: "individual",
+        home_market: "uk_ireland",
+        contact: {
+            email: "alex@example.invalid",
+            phone: "+44-0000-000000"
+        }
+    },
+    {
+        template: "Owner",
+        id: "aurora_fleet",
+        display_name: "Aurora Demonstration Fleet",
+        owner_kind: "fleet",
+        home_market: "continental_europe"
+    },
+    {
+        template: "VehicleModel",
+        id: "aurora_estate_eu",
+        brand: "northstar",
+        name: "Aurora Estate Continental",
+        model_year: 2028,
+        body_style: "estate",
+        market: "continental_europe",
+        steering_position: "left",
+        doors: 5,
+        seats: 5,
+        powertrain: {
+            architecture: "battery_electric",
+            fuel: "electricity",
+            driven_wheels: "all",
+            transmission: "single_speed",
+            power_kw: 230,
+            torque_nm: 480,
+            battery_kwh: 82.0
+        },
+        hero_image: "./images/aurora-estate.png",
+        engineering_preview: "./images/engineering-preview.jpg",
+        specification: "./documents/service-summary.txt",
+        connectivity: "basic"
+    },
+    {
+        template: "VehicleModel",
+        id: "aurora_estate_uk",
+        brand: "northstar",
+        name: "Aurora Estate",
+        model_year: 2028,
+        body_style: "estate",
+        market: "uk_ireland",
+        steering_position: "right",
+        doors: 5,
+        seats: 5,
+        powertrain: {
+            architecture: "plug_in_hybrid",
+            fuel: "petrol_electric",
+            driven_wheels: "all",
+            transmission: "automatic_8",
+            power_kw: 210,
+            torque_nm: 430,
+            battery_kwh: 24.5,
+            consumption_l_per_100km: 1.8
+        },
+        hero_image: "./images/aurora-estate.png",
+        engineering_preview: "./images/engineering-preview.jpg",
+        specification: "./documents/service-summary.txt",
+        connectivity: "basic"
+    }
+],
+overlays: [
+    {
+        versions: {
+            min: 1,
+            max: 1
+        },
+        data: [
+            {
+                template: "Car",
+                id: "aurora_demo",
+                model: "aurora_estate_uk",
+                owner: "alex_demo",
+                market: "uk_ireland",
+                steering_position: "right",
+                trim: "touring",
+                active: true,
+                vin: "SYNTHETICVIN00001",
+                registration: "DEMO-001",
+                exterior_color: "aurora_blue",
+                accent_colors: ["accent_blue", "accent_black", "accent_silver", "accent_red"],
+                hero: "./images/aurora-estate.png",
+                gallery: ["./images/aurora-estate.png", "./images/abstract-logo.png"],
+                documents: ["./documents/owner-guide.txt", "./documents/service-summary.txt"],
+                powertrain: {
+                    architecture: "plug_in_hybrid",
+                    fuel: "petrol_electric",
+                    driven_wheels: "all",
+                    transmission: "automatic_8",
+                    power_kw: 210,
+                    torque_nm: 430,
+                    battery_kwh: 24.5,
+                    consumption_l_per_100km: 1.8
+                },
+                performance: {
+                    source: "synthetic_demo",
+                    minimum_valid_speed_kmh: 0,
+                    zero_to_100_kmh_s: 7.2,
+                    top_speed_kmh: 220,
+                    efficiency_wh_km: 168,
+                    note: "Synthetic values for compiler demonstration only"
+                },
+                wheels: [
+                    {
+                        position: "front_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "front_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "rear_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    },
+                    {
+                        position: "rear_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    }
+                ],
+                tires: [
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    }
+                ],
+                reference_seat: {
+                    position: "driver",
+                    upholstery: "recycled_textile",
+                    color: "charcoal",
+                    heated: true,
+                    ventilation: true,
+                    adjustment_axes: 12
+                },
+                seats: [
+                    {
+                        position: "driver",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 12
+                    },
+                    {
+                        position: "front_passenger",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_left",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_center",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_right",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    }
+                ],
+                climate: {
+                    air_conditioning: true,
+                    temperature_unit: "celsius",
+                    zones: [
+                        {
+                            position: "driver",
+                            target_temperature_c: 21.0,
+                            enabled: true
+                        },
+                        {
+                            position: "front_passenger",
+                            target_temperature_c: 21.5,
+                            enabled: true
+                        },
+                        {
+                            position: "rear",
+                            target_temperature_c: 22.0,
+                            enabled: true
+                        }
+                    ]
+                },
+                features: [
+                    {
+                        code: "airbags",
+                        enabled: true,
+                        level: "enhanced",
+                        notes: {
+                            detail: "Synthetic feature record",
+                            verified: true
+                        }
+                    },
+                    {
+                        code: "abs",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "lane_assist",
+                        enabled: true,
+                        level: "premium"
+                    },
+                    {
+                        code: "heated_seats",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "parking_camera",
+                        enabled: true,
+                        level: "standard"
+                    }
+                ],
+                wheel_checks: {
+                    front_left: true,
+                    front_right: true,
+                    rear_left: true,
+                    rear_right: true
+                },
+                labels: {
+                    1: "aurora_demo_fleet",
+                    2: "aurora_demo_fleet"
+                },
+                seat_count: 5,
+                wheel_count: 4,
+                display_label: "aurora_demo_touring",
+                schema_version: 1,
+                logic_echo: "touring",
+                legacy_inventory_code: "LEGACY-DEMO"
+            },
+            {
+                template: "VehicleModel",
+                id: "aurora_estate_eu",
+                brand: "northstar",
+                name: "Aurora Estate Continental",
+                model_year: 2028,
+                body_style: "estate",
+                market: "continental_europe",
+                steering_position: "left",
+                doors: 5,
+                seats: 5,
+                powertrain: {
+                    architecture: "battery_electric",
+                    fuel: "electricity",
+                    driven_wheels: "all",
+                    transmission: "single_speed",
+                    power_kw: 230,
+                    torque_nm: 480,
+                    battery_kwh: 82.0
+                },
+                hero_image: "./images/aurora-estate.png",
+                engineering_preview: "./images/engineering-preview.jpg",
+                specification: "./documents/service-summary.txt"
+            },
+            {
+                template: "VehicleModel",
+                id: "aurora_estate_uk",
+                brand: "northstar",
+                name: "Aurora Estate",
+                model_year: 2028,
+                body_style: "estate",
+                market: "uk_ireland",
+                steering_position: "right",
+                doors: 5,
+                seats: 5,
+                powertrain: {
+                    architecture: "plug_in_hybrid",
+                    fuel: "petrol_electric",
+                    driven_wheels: "all",
+                    transmission: "automatic_8",
+                    power_kw: 210,
+                    torque_nm: 430,
+                    battery_kwh: 24.5,
+                    consumption_l_per_100km: 1.8
+                },
+                hero_image: "./images/aurora-estate.png",
+                engineering_preview: "./images/engineering-preview.jpg",
+                specification: "./documents/service-summary.txt",
+                legacy_platform_code: "NX-E28"
+            }
+        ],
+        removed: ["aurora_continental"]
+    },
+    {
+        versions: {
+            min: 2,
+            max: 2
+        },
+        data: [
+            {
+                template: "Car",
+                id: "aurora_continental",
+                model: "aurora_estate_eu",
+                owner: "aurora_fleet",
+                market: "continental_europe",
+                steering_position: "left",
+                trim: "executive",
+                active: true,
+                vin: "SYNTHETICVIN00002",
+                registration: "DEMO-EU-2",
+                exterior_color: "glacier_white",
+                accent_colors: ["accent_blue", "accent_black", "accent_silver", "accent_red"],
+                hero: "./images/aurora-estate.png",
+                gallery: ["./images/aurora-estate.png", "./images/abstract-logo.png"],
+                documents: ["./documents/owner-guide.txt", "./documents/service-summary.txt"],
+                powertrain: {
+                    architecture: "plug_in_hybrid",
+                    fuel: "petrol_electric",
+                    driven_wheels: "all",
+                    transmission: "automatic_8",
+                    power_kw: 210,
+                    torque_nm: 430,
+                    battery_kwh: 24.5,
+                    consumption_l_per_100km: 1.8
+                },
+                performance: {
+                    source: "synthetic_demo",
+                    minimum_valid_speed_kmh: 0,
+                    zero_to_100_kmh_s: 7.2,
+                    top_speed_kmh: 220,
+                    efficiency_wh_km: 168,
+                    note: "Synthetic values for compiler demonstration only"
+                },
+                wheels: [
+                    {
+                        position: "front_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "front_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "rear_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    },
+                    {
+                        position: "rear_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    }
+                ],
+                tires: [
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    }
+                ],
+                reference_seat: {
+                    position: "driver",
+                    upholstery: "recycled_textile",
+                    color: "charcoal",
+                    heated: true,
+                    ventilation: true,
+                    adjustment_axes: 12
+                },
+                seats: [
+                    {
+                        position: "driver",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 12
+                    },
+                    {
+                        position: "front_passenger",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_left",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_center",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_right",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    }
+                ],
+                climate: {
+                    air_conditioning: true,
+                    temperature_unit: "celsius",
+                    zones: [
+                        {
+                            position: "driver",
+                            target_temperature_c: 21.0,
+                            enabled: true
+                        },
+                        {
+                            position: "front_passenger",
+                            target_temperature_c: 21.5,
+                            enabled: true
+                        },
+                        {
+                            position: "rear",
+                            target_temperature_c: 22.0,
+                            enabled: true
+                        }
+                    ]
+                },
+                features: [
+                    {
+                        code: "airbags",
+                        enabled: true,
+                        level: "enhanced",
+                        notes: {
+                            detail: "Synthetic feature record",
+                            verified: true
+                        }
+                    },
+                    {
+                        code: "abs",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "lane_assist",
+                        enabled: true,
+                        level: "premium"
+                    },
+                    {
+                        code: "heated_seats",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "parking_camera",
+                        enabled: true,
+                        level: "standard"
+                    }
+                ],
+                wheel_checks: {
+                    front_left: true,
+                    front_right: true,
+                    rear_left: true,
+                    rear_right: true
+                },
+                labels: {
+                    1: "aurora_continental_fleet",
+                    2: "aurora_continental_fleet"
+                },
+                seat_count: 5,
+                wheel_count: 4,
+                display_label: "aurora_continental_executive",
+                schema_version: 2,
+                logic_echo: "touring",
+                legacy_inventory_code: "LEGACY-DEMO",
+                software_channel: "beta"
+            },
+            {
+                template: "Car",
+                id: "aurora_demo",
+                model: "aurora_estate_uk",
+                owner: "alex_demo",
+                market: "uk_ireland",
+                steering_position: "right",
+                trim: "touring",
+                active: true,
+                vin: "SYNTHETICVIN00001",
+                registration: "DEMO-001",
+                exterior_color: "aurora_blue",
+                accent_colors: ["accent_blue", "accent_black", "accent_silver", "accent_red"],
+                hero: "./images/aurora-estate.png",
+                gallery: ["./images/aurora-estate.png", "./images/abstract-logo.png"],
+                documents: ["./documents/owner-guide.txt", "./documents/service-summary.txt"],
+                powertrain: {
+                    architecture: "plug_in_hybrid",
+                    fuel: "petrol_electric",
+                    driven_wheels: "all",
+                    transmission: "automatic_8",
+                    power_kw: 210,
+                    torque_nm: 430,
+                    battery_kwh: 24.5,
+                    consumption_l_per_100km: 1.8
+                },
+                performance: {
+                    source: "synthetic_demo",
+                    minimum_valid_speed_kmh: 0,
+                    zero_to_100_kmh_s: 7.2,
+                    top_speed_kmh: 220,
+                    efficiency_wh_km: 168,
+                    note: "Synthetic values for compiler demonstration only"
+                },
+                wheels: [
+                    {
+                        position: "front_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "front_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "rear_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    },
+                    {
+                        position: "rear_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    }
+                ],
+                tires: [
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    }
+                ],
+                reference_seat: {
+                    position: "driver",
+                    upholstery: "recycled_textile",
+                    color: "charcoal",
+                    heated: true,
+                    ventilation: true,
+                    adjustment_axes: 12
+                },
+                seats: [
+                    {
+                        position: "driver",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 12
+                    },
+                    {
+                        position: "front_passenger",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_left",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_center",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_right",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    }
+                ],
+                climate: {
+                    air_conditioning: true,
+                    temperature_unit: "celsius",
+                    zones: [
+                        {
+                            position: "driver",
+                            target_temperature_c: 21.0,
+                            enabled: true
+                        },
+                        {
+                            position: "front_passenger",
+                            target_temperature_c: 21.5,
+                            enabled: true
+                        },
+                        {
+                            position: "rear",
+                            target_temperature_c: 22.0,
+                            enabled: true
+                        }
+                    ]
+                },
+                features: [
+                    {
+                        code: "airbags",
+                        enabled: true,
+                        level: "enhanced",
+                        notes: {
+                            detail: "Synthetic feature record",
+                            verified: true
+                        }
+                    },
+                    {
+                        code: "abs",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "lane_assist",
+                        enabled: true,
+                        level: "premium"
+                    },
+                    {
+                        code: "heated_seats",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "parking_camera",
+                        enabled: true,
+                        level: "standard"
+                    }
+                ],
+                wheel_checks: {
+                    front_left: true,
+                    front_right: true,
+                    rear_left: true,
+                    rear_right: true
+                },
+                labels: {
+                    1: "aurora_demo_fleet",
+                    2: "aurora_demo_fleet"
+                },
+                seat_count: 5,
+                wheel_count: 4,
+                display_label: "aurora_demo_touring",
+                schema_version: 2,
+                logic_echo: "touring",
+                legacy_inventory_code: "LEGACY-DEMO",
+                software_channel: "beta"
+            },
+            {
+                template: "Car",
+                id: "aurora_sport_preview",
+                model: "aurora_estate_uk",
+                owner: "alex_demo",
+                market: "uk_ireland",
+                steering_position: "right",
+                trim: "sport",
+                active: true,
+                vin: "SYNTHETICVIN00003",
+                registration: "DEMO-SP-3",
+                exterior_color: "ember_red",
+                accent_colors: ["accent_blue", "accent_black", "accent_silver", "accent_red"],
+                hero: "./images/aurora-estate.png",
+                gallery: ["./images/aurora-estate.png", "./images/abstract-logo.png"],
+                documents: ["./documents/owner-guide.txt", "./documents/service-summary.txt"],
+                powertrain: {
+                    architecture: "plug_in_hybrid",
+                    fuel: "petrol_electric",
+                    driven_wheels: "all",
+                    transmission: "automatic_8",
+                    power_kw: 210,
+                    torque_nm: 430,
+                    battery_kwh: 24.5,
+                    consumption_l_per_100km: 1.8
+                },
+                performance: {
+                    source: "synthetic_demo",
+                    minimum_valid_speed_kmh: 0,
+                    zero_to_100_kmh_s: 7.2,
+                    top_speed_kmh: 220,
+                    efficiency_wh_km: 168,
+                    note: "Synthetic values for compiler demonstration only"
+                },
+                wheels: [
+                    {
+                        position: "front_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "front_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.0,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 250
+                    },
+                    {
+                        position: "rear_left",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    },
+                    {
+                        position: "rear_right",
+                        rim_diameter_in: 19,
+                        width_in: 8.5,
+                        material: "alloy",
+                        rim_design: "aero_disc",
+                        pressure_kpa: 260
+                    }
+                ],
+                tires: [
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 235,
+                        aspect_ratio: 45,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    },
+                    {
+                        manufacturer: "Fictional Rubber Co",
+                        family: "QuietRoad",
+                        width_mm: 255,
+                        aspect_ratio: 40,
+                        rim_diameter_in: 19,
+                        season: "all_season",
+                        run_flat: false
+                    }
+                ],
+                reference_seat: {
+                    position: "driver",
+                    upholstery: "recycled_textile",
+                    color: "charcoal",
+                    heated: true,
+                    ventilation: true,
+                    adjustment_axes: 12
+                },
+                seats: [
+                    {
+                        position: "driver",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 12
+                    },
+                    {
+                        position: "front_passenger",
+                        upholstery: "recycled_textile",
+                        color: "charcoal",
+                        heated: true,
+                        ventilation: true,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_left",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_center",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    },
+                    {
+                        position: "rear_right",
+                        upholstery: "fabric",
+                        color: "stone",
+                        heated: false,
+                        adjustment_axes: 4
+                    }
+                ],
+                climate: {
+                    air_conditioning: true,
+                    temperature_unit: "celsius",
+                    zones: [
+                        {
+                            position: "driver",
+                            target_temperature_c: 21.0,
+                            enabled: true
+                        },
+                        {
+                            position: "front_passenger",
+                            target_temperature_c: 21.5,
+                            enabled: true
+                        },
+                        {
+                            position: "rear",
+                            target_temperature_c: 22.0,
+                            enabled: true
+                        }
+                    ]
+                },
+                features: [
+                    {
+                        code: "airbags",
+                        enabled: true,
+                        level: "enhanced",
+                        notes: {
+                            detail: "Synthetic feature record",
+                            verified: true
+                        }
+                    },
+                    {
+                        code: "abs",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "lane_assist",
+                        enabled: true,
+                        level: "premium"
+                    },
+                    {
+                        code: "heated_seats",
+                        enabled: true,
+                        level: "standard"
+                    },
+                    {
+                        code: "parking_camera",
+                        enabled: true,
+                        level: "standard"
+                    }
+                ],
+                wheel_checks: {
+                    front_left: true,
+                    front_right: true,
+                    rear_left: true,
+                    rear_right: true
+                },
+                labels: {
+                    1: "aurora_sport_preview_fleet",
+                    2: "aurora_sport_preview_fleet"
+                },
+                seat_count: 5,
+                wheel_count: 4,
+                display_label: "aurora_sport_preview_sport",
+                schema_version: 2,
+                logic_echo: "touring",
+                legacy_inventory_code: "LEGACY-DEMO",
+                software_channel: "beta"
+            },
+            {
+                template: "VehicleModel",
+                id: "aurora_estate_uk",
+                brand: "northstar",
+                name: "Aurora Estate",
+                model_year: 2028,
+                body_style: "estate",
+                market: "uk_ireland",
+                steering_position: "right",
+                doors: 5,
+                seats: 5,
+                powertrain: {
+                    architecture: "plug_in_hybrid",
+                    fuel: "petrol_electric",
+                    driven_wheels: "all",
+                    transmission: "automatic_8",
+                    power_kw: 210,
+                    torque_nm: 430,
+                    battery_kwh: 24.5,
+                    consumption_l_per_100km: 1.8
+                },
+                hero_image: "./images/aurora-estate.png",
+                engineering_preview: "./images/engineering-preview.jpg",
+                specification: "./documents/service-summary.txt",
+                legacy_platform_code: "NX-E28",
+                connectivity: "basic"
+            }
+        ],
+        removed: []
+    }
+]

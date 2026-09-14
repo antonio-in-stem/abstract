@@ -1,0 +1,12 @@
+schema T {
+    id: text(1..40)
+    doc: file(txt)
+    absdoc: file(ini) @optional
+    checked: text(1..10) @optional
+}
+
+logic T {
+    require .doc exists
+        else throw "doc must exist"
+    derive .checked = yes
+}

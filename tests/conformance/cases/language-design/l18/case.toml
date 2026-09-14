@@ -1,0 +1,23 @@
+id = '''L18'''
+area = '''language-design'''
+title = '''No null, no absent/empty distinction, and no list cardinality: `field:` silently yields "", `null` is the literal string "null", and a required list group accepts an empty array'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case11/ (also references: repro/language-design/case22/)'''
+command = '''count: null
+count: int @optional'''
+expected_kind = '''error'''
+expected_note = '''`field:` with no value should be an error ("missing value for 'note'; write note: \"\" for an empty string"). A required list should require at least one element, or the schema should be able to say `pairs[1..]`.'''
+actual_0_2_0 = '''Empty value silently becomes ""; `null` is a string; required lists accept [].'''
+spec_ref = '''4.6, 5.4, 5.5, 10.2 (E210), 10.4 (E445), A.1, A.4'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)      -> expected-error.txt
+compile data JSON (cwd = l18/case22)     -> case22/expected.json
+An empty right-hand side is E210, never an empty string (5.4), so n_empty.ab fails in P1 and
+"note: null" in n_null.ab is simply the text "null" - 1.0 has no null in any format (8.9).
+The cardinality half is answered by 4.6: "pairs[]" with no cardinality is satisfied by an
+explicit empty list, so case22 compiles and emits []; a schema that needs at least one element
+writes "pairs[1..]", and a value outside the bounds is E445.
+'''

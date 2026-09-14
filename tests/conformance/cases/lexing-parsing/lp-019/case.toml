@@ -1,0 +1,20 @@
+id = '''LP-019'''
+area = '''lexing-parsing'''
+title = '''`file(...)` values escape the project assets directory via `..` or an absolute path, and the error message leaks the resolved absolute path'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/lexing-parsing/bug-38-interp-path-escape/ (also references: repro/lexing-parsing/SECRET_OUTSIDE/)'''
+command = '''`cd repro/lexing-parsing/bug-38-interp-path-escape && abstract compile . JSON`'''
+expected_kind = '''error'''
+expected_note = '''A path that resolves outside `<project>/assets` is a compile error ("asset path escapes the project assets directory"), and diagnostics quote the authored path rather than the absolute host path.'''
+actual_0_2_0 = '''With `Thing :: @id.../../SECRET_OUTSIDE/secret` + `icon: ./$id.png`, and with a plain `icon: ../../SECRET_OUTSIDE/secret.png`, both compile successfully:
+```
+"icon": "./../../SECRET_OUTSIDE/secret.png"
+"icon": "../../SECRET_OUTSIDE/secret.png"
+```
+Pointing at a non-existent outside file yields the oracle:
+`abstract: data/things/x.ab: File not found at Thing.icon: './../../SECRET_OUTSIDE/absent.png' resolved to '\\?\repro\lexing-parsing\SECRET_OUTSIDE\absent.png'.`'''
+spec_ref = '''5.2, 5.3, 5.9, 7.1, 10.4 (E428)'''
+status = '''ready'''
+spec_note = '''The header tag name ends at the first "." after the identifier run, so the value of "@id" is "../../SECRET_OUTSIDE/secret", which is not an identifier: E428 (5.2, 5.3). That is a project-table error, and a phase runs only if every earlier phase succeeded (7.1), so the E424 that data/things/y.ab would raise for "../../SECRET_OUTSIDE/secret.png" (5.9) is masked and never reported for this input. E424 coverage lives in instances-merge/im-13 and in the asset cases.'''

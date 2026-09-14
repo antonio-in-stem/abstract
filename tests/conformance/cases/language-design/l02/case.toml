@@ -1,0 +1,32 @@
+id = '''L02'''
+area = '''language-design'''
+title = '''Any unrecognized top-level block in a .abt is silently ignored — a typo'd `schema` keyword produces zero diagnostics and `lint` reports ok'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/language-design/case20/'''
+command = '''# contains: schemma W { id: text(1..40) name: text }   (typo)
+#           overlay v2 { supports: 3.1 }
+#           migrate W 1 -> 2 { rename .old -> .new }
+#           logic Ghost { require .nothing exists else throw "..." }
+./project/target/release/abstract.exe lint repro/language-design/case20/data/templates
+OUTPUT: abstract: ok            <-- four bogus top-level blocks, zero complaints
+./project/target/release/abstract.exe compile repro/language-design/case20/data JSON
+OUTPUT: abstract: objects/w.ab:1: Unknown template 'W'. Add a schema named 'W' in a .abt file, or change this instance header to an existing schema.
+(the error names the .ab file; the actual mistake is on templates/W.abt line 1)'''
+expected_kind = '''error'''
+expected_note = '''`schemma W {` should fail at templates/W.abt:1 with "unknown top-level block 'schemma' (expected 'schema Name {' or 'logic Name {'). Did you mean 'schema'?", and `abstract lint` on a directory of templates should not report ok for a file that declares nothing.'''
+actual_0_2_0 = '''Zero diagnostics; lint says ok; the downstream error blames the wrong file.'''
+spec_ref = '''4.1, 6.1, 10.2 (E210), 10.5 (E501)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (or lint data) -> expected-error.txt
+4.1 removes the skip-unknown-line behaviour: a template file contains schema_decl, logic_decl
+and at most one versions_decl, and anything else at top level is E210 with a position. The
+typo "schemma W {" is therefore reported at templates/W.abt:1, not as a downstream unknown
+template in the .ab file. "overlay v2 {" and "migrate W 1 -> 2 {" are further E210s, and
+"logic Ghost {" would be E501 once the file parses.
+Note on the recorded command: "lint data/templates" is E806 in 1.0, because a named directory
+must be the project root or the data directory, and data/templates is inside the data
+directory (2.3 step 5, 9.2).
+'''

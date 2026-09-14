@@ -1,0 +1,15 @@
+id = '''ADV3-06'''
+area = '''adversarial-3'''
+title = '''The same `for` block and `else`, separated by a blank line and a comment line: rule (b) joins them and the diagnostic is E210 rather than E517'''
+severity = '''major'''
+kind = '''bug'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''3.6, 6.3, 10.2, 10.5'''
+expected_note = '''SPEC 3.6 rule (b) suppresses the `NL` wherever the next token is `else`, and blank lines and comment lines carry no token, so this file is the same program as ADV3-05 and takes the same diagnostic: E517 at the `else`. This is the spelling the S5 ruling made legal for an `if`, so the pair fixes that legalising it did not change which fault a non-`if` block raises.'''
+actual_1_0 = '''exit 1, identical to ADV3-05 but three lines lower:
+  data/templates/T.abt:13:5: error[E210]: Unexpected 'else' here; expected end of line.
+  data/templates/T.abt:16:1: error[E210]: Unexpected '}' here; expected 'schema', 'logic' or 'versions'.'''
+note_1_0 = '''Same site as ADV3-05.'''

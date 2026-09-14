@@ -1,0 +1,6 @@
+schema Thing {
+    id: text(1..40)
+    name: text @optional
+    color: text @optional
+    size: int @optional
+}

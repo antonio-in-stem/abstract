@@ -1,0 +1,3 @@
+Thing :: @id.a
+    lang: hello
+    lang_values: 5

@@ -1,0 +1,5 @@
+schema T {
+    id: text(1..40)
+    files[]: text(1..200)
+    label: text(1..60) @optional
+}

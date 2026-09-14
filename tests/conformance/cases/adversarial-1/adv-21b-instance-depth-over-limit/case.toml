@@ -1,0 +1,17 @@
+id = '''ADV-21B'''
+area = '''adversarial-1'''
+title = '''An instance 65 levels deep is E209 at the statement that reaches the limit, with a file, line and column'''
+severity = '''minor'''
+kind = '''ruling'''
+verdict = '''confirmed'''
+status = '''ready'''
+expected_kind = '''error'''
+expected_files = '''expected-error.txt'''
+spec_ref = '''3.7, 7.3, 9.8'''
+expected_note = '''The over-limit half of the boundary `adv-21-document-depth-limit` holds from below, written so that it is the depth limit and nothing else that fires.
+
+SPEC 3.7 counts the instance object as level 1 and every object AND every list one level down as one further level. The statement here writes `tags` under 63 nested `child` objects, so the tree is: the instance object (1), 63 `child` objects (2..64), and the `tags` list (65). 65 exceeds 64, so it is E209.
+
+The path is 64 segments exactly, which is the SPEC 3.7 path-segment limit and therefore legal: without the list, 63 nested objects would stand at level 64 and compile. That is what makes the case exercise the depth row rather than the path row, which is otherwise reached first when depth is built out of dotted segments alone.'''
+spec_note = '''SPEC 3.7 makes validation the single site of the check and requires a position. The diagnostic is `data/items/x.ab:2:5: error[E209]: Instance nesting depth exceeds the limit of 64.`, positioned at the statement; the output stage performs no depth check, so the positionless form the old implementation produced can no longer occur.'''
+actual_1_0 = '''exit 1 with that one diagnostic. The same project with 62 `child` objects before `tags` stands at level 64 and compiles.'''

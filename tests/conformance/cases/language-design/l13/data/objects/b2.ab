@@ -1,0 +1,3 @@
+Brace :: @id.b2
+    slots.{one}: only
+    images: "./assets/{hero,thumb}.png"

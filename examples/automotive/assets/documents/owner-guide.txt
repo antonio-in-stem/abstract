@@ -1,0 +1,2 @@
+Synthetic demonstration owner guide for the fictional Aurora Estate.
+Values in this corpus are language fixtures, not measured vehicle data.

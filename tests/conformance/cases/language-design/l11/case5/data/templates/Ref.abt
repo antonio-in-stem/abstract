@@ -1,0 +1,11 @@
+schema Owner {
+    team: text(1..40)
+    contact: text @optional
+}
+
+schema Item {
+    id: text(1..40)
+    owner: $(Owner)
+    parent: text @optional
+    label: text @optional
+}

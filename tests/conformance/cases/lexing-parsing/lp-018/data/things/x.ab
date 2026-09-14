@@ -1,0 +1,2 @@
+Thing :: @id.x
+    lang(key, value): (en_us, Hi) THIS_TEXT_IS_SILENTLY_DROPPED (es_es, Hola)

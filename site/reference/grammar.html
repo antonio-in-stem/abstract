@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grammar reference - Abstract</title>
+    <meta name="description" content="The Abstract 1.0 grammar: lexical conventions, line joining, values, templates, logic and instances.">
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="../docs/index.html">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="grammar.html" aria-current="page">Reference</a>
+        <a href="../docs/ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Reference</p>
+        <h1>The grammar, in one page.</h1>
+        <p class="lede">Every rule name here is defined in <code>docs/GRAMMAR.ebnf</code> and referred to by <code>docs/SPEC.md</code>. This page is the readable version of both.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Reference</span>
+            <nav>
+                <a href="grammar.html" aria-current="page">Grammar</a>
+                <a href="diagnostics.html">Diagnostics</a>
+                <a href="../docs/cli.html">CLI</a>
+                <a href="../docs/raw.html">Compiled data</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+<p>This page is the practical reading of <code>docs/GRAMMAR.ebnf</code>, which is normative and defines every rule name used in the specification. Where this page is shorter than the grammar, the grammar wins.</p>
+<h2>Lexical conventions</h2>
+<table class="table"><thead><tr><th>Rule</th><th>Definition</th></tr></thead><tbody><tr><td>Encoding</td><td>UTF-8. A byte-order mark at offset 0 is removed before lexing and has no other effect.</td></tr><tr><td>Line terminators</td><td><code>LF</code> and <code>CRLF</code>, each one terminator. A lone <code>CR</code> is E210.</td></tr><tr><td>Whitespace</td><td>Space and tab separate tokens. <strong>Indentation carries no meaning</strong>: two programs differing only in leading whitespace compile identically.</td></tr><tr><td>Comments</td><td><code>//</code> to the end of the physical line, only at line start or immediately after a space or tab, never inside a quoted string.</td></tr><tr><td>Longest match</td><td>At each position the lexer takes the longest match, except that <code>.</code> followed by <code>.</code> is always <code>..</code> &mdash; so <code>1..3</code> is <code>1</code>, <code>..</code>, <code>3</code>.</td></tr><tr><td>Adjacency</td><td><code>::</code>, <code>..</code>, <code>${</code>, <code>$$</code>, <code>derive?</code>, a field head&rsquo;s <code>[]</code>, a size token, an annotation&rsquo;s <code>(</code>, and the <code>#</code>/<code>@</code>/<code>&amp;</code>/<code>$</code> that introduces a construct are single lexemes with no internal whitespace.</td></tr></tbody></table>
+<h2>Identifiers</h2>
+<pre><code>ident_start   = letter | digit | "_"
+ident_char    = letter | digit | "_" | "-"
+identifier    = ident_start , { ident_char }        (* must not end with "-" *)
+schema_name   = letter , { letter | digit | "_" }</code></pre>
+<p>Identifiers are ASCII only (E206) and are <strong>normalised</strong>: ASCII-lowercased, then <code>-</code> replaced by <code>_</code>. Schema names are <em>not</em> normalised and are compared exactly. Purely numeric identifiers are legal and are ordinary names, not indices.</p>
+<h2>Line joining</h2>
+<p>The lexer keeps a <strong>value-bracket stack</strong> for <code>(</code> <code>)</code>, <code>[</code> <code>]</code> and the <code>{</code> <code>}</code> of a multi-path key list. While that stack is non-empty a line terminator produces nothing and the logical line continues; while it is empty a line terminator ends the statement.</p>
+<p>A <strong>block brace</strong> &mdash; the <code>{</code> of a schema, a group, a logic block or an instance body block &mdash; is matched against its <code>}</code> but is never pushed onto that stack, so it joins no lines. A block&rsquo;s <code>{</code> must be the last token of its line and its <code>}</code> the first token of one.</p>
+<p>There are exactly two further continuation rules: inside a header tag list when the line so far ends with <code>,</code>, and inside a logic block when the next token after the terminator is <code>else</code>. A trailing <code>,</code> at bracket depth 0 does <strong>not</strong> continue a statement &mdash; it is E442.</p>
+<pre><code>tags: [
+    core,
+    public
+]                      // continues: the '[' is open
+
+tags: core, public     // one statement, one line
+
+tags: core,            // E442: trailing comma at depth 0
+public
+
+schema Label {         // a block brace joins no lines
+    caption: text
+}</code></pre>
+<h2>Values</h2>
+<pre><code>value         = list_value | bare_list
+bare_list     = single_value , { "," , single_value }
+list_value    = "[" , [ single_value , { "," , single_value } , [ "," ] ] , "]"
+single_value  = quoted_string | tag_object | bare_text
+
+tag_object    = "#" , identifier , [ "(" , [ tag_arg , { "," , tag_arg } ] , ")" ]
+tag_arg       = tag_arg_key , ":" , tag_arg_value | identifier
+tag_arg_key   = identifier , { "." , identifier }</code></pre>
+<p>A <code>bare_text</code> token is the raw, undecoded lexeme of an unquoted value. It never begins with <code>"</code>, <code>#</code> or <code>[</code>; contains no line terminator, no comment start and no <code>,</code> at bracket depth 0; has its leading and trailing whitespace removed; and, in a body statement, ends before any trailing annotation list. An empty right-hand side is E210.</p>
+<pre><code>"quoted string"           // escapes: \" \\ \n \r \t  -- and nothing else
+123                       // an integer literal where an int is declared
+19.5                      // a float literal; 1.21.5 stays text
+true / false              // bool
+[one, two, three]         // list; may span lines while brackets are open
+#tag        #tag(field: value, flag)
+./art/{hero,thumb}.png    // brace pattern, on a file/image list field
+flags: hat_*              // enum wildcard, in one of three positions
+./sets/$id/icon.png       // $field / ${field} interpolation; $$ is a literal $</code></pre>
+<h2>Template files</h2>
+<pre><code>template_file = { NL } , { template_item }
+template_item = ( versions_decl | schema_decl | logic_decl ) , { NL }
+
+versions_decl = "versions" , version_number , ".." , version_number , NL
+
+schema_decl   = "schema" , schema_name , "{" , NL , field_list , "}" , NL
+field_decl    = ( scalar_field | group_field ) , { NL }
+
+scalar_field  = field_head , ":" , type_expr , { field_modifier } ,
+                [ "=" , default_value ] , NL
+group_field   = field_head , { field_modifier } , "{" , NL , field_list , "}" , NL
+
+field_head    = identifier , [ "[" , [ cardinality ] , "]" ]
+cardinality   = uint , ".." , [ uint ]
+field_modifier = "@optional" | "@tag" | version_annotation</code></pre>
+<h3>Types</h3>
+<pre><code>text_type          = "text"  , [ "(" , [ int_range_list ]   , ")" ]
+int_type           = "int"   , [ "(" , [ int_range_list ]   , ")" ]
+float_type         = "float" , [ "(" , [ float_range_list ] , ")" ]
+bool_type          = "bool"
+enum_type          = "enum"  , "(" , identifier , { "," , identifier } , ")"
+file_type          = "file"  , "(" , extension , { "," , extension } , ")"
+image_type         = "image" , "(" , image_alt  , { "," , image_alt  } , ")"
+image_alt          = extension , [ ws , size_token ]
+size_token         = ( uint | "*" ) , "x" , ( uint | "*" )
+ref_type           = "ref" , "(" , schema_name , ")"
+nested_schema_type = "$(" , schema_name , ")"</code></pre>
+<p>A type keyword must be immediately followed by <code>(</code> when it takes arguments: <code>text (1..40)</code> with a space is E304. The size token is one lexeme, so <code>image(png128x128)</code> is a single extension and is E307, while <code>image(png 128 x 128)</code> is E308.</p>
+<h3>Annotations</h3>
+<pre><code>since_annotation   = "@since"   , "(" , version_number , ")"
+removed_annotation = "@removed" , "(" , version_number , ")"
+annotation_list    = version_annotation , [ version_annotation ]</code></pre>
+<p>An annotation list appears in exactly three places: as a field modifier, at the end of a body statement, and at the end of an instance header. Anywhere else &mdash; on a header tag, a clone statement or a body block &mdash; it is E437. The <code>(</code> is what separates <code>@since(2)</code> from the header tag <code>@since.2</code> and the flag <code>@since</code>; the parser never looks further than that character.</p>
+<h2>Logic blocks</h2>
+<pre><code>logic_decl       = "logic" , schema_name , "{" , NL , logic_body , "}" , NL
+
+derive_statement  = ( "derive" | "derive?" ) , logic_path , "=" , derive_expr , NL
+derive_expr       = logic_path | length_call | version_builtin | loop_variable | value
+require_statement = "require" , condition , "else" , "throw" , quoted_string , NL
+if_statement      = "if" , condition , block ,
+                    { "else" , "if" , condition , block } , [ "else" , block ]
+for_statement     = "for" , loop_variable , "in" , iterable , block
+iterable          = logic_path | list_value</code></pre>
+<pre><code>condition     = or_condition
+or_condition  = and_condition , { ( "or" | "||" ) , and_condition }
+and_condition = not_condition , { ( "and" | "&amp;&amp;" ) , not_condition }
+not_condition = [ "not" | "!" ] , comparison
+comparison    = operand , comparison_op , operand
+              | operand , "contains" , operand
+              | operand , "exists"
+              | operand
+comparison_op = "==" | "!=" | "&gt;=" | "&lt;=" | "&gt;" | "&lt;"
+operand       = "(" , condition , ")" | length_call | version_builtin
+              | logic_path | loop_variable | quoted_string | number | bool_literal
+length_call   = "length" , "(" , ( logic_path | loop_variable ) , ")"</code></pre>
+<pre><code>logic_path    = root_path | loop_path
+root_path     = "." , logic_segment , { "." , logic_segment }
+loop_path     = loop_variable , "." , logic_segment , { "." , logic_segment }
+logic_segment = ( identifier | loop_variable ) , [ "[" , uint , "]" ]</code></pre>
+<p>The index is read-only, and a loop-variable segment is a read position: a <code>derive</code> target containing one is E520. <code>version</code> is a bare word &mdash; a field is always written with a leading <code>.</code>, a loop variable with a leading <code>$</code>, and a quoted <code>"version"</code> is literal text, so the three never collide.</p>
+<h2>Instance files</h2>
+<pre><code>instance_file    = { NL } , { instance }
+instance         = instance_header , { clone_statement } , { body_item }
+
+instance_header  = schema_name , "::" , [ header_tag_list ] , [ annotation_list ] , NL
+header_tag_list  = header_tag , { "," , header_tag }
+header_tag       = "@" , identifier , [ "." , header_tag_value ]
+header_tag_value = quoted_string | bare_header_value
+
+clone_statement  = "&amp;" , instance_id , [ "." , ( "*" | path ) ] , NL
+
+body_item        = body_statement | body_block
+body_statement   = assignment , [ annotation_list ] , NL
+body_block       = path , "{" , NL , { body_item } , "}" , NL
+
+assignment       = tuple_array_assignment | multi_path_assignment | path_assignment
+path_assignment  = path , ":" , value
+multi_path_assignment
+                 = path , "." , "{" , identifier , { "," , identifier } , "}" , ":" , value
+tuple_array_assignment
+                 = path , "(" , identifier , { "," , identifier } , ")" , ":" ,
+                   ( tuple_row , { "," , tuple_row }
+                   | "[" , tuple_row , { "," , tuple_row } , [ "," ] , "]" )
+tuple_row        = "(" , tuple_cell , { "," , tuple_cell } , ")"
+tuple_cell       = quoted_string | bare_text</code></pre>
+<p>Assignment, multi-path, body-block and clone paths admit no index syntax: a segment written <code>name[0]</code> is E316. A <code>bare_header_value</code> is a <code>bare_text</code> that additionally contains no depth-0 <code>@</code> and no depth-0 <code>,</code>.</p>
+<h2>Reserved words</h2>
+<table class="table"><thead><tr><th>Position</th><th>Words</th></tr></thead><tbody><tr><td>Top level of a <code>.abt</code> file</td><td><code>schema</code>, <code>logic</code>, <code>versions</code></td></tr><tr><td>Type position</td><td><code>text</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>enum</code>, <code>file</code>, <code>image</code>, <code>ref</code></td></tr><tr><td>Modifier position</td><td><code>@optional</code>, <code>@tag</code>, <code>@since</code>, <code>@removed</code></td></tr><tr><td>Logic statement position</td><td><code>derive</code>, <code>derive?</code>, <code>require</code>, <code>if</code>, <code>else</code>, <code>for</code></td></tr><tr><td>Logic expression position</td><td><code>in</code>, <code>not</code>, <code>and</code>, <code>or</code>, <code>contains</code>, <code>exists</code>, <code>length</code>, <code>version</code>, <code>true</code>, <code>false</code></td></tr></tbody></table>
+<p>Keywords are recognised only where they are meaningful; none is reserved as a field name, an enum member or an instance id. Operator spellings: <code>==</code> <code>!=</code> <code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code> <code>&amp;&amp;</code> <code>||</code> <code>!</code>. Punctuation with meaning: <code>:</code> <code>::</code> <code>.</code> <code>,</code> <code>=</code> <code>(</code> <code>)</code> <code>[</code> <code>]</code> <code>{</code> <code>}</code> <code>[]</code> <code>@</code> <code>#</code> <code>&amp;</code> <code>$</code> <code>${</code> <code>$$</code> <code>*</code> <code>?</code> <code>..</code> <code>//</code>.</p>
+<h2>Limits</h2>
+<p>Each of these is 64, and exceeding one is E209: bracket nesting in a value; segments in an assignment, clone or logic path; schema group nesting and <code>$(Schema)</code> nesting in one compiled object; <code>if</code>/<code>for</code> nesting in one logic block; clone chain length; and the depth of the emitted document. An implementation must never abort, panic or crash on any input.</p>
+        </article>
+    </div>
+</main>
+
+<footer class="footer"><p>For how failures are reported, read <a href="diagnostics.html">diagnostics</a>.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

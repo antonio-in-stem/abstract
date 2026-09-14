@@ -1,0 +1,32 @@
+id = '''DTE-17'''
+area = '''docs-tests-examples'''
+title = '''Quoting a value does NOT keep it as text for int/float/bool fields — contradicting the compiler's own error message and NEW-FEATURES.md's migration advice'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/type-coercion/'''
+command = '''cd .../repro/docs-tests-examples/type-coercion && abstract compile data JSON
+n: "42"
+f: "3.5"
+b: "true"
+int(0..100)
+float(0..100)
+bool
+cd .../repro/docs-tests-examples/type-coercion/textnum && abstract compile data JSON
+txt: 2026
+text(1..40)'''
+expected_kind = '''undecided'''
+expected_note = '''Symmetric behaviour: either quoting preserves the string (matching NEW-FEATURES.md:288 and the error message's own advice), or the coercion is documented explicitly.'''
+actual_0_2_0 = '''Quoted values coerce silently: `"n": 42, "f": 3.5, "b": true` (exit 0). The reverse direction is strict: `abstract: items/tn.ab: Type mismatch at T.txt: expected text, but received a int value. Wrap the value in quotes to keep it as text.` (exit 1).'''
+spec_ref = '''3.5, 5.10, 10.4 (E412), A.1 (A11)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON (cwd = case root)          -> expected-error.txt   (n: "42" on int)
+compile data JSON (cwd = dte-17/edge)        -> edge/expected-error.txt   (n: 1_0)
+compile data JSON (cwd = dte-17/edge2)       -> edge2/expected-error.txt  (b: "yes")
+compile data JSON (cwd = dte-17/textnum)     -> textnum/expected.json     (txt: 2026)
+1.0 is symmetric and strict in both directions (5.10). Quoting never coerces: a Quoted value
+on an int, float or bool field is E412 (A.1 A11). An unquoted lexeme on a text field is that
+lexeme verbatim, so "txt: 2026" is the string "2026" and compiles. "1_0" is not an integer
+literal (3.5 forbids underscores), so it is E412 on an int field, not E211.
+'''

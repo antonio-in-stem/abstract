@@ -1,0 +1,18 @@
+id = '''cli-08'''
+area = '''cli-project'''
+title = '''`bundle --key <pass> --plain` silently writes an UNENCRYPTED bundle'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''security'''
+source_repro = '''repro/cli-project/case-bundle/'''
+command = '''../../project/target/release/abstract.exe bundle case-bundle/data --key "release passphrase" --plain --out case-bundle/both.abx
+grep -c TOP_SECRET_VALUE case-bundle/both.abx
+../../project/target/release/abstract.exe unbundle case-bundle/both.abx'''
+expected_kind = '''error'''
+expected_note = '''Passing both --key and --plain is a usage error ('--plain cannot be combined with --key').'''
+actual_0_2_0 = '''exit 0, 'abstract: wrote case-bundle/both.abx (132 bytes, 1 item(s), plain)'; grep finds TOP_SECRET_VALUE in the file, and `unbundle` with no key prints the full JSON. The sealed variant contains 0 matches and refuses to open without a key.'''
+spec_ref = '''9.9, Appendix D.1'''
+status = '''manual'''
+resolution_1_0 = '''RESOLVED (see SPEC-ISSUES-conformance.md item 1). SPEC 9.9 places bundle outside the language and outside conformance, and SPEC 10 catalogues language diagnostics only, so the refusal carries no Exxx identifier: there is none to assign. What Appendix D.1 item 1 binds is the behaviour, and the reference implementation satisfies it - the invocation is refused with abstract: error: Flags '--key' and '--plain' cannot be combined: '--plain' would write the container unencrypted and discard the key., exit code 2, and no container is written. Covered by tests/cli_tests.rs::bundle_flag_errors_keep_their_wording_and_exit_code rather than by a corpus golden, because the runner compares catalogue identifiers. Status moved from ambiguous to manual, the value the corpus already uses for the other Appendix D cases.'''
+command_1_0 = '''bundle data --key <passphrase> --plain --out both.abx'''
+expected_1_0 = '''Appendix D.1 item 1 makes --key together with --plain a usage error and forbids writing an unencrypted container while a key was given, but SPEC 9.9 places bundle outside the language and outside conformance, and SPEC 10.8 defines no identifier for two mutually exclusive flags: E802 is an unknown flag, E803 a missing value, E811 a repeated flag and E812 an invalid flag value, and none of them describes this condition. The behaviour is fixed (refuse, exit 2, write nothing); only the identifier is undecided. See SPEC-ISSUES-schema-types.md item 2. data/abstract.abx is a leftover 0.2.0 artefact and is not an input to the case.'''

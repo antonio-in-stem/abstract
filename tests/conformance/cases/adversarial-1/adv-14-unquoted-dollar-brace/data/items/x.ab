@@ -1,0 +1,3 @@
+Thing :: @id.atlas
+    name: Atlas
+    label: ${id

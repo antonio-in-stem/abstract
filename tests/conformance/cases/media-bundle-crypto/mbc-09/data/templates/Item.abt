@@ -1,0 +1,5 @@
+schema Item {
+    id: text(1..40)
+    name: text(1..80)
+    secret_price: int(0..99999)
+}

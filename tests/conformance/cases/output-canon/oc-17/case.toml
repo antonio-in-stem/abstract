@@ -1,0 +1,26 @@
+id = '''OC-17'''
+area = '''output-canon'''
+title = '''Optional list fields materialize as [] while optional scalars, refs and groups are omitted entirely - undocumented and inconsistent'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/output-canon/oc11-optional-absence/'''
+command = '''cd repro/output-canon/oc11-optional-absence
+abstract compile . JSON
+abstract compile . YML'''
+expected_kind = '''undecided'''
+expected_note = '''Either all five keys present with a consistent 'empty' representation, or a documented rule stating exactly which optional field kinds are omitted and which are materialized.'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "T",
+      "id": "a",
+      "list_opt": [],
+      "group_list_opt": []
+    }
+  ]
+}
+scalar_opt, ref_opt and group_opt are absent; list_opt and group_list_opt are [].'''
+spec_ref = '''4.6, 4.7, 8.4, 8.5, 8.9'''
+status = '''ready'''
+note_1_0 = '''Absence is uniform in 1.0: an absent optional field is omitted in every format for every type, list types included, and an absent optional list does not become [] (SPEC 4.6, 8.9). All five optional fields - scalar, list, $(Schema), group and list group - are absent, so the object carries only 'template' and 'id'.'''

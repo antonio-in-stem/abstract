@@ -1,0 +1,20 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Doc",
+      "id": "one",
+      "title": "First",
+      "data": "payload",
+      "after": "tail"
+    }
+  ],
+  "overlays": []
+}

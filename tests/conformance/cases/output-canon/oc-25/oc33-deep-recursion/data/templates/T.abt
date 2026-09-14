@@ -1,0 +1,9 @@
+schema N {
+    k: text(1..40) @optional
+    child: $(N) @optional
+}
+
+schema T {
+    id: text(1..80)
+    root: $(N)
+}

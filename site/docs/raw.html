@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Compiled data - Abstract</title>
+    <meta name="description" content="The Abstract compiled-document contract: envelope, key ordering, JSON, YAML and RAW byte rules, numbers, strings and overlays.">
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Compiled data</p>
+        <h1>A contract, not a dump.</h1>
+        <p class="lede">The compiled document is the only artifact consumers read. Its envelope, its key order, its number spelling and its overlay rules are all fixed by the specification, byte for byte.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="types.html">Types</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="logic.html">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html" aria-current="page">Compiled data</a>
+                <a href="java.html">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+<h2>The envelope</h2>
+<p>Every compiled document has exactly three top-level keys, in this order.</p>
+<table class="table"><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td><code>abstract</code></td><td>metadata about the document itself: <code>format</code>, <code>compiler</code>, <code>versions</code></td></tr><tr><td><code>data</code></td><td>the compiled instance objects for the <strong>maximum</strong> version</td></tr><tr><td><code>overlays</code></td><td>the differences for every earlier version, possibly empty</td></tr></tbody></table>
+<p><code>format</code> is exactly <code>1</code> and changes only when the shape of the document changes, so a consumer that understands format 1 understands every document a 1.x compiler produces. <code>compiler</code> identifies the producer and is the only part of a document that is not a function of the source bytes.</p>
+<h2>Instance objects</h2>
+<p>Every object begins with <code>template</code> and <code>id</code>, then the schema&rsquo;s fields in <strong>declaration order</strong>, skipping absent fields. Groups and <code>$(Schema)</code> values order their own keys by their own declaration order, recursively. There are no other keys: unknown fields cannot reach the output.</p>
+<p>Key order therefore never depends on assignment order, clone order, or the order in which logic wrote values. Objects are ordered by <code>(template, id)</code>, compared as sequences of Unicode scalar values, so the document never depends on file layout, directory names or command-line order.</p>
+<h2>There is no null</h2>
+<p>No format ever emits <code>null</code>, <code>~</code> or an empty value for a field. An absent optional field is <strong>omitted</strong>, for every type, including lists: an optional list that was never assigned does not become <code>[]</code>. An empty list is a present value spelled <code>[]</code>. A group is present when at least one of its own fields has a value, and omitted otherwise, so an empty object never appears anywhere in a conforming document.</p>
+<p>A consumer distinguishes &ldquo;absent&rdquo; from &ldquo;empty&rdquo; by key presence.</p>
+<h2>The same tree, three ways</h2>
+<p>This is <code>docs/examples/formats</code>, stored with all three renderings.</p>
+<pre><code>schema Product {
+    price: float(0..9999)
+    featured: bool
+    tags[]: enum(core, public, internal)
+    capabilities[] {
+        id: enum(search, sync) @tag
+        availability: enum(alpha, beta, stable) = stable
+    }
+}
+
+Product :: @id.atlas
+    price: 19.5
+    featured: true
+    tags: [core, public]
+    capabilities: [#search]</code></pre>
+<h3>JSON</h3>
+<p>Two-space indent; a non-empty object or array puts each member on its own line and closes at the parent&rsquo;s indentation; an empty object is <code>{}</code> and an empty array <code>[]</code> on one line; the separator is <code>": "</code>; exactly one trailing <code>LF</code>, no BOM, no trailing whitespace on any line.</p>
+<pre><code>{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "data": [
+    {
+      "template": "Product",
+      "id": "atlas",
+      "price": 19.5,
+      "featured": true,
+      "tags": [
+        "core",
+        "public"
+      ],
+      "capabilities": [
+        {
+          "id": "search",
+          "availability": "stable"
+        }
+      ]
+    }
+  ],
+  "overlays": []
+}</code></pre>
+<h3>YAML</h3>
+<p>Block style, two-space indent, and <strong>every mapping key double-quoted</strong> &mdash; which is what makes a field named <code>1</code>, <code>yes</code>, <code>no</code>, <code>on</code> or <code>null</code> unambiguous. Numbers and booleans are bare. No <code>---</code> marker; exactly one trailing <code>LF</code>.</p>
+<pre><code>"abstract":
+  "format": 1
+  "compiler": "1.0.0"
+  "versions":
+    "min": 1
+    "max": 1
+"data":
+  - "template": "Product"
+    "id": "atlas"
+    "price": 19.5
+    "featured": true
+    "tags":
+      - "core"
+      - "public"
+    "capabilities":
+      - "id": "search"
+        "availability": "stable"
+"overlays": []</code></pre>
+<h3>RAW</h3>
+<p>A <strong>review</strong> format: the same data with bare keys and four-space indent, for diffs and code review. It is not intended to be machine-parsed, and no Abstract tool reads it back. The envelope is rendered without its outer braces; an object is always multi-line; an array of scalars is inline and an array containing an object or array is multi-line.</p>
+<pre><code>abstract: {
+    format: 1,
+    compiler: "1.0.0",
+    versions: {
+        min: 1,
+        max: 1
+    }
+},
+data: [
+    {
+        template: "Product",
+        id: "atlas",
+        price: 19.5,
+        featured: true,
+        tags: ["core", "public"],
+        capabilities: [
+            {
+                id: "search",
+                availability: "stable"
+            }
+        ]
+    }
+],
+overlays: []</code></pre>
+<h2>Numbers</h2>
+<p><strong>Integers</strong> render in base ten with no leading zeros (except <code>0</code>), with <code>-</code> for negatives and never <code>+</code>. The full signed 64-bit range is representable.</p>
+<p><strong>Floats</strong> render as the shortest decimal string that round-trips to the same binary64 value, then:</p>
+<table class="table"><thead><tr><th>Value</th><th>Rendered</th></tr></thead><tbody><tr><td>zero</td><td><code>0.0</code>, or <code>-0.0</code> for negative zero</td></tr><tr><td><code>1e-6 &le; |v| &lt; 1e21</code></td><td>plain positional, with <code>.0</code> appended when there are no fractional digits &mdash; so <code>3</code> renders <code>3.0</code></td></tr><tr><td>anything else</td><td>scientific: one digit, <code>.</code>, at least one fractional digit, <code>e</code>, an explicit sign, no leading zeros in the exponent (<code>1.0e+21</code>, <code>1.5e-7</code>)</td></tr></tbody></table>
+<p>A float is therefore always distinguishable from an integer. Non-finite values cannot occur.</p>
+<h2>Strings</h2>
+<p>In all three formats a string is emitted between double quotes with exactly these escapes: <code>\"</code>, <code>\\</code>, <code>\b</code>, <code>\t</code>, <code>\n</code>, <code>\f</code>, <code>\r</code>, and <code>\u00XX</code> in lowercase hexadecimal for any other C0 or C1 control character. Every other Unicode scalar value, including all non-ASCII text, is emitted literally as UTF-8. <code>/</code> is never escaped.</p>
+<h2>What a consumer may rely on</h2>
+<table class="table"><thead><tr><th>Schema type</th><th>JSON kind</th></tr></thead><tbody><tr><td><code>text</code>, <code>enum</code>, <code>file</code>, <code>image</code>, <code>ref</code></td><td>string</td></tr><tr><td><code>int</code></td><td>number with no fractional part</td></tr><tr><td><code>float</code></td><td>number, always with a fractional part or an exponent</td></tr><tr><td><code>bool</code></td><td>boolean</td></tr><tr><td>group, <code>$(Schema)</code></td><td>object</td></tr><tr><td>any list field</td><td>array</td></tr></tbody></table>
+<p>Enum values are always the normalised member name, so compare against lowercase, <code>_</code>-separated text. A <code>ref</code> value is the referenced instance&rsquo;s id as a string; the referenced object is never inlined.</p>
+<h2>Overlays</h2>
+<p>Each overlay has exactly three keys, in this order: <code>versions</code> (an object with <code>min</code> and <code>max</code>), <code>data</code> (complete instance objects that replace or add to the base over that range, ordered by <code>(template, id)</code>), and <code>removed</code> (the ids of base objects that do not exist over that range, ascending). All three are always present; either array may be empty, but not both.</p>
+<p>To read version <code>v</code>: start from <code>data</code>, then apply <strong>every</strong> overlay whose range contains <code>v</code> &mdash; replace or add each object by <code>id</code>, then delete every id in <code>removed</code>. There may be none, one or several. Ranges of different overlays may overlap, but for any single id the ranges that mention it are disjoint, so the order of application does not matter.</p>
+<p>Full worked examples: <a href="versions.html">versions and overlays</a>.</p>
+<h2>Determinism</h2>
+<p>For a fixed set of source bytes one compiler emits byte-identical output regardless of filesystem enumeration order, the spelling of the command-line roots, the platform, path separator convention, locale, time zone or environment, whether <code>--skip-assets</code> was passed, and whether the compile was whole-project or single-file. Two implementations differ only in the <code>abstract.compiler</code> string.</p>
+<h2>Practical notes</h2>
+<ul class="mini-list"><li><strong>Look up by <code>id</code>.</strong> Ids are unique project-wide and normalised, so they are stable join keys; <code>template</code> says which schema the object satisfies.</li><li><strong>Treat key presence as the only absence signal.</strong> There is no null and no sentinel.</li><li><strong>Do not infer a type from a value.</strong> A <code>text</code> field holding <code>19.5</code> is the string; a <code>float</code> field holding 3 renders <code>3.0</code>. The schema is the contract.</li><li><strong>Pin <code>abstract.format</code>.</strong> Refuse a document whose format you do not understand rather than guessing.</li><li><strong>Do not parse RAW.</strong> Read JSON, or YAML if your pipeline prefers it.</li></ul>
+        </article>
+    </div>
+</main>
+
+<footer class="footer"><p>The normative text is <code>docs/SPEC.md</code>; these pages explain it.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

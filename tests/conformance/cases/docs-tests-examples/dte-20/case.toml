@@ -1,0 +1,24 @@
+id = '''DTE-20'''
+area = '''docs-tests-examples'''
+title = '''The shipped `example/` project is byte-identical to v0.1 and exercises none of the 0.2 features docs tell collaborators to demo with it'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''doc-mismatch'''
+source_repro = '''repro/docs-tests-examples/example-staleness/ (also references: repro/docs-tests-examples/init-scaffold/)'''
+command = '''(the check script diffed example/ against a published copy; not shipped)
+cd .../repro/docs-tests-examples/init-scaffold && abstract init my-pack && abstract compile my-pack JSON && find my-pack -type f'''
+expected_kind = '''undecided'''
+expected_note = '''example/ demonstrates the v0.2 language the docs describe (at least one float, bool, image field and one logic block), so `compile example JSON` is a meaningful smoke test.'''
+actual_0_2_0 = '''check.sh prints 'IDENTICAL to the published v0.1 example/' (diff with --strip-trailing-cr is empty) and feature counts float(=0, bool=0, image(=0, logic =0, derive=0, $(=0, wildcards=0. The init scaffold's file list is data/items/starter_sword.ab, data/templates/Item.abt, data/templates/Meta.abt, pack.ab, README.md — no assets/ directory, and the compiled output contains no `icon` field.'''
+spec_ref = '''2.3, 2.4, 9.2 (init), 11.2'''
+status = '''ready'''
+expectation_1_0 = '''
+compile init-scaffold/my-pack JSON  -> expected.json (my-pack2 emits identical bytes)
+The check script of the original finding is not runnable as a conformance case: it
+diffs against a path outside the corpus, and is not shipped with it. The captured scaffold is 0.2.0 output and is not what 1.0 init must generate: 9.2
+requires a versions range, a list group with @tag, a ref, two instances the second of which
+clones the first, an image asset under assets/, and a logic block with a require and a derive.
+It also puts pack.ab outside data/, and 1.0 discovery walks the data directory only (2.3,
+2.4), so the Meta instance is not collected at all and the compiled document holds one
+object. Conformance for init itself is 9.2's contract, checked by a dedicated init case.
+'''

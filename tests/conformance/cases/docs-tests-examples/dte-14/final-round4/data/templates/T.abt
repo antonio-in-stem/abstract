@@ -1,0 +1,5 @@
+schema T {
+    id: text(1..40)
+    template: text(1..40)
+    color: enum(red, green, blue)
+}

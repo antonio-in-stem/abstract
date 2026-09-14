@@ -1,0 +1,29 @@
+id = '''LOGIC-10'''
+area = '''logic-engine'''
+title = '''A quoted string literal is silently replaced by a bound variable of the same name — quoting does not protect a literal'''
+severity = '''major'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L02-quoted-literal-hijacked-by-var/'''
+command = '''repro/logic-engine/L02-quoted-literal-hijacked-by-var — cd repro/logic-engine/L02-quoted-literal-hijacked-by-var && abstract compile data JSON'''
+expected_kind = '''error'''
+expected_note = '''`require .marker != "t"` compares marker against the literal text "t". The instance sets marker: t, so the require must FAIL with "marker must not be the literal text t".'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "Thing",
+      "id": "one",
+      "tags": [
+        "alpha",
+        "beta"
+      ],
+      "marker": "t"
+    }
+  ]
+}
+EXIT=0
+
+(The guard never fired because "t" resolved to the loop item "alpha"/"beta". The mirror case is also confirmed: with marker: alpha the same rule THROWS — "abstract: items/one.ab: Thing logic: marker must not be the literal text t" — even though marker is not "t".)'''
+spec_ref = '''6.2, 6.9, 10.2'''
+status = '''ready'''
+note_1_0 = ''''for t in .tags' is E210: a loop variable is '$t', never the bare word 't' (SPEC 6.9). Written as 'for $t in .tags' the case would compile and the guard would fire, because a quoted string in a condition is always literal text and is never a variable (SPEC 6.9): .marker != "t" compares against the one-character string 't'.'''

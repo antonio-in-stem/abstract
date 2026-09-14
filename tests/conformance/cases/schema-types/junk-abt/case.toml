@@ -1,0 +1,27 @@
+id = '''junk-abt'''
+area = '''schema-types'''
+title = '''Unrecognised content in a .abt is silently discarded — misspelled `schema`, fields outside a block, one-line schemas and brace-less schemas all pass without a word'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/schema-types/junk-abt/ (also references: repro/schema-types/typo-keyword/, repro/schema-types/oneline-schema/, repro/schema-types/oneline-two/, repro/schema-types/no-brace/)'''
+command = '''this is not a schema line
+random { garbage }
+id: text(1..40)
+schema Thing { ... }
+schem Thing {
+schema Thing { id: text(1..40) name: text(1..40) }
+schema Thing
+{
+lint'''
+expected_kind = '''error'''
+expected_note = '''An error naming the .abt file and line for any line that is neither a schema/logic block nor inside one; a one-line schema either parsed or rejected at its own line; a missing `{` rejected.'''
+actual_0_2_0 = '''junk-abt: exit 0, compiles as if the junk were not there.
+typo-keyword (compile and lint): abstract: items/a.ab:1: Unknown template 'Thing'. ...   (never mentions Thing.abt)
+oneline-schema: abstract: templates/Thing.abt: schema block was not closed   (no line number, wrong cause)
+oneline-two: abstract: templates/T.abt:2: unexpected token 'Other' in field declaration   (misleading)
+no-brace: exit 0, compiles fine'''
+spec_ref = '''3.6, 4.1, 4.2, 10.2'''
+status = '''ready'''
+command_1_0 = '''compile data JSON   (variants: compile no-brace/data JSON, compile oneline-schema/data JSON, compile oneline-two/data JSON, compile typo-keyword/data JSON)'''
+expected_1_0 = '''Anything other than a schema, logic or versions declaration at the top level of a template file is E210 with a position, and there is no skip-unknown-line behaviour (SPEC 4.1). Primary: E210 at templates/Thing.abt:1:1; lines 2 and 3 are separately invalid, and how many an implementation reports after the first depends on parse recovery, which the spec does not fix. typo-keyword: E210 at templates/Thing.abt:1:1 for the misspelled keyword, which is reported instead of the misleading E401 that the instance used to get. no-brace: the opening brace must be on the same logical line as the schema name (SPEC 4.2), so E210 at line 1. oneline-schema and oneline-two: a block brace must be the last token of its logical line and the closing brace the first token of a logical line (SPEC 3.6), so both are E210 at line 1.'''

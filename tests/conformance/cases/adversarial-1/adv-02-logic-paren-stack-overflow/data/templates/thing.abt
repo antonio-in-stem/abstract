@@ -1,0 +1,8 @@
+schema Thing {
+    name: text(1..40)
+    flag: bool @optional
+}
+
+logic Thing {
+    require ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((.flag == true)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) else throw "guarded"
+}

@@ -1,0 +1,10 @@
+Loan :: @id.mina_earthsea
+    book: earthsea
+    member: mina
+    loan_period_days: 21
+
+Loan :: @id.noah_giovannis_room
+    book: giovannis_room
+    member: noah
+    state: returned
+    renewal_allowed: false

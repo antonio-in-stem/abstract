@@ -1,0 +1,35 @@
+id = '''DTE-11'''
+area = '''docs-tests-examples'''
+title = '''RAW output indentation is wrong: every instance's opening brace is emitted at column 0, contradicting the documented RAW contract'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/raw-indentation/'''
+command = '''cd .../repro/docs-tests-examples/raw-indentation && abstract compile data RAW | cat -A
+cd <crate> && ./target/release/abstract.exe compile example RAW'''
+expected_kind = '''undecided'''
+expected_note = '''Per docs/raw-data.md:45-54:
+data: [
+    {
+        template: "Product",
+        ...
+    }
+]'''
+actual_0_2_0 = '''data: [
+{
+        template: "Product",
+        id: "atlas",
+        status: "active",
+        price: 19.5
+    }
+]
+(the `{` is at column 0, fields at 8 spaces, `}` at 4 — and an empty project emits `data: [\n\n]`)'''
+spec_ref = '''8.1, 8.6, 8.7, A.3 (A50)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data RAW -> expected.abraw   (11.2 names the RAW golden 'out.abraw')
+8.6 fixes RAW completely: the envelope is rendered without its outer braces at indentation 0,
+indentation is four spaces per level, an object is always multi-line with its opening brace on
+the parent line and its closing brace at the object's own indentation, and an array with an
+object element is multi-line. price renders as 19.5 (8.7).
+'''

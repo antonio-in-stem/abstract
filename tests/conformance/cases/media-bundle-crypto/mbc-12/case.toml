@@ -1,0 +1,20 @@
+id = '''mbc-12'''
+area = '''media-bundle-crypto'''
+title = '''BMP width/height run through unsigned_abs, silently accepting malformed negative dimensions'''
+severity = '''design'''
+verdict = '''confirmed'''
+kind = '''design-flaw'''
+source_repro = '''repro/media-bundle-crypto/case13-bmp-sign-loss/'''
+command = '''image(bmp 512x256)'''
+expected_kind = '''error'''
+expected_note = '''Negative width should be rejected as malformed; only height's sign carries meaning (orientation).'''
+actual_0_2_0 = '''Both magnitudes accepted; -512x-256 matches 512x256.'''
+spec_ref = '''4.4.7.1, 10.4 (E422)'''
+status = '''ready'''
+expectation_1_0 = '''
+compile data JSON -> expected-error.txt
+4.4.7.1 separates the two signs: BMP width MUST be greater than 0, and a width of 0 or less is
+E422 with "note: malformed BMP width."; only BMP height may be negative, which denotes a
+top-down bitmap and whose absolute value is the height. assets/x.bmp carries a little-endian
+i32 width of -512 at offset 18, so it is rejected instead of silently matching 512x256.
+'''

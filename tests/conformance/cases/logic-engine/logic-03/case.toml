@@ -1,0 +1,26 @@
+id = '''LOGIC-03'''
+area = '''logic-engine'''
+title = '''A stray '}' silently truncates a logic block; every rule after it is discarded with no error and lint reports ok'''
+severity = '''critical'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/logic-engine/L24-stray-brace-drops-rules/'''
+command = '''repro/logic-engine/L24-stray-brace-drops-rules — cd repro/logic-engine/L24-stray-brace-drops-rules && abstract compile data JSON  (then: ... abstract.exe lint data)'''
+expected_kind = '''error'''
+expected_note = '''A parse error on the extra '}' at templates/T.abt line 10, or at minimum an error on the trailing statements that are outside any block. The `require .status == "active"` after the stray brace should have failed the instance (status is "disabled").'''
+actual_0_2_0 = '''{
+  "data": [
+    {
+      "template": "T",
+      "id": "bad",
+      "status": "disabled"
+    }
+  ]
+}
+EXIT=0
+--- lint ---
+abstract: ok
+EXIT=0'''
+spec_ref = '''3.6, 4.1, 6.3, 10.2'''
+status = '''ready'''
+note_1_0 = '''The stray '}' on line 10 closes the logic block (SPEC 3.6: a block brace is matched against its '}'). The 'require' on line 11 is then at template-file top level, where only schema_decl / logic_decl / versions_decl are allowed, so it is E210 (SPEC 4.1: there is no skip-unknown-line behaviour). Only the first diagnostic is pinned here: parser recovery is not specified, and an implementation that recovers also reports E210 for the 'derive' on line 12 and E205 for the '}' on line 13.'''

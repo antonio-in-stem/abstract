@@ -1,0 +1,7 @@
+T :: @id.a
+    name: Alpha
+data: this line silently stops parsing
+    note: THIS IS SILENTLY DISCARDED
+T :: @id.b
+    name: Bravo
+!!! total garbage ((( unterminated "

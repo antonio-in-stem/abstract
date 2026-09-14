@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Logic blocks - Abstract</title>
+    <meta name="description" content="derive, require, branches, loops, operators, projections and the version built-in.">
+    <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<canvas class="starfield" data-starfield aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<header class="topbar">
+    <a class="brand" href="../index.html" aria-label="Abstract home"><span class="brand-mark" aria-hidden="true"></span><span>Abstract</span></a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="../learn/index.html">Learn</a>
+        <a href="index.html" aria-current="page">Docs</a>
+        <a href="../examples/index.html">Examples</a>
+        <a href="../reference/grammar.html">Reference</a>
+        <a href="ai.html">AI Guide</a>
+    </nav>
+    <div class="top-actions"><a class="button primary" href="../downloads/abstract-windows-x64.exe">Download</a></div>
+</header>
+<main id="main">
+    <section class="doc-hero">
+        <p class="eyebrow">Logic blocks</p>
+        <h1>Rules that need more than a type.</h1>
+        <p class="lede">A logic block is where constraints that depend on relationships live: derived values, guarded requirements, and rules that differ between versions.</p>
+    </section>
+    <div class="doc-shell">
+        <aside class="sidebar">
+            <span class="sidebar-title">Docs</span>
+            <nav>
+                <a href="language.html">Language guide</a>
+                <a href="types.html">Types</a>
+                <a href="schemas.html">Schemas</a>
+                <a href="instances.html">Instances</a>
+                <a href="logic.html" aria-current="page">Logic blocks</a>
+                <a href="versions.html">Versions &amp; overlays</a>
+                <a href="cli.html">CLI</a>
+                <a href="raw.html">Compiled data</a>
+                <a href="java.html">Java &amp; bundles</a>
+                <a href="ai.html">AI guide</a>
+                <a href="../reference/diagnostics.html">Diagnostics</a>
+            </nav>
+        </aside>
+        <article class="doc-content">
+<h2>Binding</h2>
+<pre><code>logic Product {
+    ...
+}</code></pre>
+<p>A logic block attaches rules to a declared schema (E501 otherwise) and runs for every instance of that schema, and for every nested object validated against it. A schema may have at most one logic block (E502), and the block may live in a different <code>.abt</code> file from the schema.</p>
+<h2>The five statements</h2>
+<table class="table"><thead><tr><th>Statement</th><th>Effect</th></tr></thead><tbody><tr><td><code>derive .path = expr</code></td><td>writes a value onto the object being evaluated</td></tr><tr><td><code>derive? .path = expr</code></td><td>writes only when the path currently has no value</td></tr><tr><td><code>require cond else throw "msg"</code></td><td>fails compilation with that message when the condition is false</td></tr><tr><td><code>if ... { } else if ... { } else { }</code></td><td>branches; exactly one body runs</td></tr><tr><td><code>for $x in iterable { }</code></td><td>runs the body once per element</td></tr></tbody></table>
+<p>Only <code>derive</code> and <code>derive?</code> mutate. Statements execute in source order.</p>
+<h2>A worked block</h2>
+<p>This is <code>docs/examples/logic-basics</code>.</p>
+<pre><code>logic Product {
+    derive .shipping_class = standard
+    derive? .release_wave = 1
+
+    if .status == "active" {
+        require .owner.contact exists
+            else throw "Active products need an owner contact."
+    } else if .status == "retired" {
+        derive .visibility = hidden
+    } else {
+        derive .visibility = internal
+    }
+
+    derive .flag_count = length(.flags)
+
+    require not .flags contains "banned"
+        else throw "Banned products cannot ship."
+}</code></pre>
+<pre><code>Product :: @id.relic, @status.retired
+    title: Relic
+    owner.team: Knowledge Systems</code></pre>
+<pre><code>{
+  "template": "Product",
+  "id": "relic",
+  "title": "Relic",
+  "status": "retired",
+  "visibility": "hidden",
+  "shipping_class": "standard",
+  "release_wave": 1,
+  "flag_count": 0,
+  "owner": { "team": "Knowledge Systems" }
+}</code></pre>
+<p><code>flags</code> was never written, so <code>length(.flags)</code> is 0 &mdash; a path that resolves to no value is not an error here &mdash; and <code>flags</code> itself is omitted, because it is an absent optional list. <code>visibility</code> comes from the <code>retired</code> branch.</p>
+<h2>Paths and projections</h2>
+<p><code>.a.b</code> starts at the object being evaluated; <code>$x.a</code> starts at a loop variable. A segment may carry a read-only index (<code>.items[0].id</code>) and may itself be a loop variable (<code>.slots.$slot.mode</code>). Every literal segment must name a declared field (E503).</p>
+<p>A path that crosses a list field without an index <strong>projects</strong>: it resolves to one value per element. A projected path is a legal operand only of <code>contains</code> and <code>exists</code>.</p>
+<pre><code>require not .capabilities.id contains "banned"     // correct
+require .capabilities.id != "banned"               // E519</code></pre>
+<p>That restriction is deliberate: the rejected line would otherwise silently mean &ldquo;some element is not banned&rdquo;, which is not what it reads like.</p>
+<h2>Operators</h2>
+<table class="table"><thead><tr><th>Level</th><th>Construct</th><th>Associativity</th></tr></thead><tbody><tr><td>1 (tightest)</td><td><code>( ... )</code>, <code>length( ... )</code>, path, loop variable, <code>version</code>, literal</td><td>&mdash;</td></tr><tr><td>2</td><td>postfix <code>exists</code></td><td>&mdash;</td></tr><tr><td>3</td><td><code>==</code> <code>!=</code> <code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code> <code>contains</code></td><td>non-associative</td></tr><tr><td>4</td><td>prefix <code>not</code>, <code>!</code></td><td>right</td></tr><tr><td>5</td><td><code>and</code>, <code>&amp;&amp;</code></td><td>left</td></tr><tr><td>6 (loosest)</td><td><code>or</code>, <code>||</code></td><td>left</td></tr></tbody></table>
+<p>So <code>a or b and c</code> is <code>a or (b and c)</code>, and <code>not .a == .b</code> means <code>not (.a == .b)</code>. To negate an operand instead, parenthesise it. Comparisons do not chain: <code>a &lt; b &lt; c</code> is E512.</p>
+<h2>Comparison semantics</h2>
+<table class="table"><thead><tr><th>Situation</th><th>Result</th></tr></thead><tbody><tr><td>an operand resolves to no value</td><td>every comparison is false, including <code>!=</code>. Never an error.</td></tr><tr><td>two strings</td><td>equal only when identical, scalar for scalar. No case folding, no <code>-</code>/<code>_</code> folding.</td></tr><tr><td>a number and a string</td><td>false, not an error</td></tr><tr><td><code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code> on non-numbers</td><td>E513 &mdash; no string ordering, no numeric reading of strings</td></tr><tr><td><code>contains</code> on a list / on a string</td><td>membership / substring</td></tr><tr><td>comparing a list or an object with <code>==</code></td><td>E513</td></tr><tr><td>a bare <code>text</code> path or a bare <code>length(...)</code> as a condition</td><td>E513 &mdash; there is no truthiness</td></tr></tbody></table>
+<p>Enum values are stored normalised, so <code>.status == "active"</code> is the correct spelling for an enum field, and <code>"Active"</code> is simply false rather than an error.</p>
+<h2><code>exists</code> never touches the disk</h2>
+<p><code>exists</code> is presence in the compiled data, for every field type, in every mode. It is true when the path resolves to at least one value and that value is not a single empty list &mdash; so an empty string is true and an absent optional field is false. On-disk existence of <code>file</code> and <code>image</code> assets is a schema check controlled by <code>--skip-assets</code>, which is exactly what keeps compiled data independent of that flag.</p>
+<h2><code>length</code> and <code>version</code></h2>
+<table class="table"><thead><tr><th>Argument</th><th><code>length</code> yields</th></tr></thead><tbody><tr><td>a list</td><td>the number of elements</td></tr><tr><td>a string</td><td>the number of Unicode scalar values</td></tr><tr><td>a projection</td><td>the number of projected values</td></tr><tr><td>a path with no value</td><td><code>0</code></td></tr><tr><td>a declared <code>int</code>, <code>float</code>, <code>bool</code>, group, <code>$(Schema)</code> or <code>ref</code></td><td>E514, checked before any instance is read</td></tr></tbody></table>
+<p><code>version</code> is the only built-in value: the integer version being compiled. It is a bare word with no <code>.</code> and no <code>$</code>, so it never collides with a field called <code>version</code> (written <code>.version</code>) or a loop variable (<code>$version</code>). This is <code>docs/examples/logic-version</code>:</p>
+<pre><code>versions 1..2
+
+schema Item {
+    name: text(1..40)
+    glow: bool @since(2) = false
+    schema_version: int(1..9)
+}
+
+logic Item {
+    derive .schema_version = version
+
+    if version &gt;= 2 {
+        derive .glow = true
+    }
+}</code></pre>
+<p>In version 1 the guarded <code>derive</code> does not execute, so writing <code>glow</code> &mdash; which does not exist there &mdash; never arises. An unguarded write against a field absent in the version being compiled is E521.</p>
+<h2>Loops and variables</h2>
+<pre><code>for $lang in [es_es, es_mx] {
+    require .copy.key contains $lang
+        else throw "Missing $lang copy."
+}</code></pre>
+<p>Loop variables are the only variables, always written <code>$name</code>. They are in scope inside their own block, may not shadow an enclosing loop (E516), and may be used as operands, as dynamic path segments, in <code>derive</code> values and in <code>throw</code> messages. A quoted string is never a variable: <code>"$kind"</code> is five characters. Iterating an absent or empty list runs the body zero times and is not an error.</p>
+<h2>What <code>derive</code> may write</h2>
+<table class="table"><thead><tr><th>Target</th><th>Allowed</th></tr></thead><tbody><tr><td>a declared scalar field, or one inside a group or <code>$(Schema)</code></td><td>yes &mdash; missing intermediate objects are created</td></tr><tr><td>a list field, as a whole value</td><td>yes</td></tr><tr><td>one element of a list (<code>.items[0].x</code>)</td><td>no &mdash; E506</td></tr><tr><td><code>.template</code>, <code>.id</code></td><td>no &mdash; E504</td></tr><tr><td>a field the schema does not declare</td><td>no &mdash; E505</td></tr><tr><td>a field absent in the version being compiled</td><td>no &mdash; E521 when the statement executes</td></tr><tr><td>a path containing a loop variable</td><td>no &mdash; E520</td></tr></tbody></table>
+<p>The right-hand side may be a literal, a string carrying interpolation, another path of the same object, <code>length(...)</code>, <code>version</code>, or a loop variable. A path keeps the <strong>type</strong> of the value it resolved to; a path that projects several values is E519. There is no accumulation operator and no list append: a list is assigned in the instance, or derived once from a single expression.</p>
+<p><code>derive?</code> writes only when the path currently has no value. Because defaults are filled <em>before</em> logic runs, a <code>derive?</code> on a field that declares a default could never fire, and is E518.</p>
+<h2>Order of evaluation</h2>
+<p>For one object and one version:</p>
+<ol><li>authored values are type-checked;</li><li>defaults are filled;</li><li>logic runs &mdash; nested schema logic first, in field declaration order and element order, then this schema&rsquo;s block;</li><li>required fields are checked, so a <code>derive</code> may satisfy one;</li><li>the whole object is re-validated from scratch, so nothing logic wrote escapes validation.</li></ol>
+<p>A failed <code>require</code> aborts that instance immediately with E515 and your own message; no later statement in that instance runs, and compilation fails.</p>
+<pre><code>data/templates/Pack.abt:32:9: error[E515]: Sticker logic: Epic stickers must carry the promo tag.
+  note: data/stickers/ember.ab:1:1: instance 'ember' declared here.
+  note: compiling version 1.</code></pre>
+<div class="callout"><p>Use schema fields for shape and type. Use logic when the rule depends on relationships between fields, or between a field and the version being compiled.</p></div>
+<h2>Determinism</h2>
+<p>Logic evaluation is a pure function of the authored object, the schema set and the version. It performs no I/O, does not observe the filesystem, the clock, the locale or the environment, and visits statements, branches, loop elements and nested objects in a fixed order. Two runs on the same bytes produce the same result, including the same first failing <code>require</code>. A diagnostic raised inside a loop additionally names the index and the item.</p>
+        </article>
+    </div>
+</main>
+
+<footer class="footer"><p>The normative text is <code>docs/SPEC.md</code>; these pages explain it.</p></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

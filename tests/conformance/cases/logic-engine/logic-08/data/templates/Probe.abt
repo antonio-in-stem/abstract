@@ -1,0 +1,13 @@
+schema Probe {
+    id: text(1..40)
+    probe: text(1..200)
+    leak: text(1..20) @optional
+}
+
+logic Probe {
+    if .probe exists {
+        derive .leak = "present"
+    } else {
+        derive .leak = "absent"
+    }
+}

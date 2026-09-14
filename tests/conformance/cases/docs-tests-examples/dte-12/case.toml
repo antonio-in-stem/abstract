@@ -1,0 +1,24 @@
+id = '''DTE-12'''
+area = '''docs-tests-examples'''
+title = '''The YAML emitter never quotes or escapes mapping keys, so `--allow-unknown` can produce output that is not valid YAML'''
+severity = '''minor'''
+verdict = '''confirmed'''
+kind = '''bug'''
+source_repro = '''repro/docs-tests-examples/yaml-key-injection/'''
+command = '''cd .../repro/docs-tests-examples/yaml-key-injection && abstract compile data YML --allow-unknown --out broken.yml
+python -c "import yaml;yaml.safe_load(open('broken.yml',encoding='utf-8').read())"
+note #comment: hello'''
+expected_kind = '''undecided'''
+expected_note = '''Either the key is quoted (`"note #comment": "hello"`) so the document parses, or the compiler rejects a field name that cannot be emitted safely.'''
+actual_0_2_0 = '''exit 0; broken.yml line 4 is `    note #comment: "hello"`; pyyaml fails with `ScannerError while scanning a simple key ... could not find expected ':'`.'''
+spec_ref = '''3.1, 5.4, 8.5, 9.3, 10.2 (E210), A.1, A.3 (A48, A52)'''
+status = '''ready'''
+expectation_1_0 = '''
+cmd under 1.0: compile data YML   (the recorded command's --allow-unknown is E802 in 1.0)
+-> expected-error.txt
+Two independent 1.0 changes retire this defect. First, the input no longer parses: the left
+side of an assignment is a path, and "note #comment" is an identifier followed by a tag-object
+token, so it is E210 in P1 (5.4, 3.1). Second, the emitter can no longer produce unsafe YAML,
+because every mapping key is double-quoted, always (8.5, A.3 A48). --allow-unknown does not
+exist (A.3 A52), so the recorded invocation is E802 with exit code 2 before any file is read.
+'''

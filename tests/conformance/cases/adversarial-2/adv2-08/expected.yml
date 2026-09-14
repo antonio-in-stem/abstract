@@ -1,0 +1,11 @@
+"abstract":
+  "format": 1
+  "compiler": "1.0.0"
+  "versions":
+    "min": 1
+    "max": 1
+"data":
+  - "template": "Esc"
+    "id": "e1"
+    "caption": "a\u007fb"
+"overlays": []

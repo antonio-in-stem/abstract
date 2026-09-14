@@ -1,0 +1,16 @@
+schema Contact {
+    email: text(5..100)
+    city: text(1..50)
+}
+
+schema Person {
+    name: text(1..50)
+    contact: $(Contact)
+}
+
+schema Vendor {
+    name: text(1..50)
+    contact: $(Contact)
+}
+
+// TODO: add one shared contact validation rule.
