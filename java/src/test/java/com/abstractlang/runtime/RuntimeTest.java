@@ -6,10 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** JUnit mirror of the dependency-free {@code Selftest} checks. */
 class RuntimeTest {
@@ -28,14 +36,6 @@ class RuntimeTest {
             builder.append(String.format("%02x", value));
         }
         return builder.toString();
-    }
-
-    @Test
-    void poly1305MatchesRfc8439Vector() {
-        byte[] key = hex("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b");
-        byte[] tag = ChaCha20Poly1305.poly1305(
-                key, "Cryptographic Forum Research Group".getBytes(StandardCharsets.US_ASCII));
-        assertEquals("a8061dc1305136c6c22b8baf0c0127a9", toHex(tag));
     }
 
     @Test
@@ -60,7 +60,7 @@ class RuntimeTest {
 
     @Test
     void keySharesRecombine() {
-        byte[] key = AbstractKeys.fromPassphrase("sunny meadows");
+        byte[] key = AbstractKeys.generate();
         byte[][] shares = AbstractKeys.split(key, 4);
         assertEquals(toHex(key), toHex(AbstractKeys.combine(shares)));
     }
@@ -86,10 +86,63 @@ class RuntimeTest {
     void onlyTheHexPrefixSelectsRawKeyBytes() {
         String digits = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
         assertEquals(digits, toHex(AbstractKeys.fromKeyMaterial("hex:" + digits)));
-        // A bare 64-character hexadecimal string is a passphrase, and is
-        // hashed, exactly as the compiler treats it.
+        // A bare 64-character hexadecimal string retains the legacy
+        // passphrase interpretation for decoding old bundles.
         assertEquals(toHex(AbstractKeys.fromPassphrase(digits)),
                 toHex(AbstractKeys.fromKeyMaterial(digits)));
+    }
+
+    @Test
+    void opensBundleWrittenByReleased140Compiler() {
+        // Produced by out/delivery/abstract-1.4.0/abstract-windows-x64.exe
+        // from docs/examples/hello with this synthetic compatibility key.
+        byte[] fixture = Base64.getDecoder().decode(
+                "QUJYMQEBKJ2e3ZCJilic4oZSCAEAALkqxYXamRupdFkVvB5RGezaMPUJgHWG8vZJ2ui7hyBsyFQj1iBRMX+jydvplikqn1biBzkjyBAZTU6U7A86oU6ufmRLeDuyPqZIuHKjr/lCoK1z2suhFfgOzGxFyQ27H+o2oJgkjMeQR3UYCnOuaeTVea20pPXWv7RQtxILUIZbvvHMANAen0ppDCPdKuI+toB3Qq+kNPSR7bEVC0DCR9pgr9emqwmCeJVU+cQftmYiuKqJ5cU6Q9jGKqwUywkUGSWTNvd7q+2P7ONcq+wsXFnLD1WcN6l/Lpb4fENYO+PA6O6oDVE8lJT25eP8+3fqrFETc3e9Bxkuo5hZxyXkfSW/bnNB0Bt5GA==");
+        byte[] key = AbstractKeys.fromKeyMaterial("abstract-1.4.0 compatibility fixture");
+
+        AbstractData data = AbstractBundle.load(fixture, key);
+        assertEquals("Hello, world", data.require("hello").getString("caption"));
+    }
+
+    @Test
+    void currentRustCompilerProducesBundleJavaCanOpen(@TempDir Path temporary) throws Exception {
+        String compiler = System.getenv("ABSTRACT_COMPILER_PATH");
+        Assumptions.assumeTrue(compiler != null && !compiler.trim().isEmpty(),
+                "ABSTRACT_COMPILER_PATH is required for Rust-to-Java interop");
+
+        Path data = Files.createDirectories(temporary.resolve("data"));
+        Path templates = Files.createDirectories(data.resolve("templates"));
+        Path labels = Files.createDirectories(data.resolve("labels"));
+        Files.write(templates.resolve("Label.abt"),
+                "schema Label {\n    caption: text(1..40)\n}\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(labels.resolve("hello.ab"),
+                "Label :: @id.hello\n    caption: \"Hello, world\"\n"
+                        .getBytes(StandardCharsets.UTF_8));
+
+        String material =
+                "hex:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+        Path output = temporary.resolve("interop.abx");
+        Process process = new ProcessBuilder(
+                compiler, "bundle", data.toString(), "--key", material,
+                "--out", output.toString())
+                .redirectErrorStream(true)
+                .start();
+        String processOutput = new String(readAll(process.getInputStream()), StandardCharsets.UTF_8);
+        assertEquals(0, process.waitFor(), processOutput);
+
+        AbstractData opened = AbstractBundle.load(
+                Files.readAllBytes(output), AbstractKeys.fromKeyMaterial(material));
+        assertEquals("Hello, world", opened.require("hello").getString("caption"));
+    }
+
+    private static byte[] readAll(InputStream stream) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int read;
+        while ((read = stream.read(buffer)) != -1) {
+            output.write(buffer, 0, read);
+        }
+        return output.toByteArray();
     }
 
     // ------------------------------------------------------------------

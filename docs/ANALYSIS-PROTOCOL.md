@@ -3,7 +3,7 @@
 This optional compiler protocol is independent of the language and document
 versions. Existing CLI commands keep their behavior. It is not LSP: it exposes
 the compiler's validation pipeline without adding a second validator or moving
-assets into a temporary project. The crate remains dependency-free.
+assets into a temporary project.
 
 ## Process and request contract
 

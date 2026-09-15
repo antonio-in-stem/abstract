@@ -78,9 +78,21 @@ The ordinary output contains resource paths, not their bytes. See the
 
 ## Try it
 
-Download a compiler and the VS Code extension from
-[Releases](https://github.com/antonio-in-stem/abstract/releases), or build the
-compiler with Rust:
+Download the executable for your system from
+[Releases](https://github.com/antonio-in-stem/abstract/releases). Put it in a
+folder on PATH and name it `abstract` (`abstract.exe` on Windows). No Rust
+installation is needed to run a downloaded compiler.
+
+```sh
+abstract init my-project
+abstract compile my-project JSON --out my-project.json
+```
+
+Open the generated `.abt`, `.ab` and JSON side by side. Change a value outside
+its schema's allowed range, then run `abstract lint my-project` to see the
+diagnostic. Start with the [first exercise](docs/learn/README.md) for guidance.
+
+To build from this repository with Rust:
 
 ```sh
 cargo build --release --locked
@@ -89,7 +101,8 @@ cargo run -- compile my-project JSON --out my-project.json
 ```
 
 The release executable is `target/release/abstract` (`abstract.exe` on Windows).
-The Rust compiler has no external crate dependencies.
+Bundle encryption and hashing use maintained cryptographic crates. Building
+from source requires the Rust version declared in `Cargo.toml` or newer.
 
 Start with [six small exercises](docs/learn/README.md), each with a prompt, hint,
 starter and separately explained solution. Then try the
@@ -124,8 +137,10 @@ both languages and checks their results.
 ## Project and release status
 
 This repository contains the language specification, Rust compiler, Java output
-reader, VS Code extension, examples and documentation. Compiler **1.4.0**,
-language **1.2**, and extension **1.7.2** have separate versions.
+reader, VS Code extension, examples and documentation. Compiler **1.5.0**,
+language **1.2**, and extension **1.7.2** have separate versions. The
+[compatibility guide](docs/COMPATIBILITY.md) explains how they fit together,
+including the migration for existing encrypted bundles.
 
 Release evidence and remaining limits are recorded in
 [the release checklist](docs/RELEASE.md). Automated test results are not a claim

@@ -9,13 +9,31 @@ permissions:
   contents: read
 
 jobs:
+  rust-lint:
+    name: Rust format and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: python3 scripts/check-release-manifest.py
+      - run: cargo package --locked
+
   compiler:
     name: Compiler (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # Keep pull requests to one runner per primary OS. macOS uses the
+        # native Apple-silicon label; release.yml also builds Intel macOS and
+        # Linux arm64 assets on their matching hosted runners.
+        os: [ubuntu-latest, windows-latest, macos-15]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -23,6 +41,38 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --locked
       - run: cargo build --release --locked --bin abstract
+
+  rust-msrv:
+    name: Rust MSRV (1.85)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@1.85
+      - run: cargo test --locked
+
+  java-runtime:
+    name: Java runtime (${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: cargo build --locked --bin abstract
+      - run: mvn --batch-mode --file java/pom.xml verify
+        env:
+          ABSTRACT_COMPILER_PATH: ${{ github.workspace }}/target/debug/abstract
 
   vscode-unit:
     name: VS Code extension unit tests
@@ -44,3 +94,55 @@ jobs:
       - run: cargo build --locked --bin abstract
         working-directory: .
       - run: npm test
+
+  vscode-integration:
+    name: VS Code ${{ matrix.vscode-version }} extension host
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        vscode-version: ['1.92.0', stable]
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: cargo build --locked --bin abstract
+        working-directory: .
+      - name: Run against the actual VS Code extension host
+        env:
+          ABSTRACT_VSCODE_VERSION: ${{ matrix.vscode-version }}
+        run: xvfb-run --auto-servernum npm run test:integration
+
+  vscode-package:
+    name: Package VS Code extension
+    needs: [vscode-unit, vscode-integration]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: abstract-language-vsix
+          path: editors/vscode/*.vsix
+          if-no-files-found: error

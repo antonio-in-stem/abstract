@@ -3666,11 +3666,8 @@ impl<'t> Evaluator<'_, 't> {
         };
         let mut list = false;
         for segment in &path.segments {
-            let Some(field) =
-                fields.and_then(|scope| scope.iter().find(|field| field.name == segment.name))
-            else {
-                return None;
-            };
+            let field =
+                fields.and_then(|scope| scope.iter().find(|field| field.name == segment.name))?;
             if field.is_list() && segment.index.is_none() {
                 list = true;
             }
@@ -4145,7 +4142,7 @@ fn binary(op: CalcBinary, left: Number, right: Number) -> Result<Number, String>
         CalcBinary::Divide => left / right,
         CalcBinary::Remainder => unreachable!(),
     };
-    finite(value).map(|value| Number::Float(value))
+    finite(value).map(Number::Float)
 }
 
 fn aggregate(

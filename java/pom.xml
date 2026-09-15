@@ -6,12 +6,12 @@
 
     <groupId>com.abstractlang</groupId>
     <artifactId>abstract-runtime</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>Abstract Runtime</name>
     <description>
-        Zero-dependency Java runtime for Abstract 1.0: opens sealed .abx
+        Java runtime for Abstract compiled document format 1: opens sealed .abx
         bundles (ChaCha20-Poly1305, RFC 8439), reads the compiled document
         envelope, resolves any version of it through its overlays, and exposes
         compiled instances through a typed API. Runs on Java 8 and newer.
@@ -24,6 +24,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.86</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

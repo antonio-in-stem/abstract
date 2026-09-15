@@ -55,8 +55,8 @@ understands format 1 understands every document a 1.x compiler produces.
 not a function of the source bytes — which is why the conformance suite
 normalises it before comparing (SPEC 11.2).
 
-An empty `data` array is reachable only in single-file mode when the named files
-declare no instances; a project with no sources at all is E103.
+An empty `data` array is valid in both project and single-file mode when the
+sources declare no instances. A project with no source files at all is E103.
 
 ---
 

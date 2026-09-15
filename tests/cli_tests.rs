@@ -700,7 +700,7 @@ fn a_usage_error_writes_nothing_to_stdout() {
 }
 
 // ---------------------------------------------------------------------------
-// Optional tooling: bundle and unbundle (SPEC §9.9, Appendix D.1)
+// Optional tooling: bundle, unbundle and keygen (SPEC §9.9, Appendix D.1)
 // ---------------------------------------------------------------------------
 
 const SAMPLE_DOCUMENT: &str = "{\n  \"data\": []\n}\n";
@@ -825,6 +825,42 @@ fn bundle_refuses_a_key_together_with_plain() {
     swallowed.assert_code(2);
     assert!(swallowed.stderr.contains("Flag '--key' requires a value."));
     assert!(!root.join("x.abx").exists());
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn keygen_prints_only_cli_ready_key_material() {
+    let root = temp_dir("keygen");
+    let run = run_in(&root, &["keygen"]);
+    run.assert_code(0);
+    assert_eq!(run.stderr, "");
+    let material = run.stdout.trim_end();
+    assert!(material.starts_with("hex:"));
+    assert_eq!(material.len(), 68);
+    assert!(material[4..].bytes().all(|byte| byte.is_ascii_hexdigit()));
+    assert!(bundle::parse_key(material).is_ok());
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn bundle_refuses_legacy_passphrases_and_writes_nothing() {
+    let root = sample_project("bundle_legacy_passphrase");
+    let run = run_in(
+        &root,
+        &[
+            "bundle",
+            "data",
+            "--key",
+            "legacy passphrase",
+            "--out",
+            "data.abx",
+        ],
+    );
+    run.assert_code(2);
+    assert_eq!(run.stdout, "");
+    assert!(!run.stderr.contains("legacy passphrase"));
+    assert!(run.stderr.contains("hex:"));
+    assert!(!root.join("data.abx").exists());
     let _ = fs::remove_dir_all(&root);
 }
 
@@ -999,14 +1035,15 @@ fn every_spelling_of_the_project_root_compiles_to_the_same_bytes() {
 #[test]
 fn bundle_seals_a_compiled_document_and_unbundle_opens_it() {
     let root = sample_project("bundle_round_trip");
+    let key = "hex:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
     let sealed = run_in(
         &root,
-        &["bundle", "data", "--key", "passphrase", "--out", "data.abx"],
+        &["bundle", "data", "--key", key, "--out", "data.abx"],
     );
     sealed.assert_code(0);
     assert!(sealed.stderr.contains("sealed"));
 
-    let opened = run_in(&root, &["unbundle", "data.abx", "--key", "passphrase"]);
+    let opened = run_in(&root, &["unbundle", "data.abx", "--key", key]);
     opened.assert_code(0);
     let compiled = run_in(&root, &["compile", "data", "JSON"]);
     assert_eq!(opened.stdout, compiled.stdout);

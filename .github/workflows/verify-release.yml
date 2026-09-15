@@ -6,7 +6,6 @@ on:
       tag:
         description: Release tag to verify
         required: true
-        default: v1.4.0
 
 permissions:
   contents: read
@@ -14,6 +13,8 @@ permissions:
 jobs:
   linux-artifact:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -23,14 +24,42 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           gh release download "$RELEASE_TAG" --dir release-check
           cd release-check
-          sha256sum --check SHA256SUMS.txt
+          test -s SHA256SUMS.txt
+          sha256sum --strict --check SHA256SUMS.txt
       - name: Run shipped Linux compiler against the reference project
         run: |
           chmod +x release-check/abstract-linux-x64
-          test "$(release-check/abstract-linux-x64 --version)" = "abstract 1.4.0"
+          case "$RELEASE_TAG" in
+            v*) expected_version="${RELEASE_TAG#v}" ;;
+            *) echo "release tag must start with v: $RELEASE_TAG" >&2; exit 1 ;;
+          esac
+          actual_version="$(release-check/abstract-linux-x64 --version)"
+          test "$actual_version" = "abstract $expected_version"
+          if test -f release-check/release-manifest.json; then
+            python3 - "$expected_version" "$actual_version" <<'PY'
+          import json
+          import sys
+
+          manifest = json.load(open("release-check/release-manifest.json", encoding="utf-8"))
+          actual = sys.argv[2].removeprefix("abstract ")
+          if manifest.get("compiler") != sys.argv[1] or actual != sys.argv[1]:
+              raise SystemExit("release tag, compatibility manifest, and compiler version disagree")
+          PY
+          fi
           release-check/abstract-linux-x64 lint examples/automotive
-          release-check/abstract-linux-x64 compile examples/automotive JSON | cmp - examples/automotive/expected.json
+          release-check/abstract-linux-x64 compile examples/automotive JSON > release-check/automotive.actual.json
+          python3 - examples/automotive/expected.json release-check/automotive.actual.json <<'PY'
+          import json
+          import sys
+
+          def normalise(path):
+              document = json.load(open(path, encoding="utf-8"))
+              document["abstract"].pop("compiler")
+              return document
+
+          if normalise(sys.argv[1]) != normalise(sys.argv[2]):
+              raise SystemExit("automotive JSON differs outside abstract.compiler")
+          PY

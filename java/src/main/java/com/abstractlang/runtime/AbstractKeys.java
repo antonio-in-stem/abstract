@@ -6,11 +6,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
- * Key material helpers, mirroring the Abstract CLI:
+ * Key material helpers for Abstract bundles:
  *
  * <ul>
- *   <li>{@link #fromPassphrase(String)} hashes any passphrase with SHA-256,
- *       exactly like {@code abstract bundle --key "my passphrase"}.</li>
+ *   <li>{@link #generate()} creates a new 32-byte key with
+ *       {@link SecureRandom}.</li>
  *   <li>{@link #fromHex(String)} takes the 64-digit form used with
  *       {@code --key hex:...}.</li>
  *   <li>{@link #combine(byte[]...)} XORs key shares back together. Store
@@ -23,7 +23,13 @@ public final class AbstractKeys {
     private AbstractKeys() {
     }
 
-    /** Derives the 32-byte bundle key from a passphrase (SHA-256). */
+    /**
+     * Legacy compatibility for opening bundles created from passphrases.
+     *
+     * @deprecated A single SHA-256 hash is not a password KDF. Use
+     *             {@link #generate()} for new bundle keys.
+     */
+    @Deprecated
     public static byte[] fromPassphrase(String passphrase) {
         if (passphrase == null || passphrase.trim().isEmpty()) {
             throw new AbstractDataException("bundle keys must not be empty");
@@ -36,15 +42,21 @@ public final class AbstractKeys {
         }
     }
 
+    /** Creates a new 32-byte bundle key with the JVM's secure random source. */
+    public static byte[] generate() {
+        byte[] key = new byte[32];
+        new SecureRandom().nextBytes(key);
+        return key;
+    }
+
     /**
-     * Derives a key from CLI key material, by exactly the rule the compiler
-     * uses (SPEC Appendix D.2 item 10): only the {@code hex:} prefix selects
-     * raw key bytes, and everything else — including a bare 64-character
-     * hexadecimal string — is a passphrase and is hashed.
+     * Reads key material accepted by the bundle decoder: only the
+     * {@code hex:} prefix selects raw key bytes, and everything else —
+     * including a bare 64-character hexadecimal string — uses the legacy
+     * passphrase rule.
      *
-     * <p>This is the method to use when the key material comes from a config
-     * file or a command line, so that a given {@code --key} value means the
-     * same thing on both sides of the bundle.
+     * <p>New bundle configurations should store the {@code hex:} value emitted
+     * by {@code abstract keygen}.
      */
     public static byte[] fromKeyMaterial(String material) {
         if (material == null) {
@@ -81,8 +93,8 @@ public final class AbstractKeys {
             int high = hexValue(digits.charAt(i * 2));
             int low = hexValue(digits.charAt(i * 2 + 1));
             if (high < 0 || low < 0) {
-                throw new AbstractDataException("hex keys must contain exactly 64 hexadecimal"
-                        + " digits; '" + digits.substring(i * 2, i * 2 + 2) + "' is not one");
+                throw new AbstractDataException(
+                        "hex keys must contain exactly 64 hexadecimal digits");
             }
             key[i] = (byte) ((high << 4) | low);
         }

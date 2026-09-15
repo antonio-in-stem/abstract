@@ -1,0 +1,12 @@
+{
+  "compiler": "1.5.0",
+  "language": "1.2",
+  "documentFormat": 1,
+  "analysisProtocol": 1,
+  "extension": "1.7.2",
+  "vscodeMinimum": "1.92.0",
+  "javaRuntime": "1.1.0",
+  "javaMinimum": 8,
+  "bundleFormat": "ABX1",
+  "rustMinimum": "1.85"
+}

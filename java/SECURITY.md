@@ -18,6 +18,31 @@ license enforcement, provenance or protection against copying an intact file.
 
 ## Integration
 
+New bundles require a random 256-bit key. Use `abstract keygen`; creation with
+a human passphrase is refused. Legacy readers still accept the old SHA-256
+passphrase mapping so existing files can be migrated. That mapping has no salt
+or password-hardening cost and must not be used for new keys.
+
+Compiler 1.5.0 samples each 96-bit nonce from the operating system's secure random
+source. Failure to obtain randomness aborts sealing. Nonces do not depend on
+the wall clock, process identity, payload or a resettable counter. For `q`
+independent seals under one key, the nonce-collision bound is
+`q(q - 1) / 2^97`. Limit use to at most 65,536 seals per key (collision probability
+less than `2^-65`), then generate a new key. This is an operational limit, not
+a counter enforced across processes. Prefer a new key for each delivery when
+the application can manage it. A secure random source and independent draws
+are assumptions; random nonces are not a proof of uniqueness.
+
+The nonce requirement and consequences of reuse are specified in
+[RFC 8439, section 4](https://www.rfc-editor.org/rfc/rfc8439.html#section-4).
+An old file is not repaired by updating its reader. Rebuild it with a fresh
+key if its nonce generation or passphrase strength is in doubt.
+
+Rust uses RustCrypto implementations for SHA-256 and ChaCha20-Poly1305; Java
+uses Bouncy Castle for the AEAD and the JVM's SHA-256 provider. Dependency
+versions are recorded in `Cargo.lock` and `java/pom.xml`. Abstract does not
+maintain its own implementations of these algorithms.
+
 - Keep credentials and other secrets out of distributed data.
 - Avoid logging keys and decrypted contents.
 - Treat authentication failures as errors; do not fall back to unchecked data.

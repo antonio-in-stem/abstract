@@ -144,10 +144,9 @@ pub fn export(
                     work.visit()?;
                     if matches!(object.get("id"), Some(Value::Text(id)) if id == &instance.id)
                         && matches!(object.get("template"), Some(Value::Text(schema)) if schema == &instance.template)
+                        && matched.replace(object).is_some()
                     {
-                        if matched.replace(object).is_some() {
-                            return Err(budget("duplicate materialized instance"));
-                        }
+                        return Err(budget("duplicate materialized instance"));
                     }
                 }
                 let object = matched.ok_or_else(|| {
