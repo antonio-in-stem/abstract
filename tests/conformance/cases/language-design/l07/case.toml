@@ -7,16 +7,16 @@ kind = '''design-flaw'''
 source_repro = '''repro/language-design/case24/ (also references: repro/language-design/case18/)'''
 command = '''# no metadata anywhere:
 ./project/target/release/abstract.exe compile repro/language-design/case24/data JSON
-OUTPUT: { "data": [ { "template": "Sticker", "id": "shulker", ... } ] }
+OUTPUT: { "data": [ { "template": "Option", "id": "premium", ... } ] }
 ./project/target/release/abstract.exe compile repro/language-design/case24/data YML
-OUTPUT: data:\n  - template: "Sticker"\n    id: "shulker"\n ...
+OUTPUT: data:\n  - template: "Option"\n    id: "premium"\n ...
 # a schema can hijack the discriminator (case18/data/templates/T.abt declares template/id/version):
 ./project/target/release/abstract.exe compile repro/language-design/case18/data JSON
 OUTPUT: { "data": [ { "template": "my_own_value", "id": "t1", "version": "2" } ] }
 -> AbstractData.byTemplate("T") will never find this object.
 # a variant's asset path is unresolvable without a recorded root:
 ./project/target/release/abstract.exe compile repro/language-design/case24/overlays/v2/data JSON
-OUTPUT: { "data": [ { "template":"Sticker","id":"shulker_v2","rarity":"mythic","icon":"./textures/shulker_v2.png" } ] }
+OUTPUT: { "data": [ { "template":"Option","id":"premium_v2","rarity":"mythic","icon":"./textures/premium_v2.png" } ] }
 -> "./textures/..." is identical in the base and the overlay output; only the compiler knew the roots differed.'''
 expected_kind = '''undecided'''
 expected_note = '''The compiled document should identify the compiler, the schema versions it was produced against, the available data versions and their asset roots, and the default version — and `template`/`id` should be enforced as reserved.'''

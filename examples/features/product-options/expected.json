@@ -1,0 +1,162 @@
+{
+  "abstract": {
+    "format": 1,
+    "compiler": "1.0.0",
+    "versions": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  "data": [
+    {
+      "template": "Option",
+      "id": "ember",
+      "pack": "winter_2026",
+      "title": "Ember",
+      "icon": "./textures/ember.png",
+      "rarity": "epic",
+      "glow": false,
+      "owner": {
+        "team": "Studio A",
+        "contact": "support@example.com"
+      },
+      "tags": [
+        "core_ui",
+        "promo"
+      ],
+      "copy": [
+        {
+          "key": "en_us",
+          "value": "Ember"
+        },
+        {
+          "key": "es_es",
+          "value": "Brasa"
+        },
+        {
+          "key": "es_mx",
+          "value": "Brasa"
+        }
+      ]
+    },
+    {
+      "template": "Option",
+      "id": "frost",
+      "pack": "winter_2026",
+      "title": "Frost",
+      "icon": "./textures/frost.png",
+      "rarity": "rare",
+      "glow": false,
+      "owner": {
+        "team": "Studio A",
+        "contact": "support@example.com"
+      },
+      "tags": [
+        "core_ui",
+        "core_game"
+      ],
+      "copy": [
+        {
+          "key": "en_us",
+          "value": "Frost"
+        },
+        {
+          "key": "es_es",
+          "value": "Escarcha"
+        },
+        {
+          "key": "es_mx",
+          "value": "Escarcha"
+        }
+      ]
+    },
+    {
+      "template": "Pack",
+      "id": "spring_2026",
+      "title": "Spring 2026",
+      "tier": "free"
+    },
+    {
+      "template": "Pack",
+      "id": "winter_2026",
+      "title": "Winter 2026",
+      "tier": "plus",
+      "slot_count": 3
+    }
+  ],
+  "overlays": [
+    {
+      "versions": {
+        "min": 1,
+        "max": 1
+      },
+      "data": [
+        {
+          "template": "Option",
+          "id": "ember",
+          "pack": "winter_2026",
+          "title": "Ember",
+          "icon": "./textures/ember.png",
+          "rarity": "epic",
+          "tint": 200,
+          "owner": {
+            "team": "Studio A",
+            "contact": "support@example.com"
+          },
+          "tags": [
+            "core_ui",
+            "promo"
+          ],
+          "copy": [
+            {
+              "key": "en_us",
+              "value": "Ember"
+            },
+            {
+              "key": "es_es",
+              "value": "Brasa"
+            },
+            {
+              "key": "es_mx",
+              "value": "Brasa"
+            }
+          ]
+        },
+        {
+          "template": "Option",
+          "id": "frost",
+          "pack": "winter_2026",
+          "title": "Frost",
+          "icon": "./textures/frost.png",
+          "rarity": "rare",
+          "tint": 200,
+          "owner": {
+            "team": "Studio A",
+            "contact": "support@example.com"
+          },
+          "tags": [
+            "core_ui",
+            "core_game"
+          ],
+          "copy": [
+            {
+              "key": "en_us",
+              "value": "Frost"
+            },
+            {
+              "key": "es_es",
+              "value": "Escarcha"
+            },
+            {
+              "key": "es_mx",
+              "value": "Escarcha"
+            }
+          ]
+        }
+      ],
+      "removed": [
+        "spring_2026"
+      ]
+    }
+  ]
+}

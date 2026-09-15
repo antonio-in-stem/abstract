@@ -9,7 +9,7 @@ command = '''./project/target/release/abstract.exe compile repro/language-design
 OUTPUT: abstract: objects/braced.ab: Unknown field 'owner { team' at Pack. Declared fields: id, owner, slots, template, id.
 ^^^^^^^^^^^^^ ^^
 ./project/target/release/abstract.exe compile repro/language-design/case24/overlays/v2/data JSON
-OUTPUT: abstract: stickers/shulker.ab: File not found at Sticker.icon: './textures/shulker_v2.png' resolved to '\\?\repro\language-design\case24\overlays\v2\assets\textures\shulker_v2.png'. The schema declares file(...), so the file must exist.
+OUTPUT: abstract: options/premium.ab: File not found at Option.icon: './textures/premium_v2.png' resolved to '\\?\repro\language-design\case24\overlays\v2\assets\textures\premium_v2.png'. The schema declares file(...), so the file must exist.
 (also note the mangled field name 'owner { team' — see L08 for the cause: multi-line statements are joined before the error is built)'''
 expected_kind = '''undecided'''
 expected_note = ''''Declared fields: id, owner, slots.' — schema fields only, deduplicated. And a plain `C:\Users\...` path in asset errors.'''

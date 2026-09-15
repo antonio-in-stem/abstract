@@ -182,7 +182,7 @@ fn expect_no_arguments(rest: &[String]) -> Result<(), Failure> {
 
 /// Which flags one command accepts. A flag this command does not accept is
 /// E802 like any other unknown flag: `templates --skip-assets` is refused,
-/// where 0.2.0 accepted and ignored it (Appendix A71).
+/// where an earlier compiler accepted and ignored it (Appendix A71).
 #[derive(Clone, Copy)]
 struct FlagSet {
     out: bool,

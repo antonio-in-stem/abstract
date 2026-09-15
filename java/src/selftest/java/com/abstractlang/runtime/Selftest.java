@@ -144,7 +144,7 @@ public final class Selftest {
 
     /** SPEC §7.5 step 3 and Appendix D.2 item 11. */
     private static void versionOverlays() {
-        // The compiled document of docs/examples/overlays-multi-match. Versions 1
+        // The compiled document of examples/features/overlays-multi-match. Versions 1
         // and 2 are each covered by two overlays, and 'lantern' is in no base.
         String document = "{"
                 + "\"abstract\": {\"format\": 1, \"compiler\": \"1.0.0\","

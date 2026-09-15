@@ -14,7 +14,7 @@ OUTPUT: abstract: objects/s1.ab:1: Unknown template 'Shared'. Add a schema named
 OUTPUT: { "data": [ { "template":"Shared","id":"s1","name":"uses a schema from another project" } ] }
 -> works, but the dependency lives in the invoker's shell history, not in the source.'''
 expected_kind = '''undecided'''
-expected_note = '''An .ab (or a per-directory manifest) should be able to state its dependencies, e.g. `use ../shared/templates` or `use stickers.Sticker`, and schema names should be scopeable so two subsystems can each own an `Item`. A `const` block for shared literals would remove the main source of copy-paste in the corpus.'''
+expected_note = '''An .ab (or a per-directory manifest) should be able to state its dependencies, e.g. `use ../shared/templates` or `use options.Option`, and schema names should be scopeable so two subsystems can each own an `Item`. A `const` block for shared literals would remove the main source of copy-paste in the corpus.'''
 actual_0_2_0 = '''No imports; global flat schema namespace with a project-wide uniqueness requirement; no constants; dependencies expressible only as CLI arguments.'''
 spec_ref = '''2.3, 2.4, 4.2, 10.4 (E401), Not doing (no imports)'''
 status = '''ready'''

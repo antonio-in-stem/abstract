@@ -3217,7 +3217,7 @@ mod tests {
             ids("schema A {\n    a: text @optional @optional\n}\n"),
             [ErrorId::E303]
         );
-        // `@was` is not a modifier of Abstract 1.0.
+        // `@was` is not an Abstract modifier.
         assert_eq!(ids("schema A {\n    a: text @was(b)\n}\n"), [ErrorId::E303]);
     }
 
@@ -3630,7 +3630,7 @@ mod tests {
         assert_eq!(plain.field_names(), ["title"]);
         assert_eq!(plain.id_ranges(), Vec::new());
 
-        let ranged = one_schema("schema Sticker {\n    id: text(3..24)\n    title: text\n}\n");
+        let ranged = one_schema("schema Option {\n    id: text(3..24)\n    title: text\n}\n");
         assert_eq!(ranged.id_ranges(), vec![IntRange { min: 3, max: 24 }]);
 
         let implicit = one_schema("schema Plain {\n    title: text\n}\n");
@@ -3851,7 +3851,7 @@ mod tests {
                     \x20   slot_count: int(1..9) @optional\n\
                     }\n\
                     \n\
-                    schema Sticker {\n\
+                    schema Option {\n\
                     \x20   pack: ref(Pack)\n\
                     \x20   title: text(1..60)\n\
                     \x20   icon: image(png 128x128)\n\
@@ -3869,13 +3869,13 @@ mod tests {
                     \x20   }\n\
                     }\n\
                     \n\
-                    logic Sticker {\n\
+                    logic Option {\n\
                     \x20   derive? .owner.contact = support@example.com\n\
                     }\n";
         let tables = validated(text).expect("the specification's own example");
         assert_eq!(tables.versions, VersionRange::new(1, 2).unwrap());
-        assert_eq!(tables.schema_names(), ["Pack", "Sticker"]);
-        assert!(tables.logic_for("Sticker").is_some());
+        assert_eq!(tables.schema_names(), ["Pack", "Option"]);
+        assert!(tables.logic_for("Option").is_some());
 
         let pack = tables.schema("Pack").expect("Pack");
         assert_eq!(pack.field_names(), ["title", "tier", "slot_count"]);
@@ -3888,27 +3888,27 @@ mod tests {
         );
         assert!(pack.field("slot_count").expect("slot_count").is_optional());
 
-        let sticker = tables.schema("Sticker").expect("Sticker");
+        let option = tables.schema("Option").expect("Option");
         assert_eq!(
-            sticker.field_names(),
+            option.field_names(),
             ["pack", "title", "icon", "rarity", "glow", "tint", "owner", "tags", "copy"]
         );
-        assert_eq!(sticker.id_ranges(), vec![IMPLICIT_ID_RANGE]);
+        assert_eq!(option.id_ranges(), vec![IMPLICIT_ID_RANGE]);
 
         let project = tables.versions;
-        let glow = sticker.field("glow").expect("glow");
+        let glow = option.field("glow").expect("glow");
         assert!(!glow.exists_in(1, project) && glow.exists_in(2, project));
-        let tint = sticker.field("tint").expect("tint");
+        let tint = option.field("tint").expect("tint");
         assert!(tint.exists_in(1, project) && !tint.exists_in(2, project));
 
-        let copy = sticker.field("copy").expect("copy");
+        let copy = option.field("copy").expect("copy");
         assert!(copy.is_list());
         assert_eq!(
             copy.tag_field().map(|field| field.name.as_str()),
             Some("key")
         );
         assert!(matches!(
-            sticker.field("icon").and_then(FieldDecl::type_expr),
+            option.field("icon").and_then(FieldDecl::type_expr),
             Some(TypeExpr::Image { alternatives })
                 if alternatives == &[ImageAlt {
                     extension: "png".to_string(),

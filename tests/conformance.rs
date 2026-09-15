@@ -388,7 +388,7 @@ fn command_line(fields: &BTreeMap<String, String>) -> Option<(Option<String>, Ve
     if args.iter().any(|arg| arg.starts_with('<')) {
         return None;
     }
-    // A line may introduce the vector in prose ("cmd under 1.0: compile …");
+    // A line may introduce the vector in prose ("command: compile …");
     // the vector starts at the command word. A line with no command word at
     // all is a deliberately invalid one (`abstract a.ab Item.abt true JSON`)
     // and is passed through as written.

@@ -1,0 +1,5 @@
+Option :: @id.ember, @rarity.epic
+&frost.*
+    title: Ember
+    tags: [core_ui, promo]
+    copy(key, value): (en_us, Ember), (es_*, Brasa)

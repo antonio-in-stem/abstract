@@ -547,7 +547,7 @@ mod overlay_tests {
         "    slot_count: int(1..9) @optional\n",
         "}\n",
         "\n",
-        "schema Sticker {\n",
+        "schema Option {\n",
         "    pack: ref(Pack)\n",
         "    title: text(1..60)\n",
         "    icon: image(png 128x128)\n",
@@ -575,7 +575,7 @@ mod overlay_tests {
             "    title: text(1..40)\n",
             "}\n",
             "\n",
-            "schema Sticker {\n",
+            "schema Option {\n",
             "    pack: ref(Pack)\n",
             "    title: text(1..40)\n",
             "}\n",
@@ -583,18 +583,18 @@ mod overlay_tests {
         let winter = ("data/winter.ab", "Pack :: @id.winter\n    title: Winter\n");
         let ember = (
             "data/ember.ab",
-            "Sticker :: @id.ember\n    pack: winter\n    title: Ember\n",
+            "Option :: @id.ember\n    pack: winter\n    title: Ember\n",
         );
         let frost = (
             "data/frost.ab",
-            "Sticker :: @id.frost\n    pack: winter\n    title: Frost\n",
+            "Option :: @id.frost\n    pack: winter\n    title: Frost\n",
         );
         let (_, forwards) = project(template, &[winter, ember, frost]);
         let (_, backwards) = project(template, &[frost, ember, winter]);
         assert_eq!(forwards, backwards);
         assert_eq!(
             forwards[0].iter().map(id_of).collect::<Vec<_>>(),
-            ["winter", "ember", "frost"]
+            ["ember", "frost", "winter"]
         );
     }
 
@@ -612,9 +612,9 @@ mod overlay_tests {
                     "Pack :: @since(2)\n    title: Spring 2026\n",
                 ),
                 (
-                    "data/stickers/frost.ab",
+                    "data/options/frost.ab",
                     concat!(
-                        "Sticker :: @id.frost, @rarity.rare\n",
+                        "Option :: @id.frost, @rarity.rare\n",
                         "    pack: winter_2026\n",
                         "    title: Frost\n",
                         "    icon: ./textures/$id.png\n",
@@ -625,9 +625,9 @@ mod overlay_tests {
                     ),
                 ),
                 (
-                    "data/stickers/ember.ab",
+                    "data/options/ember.ab",
                     concat!(
-                        "Sticker :: @id.ember, @rarity.epic\n",
+                        "Option :: @id.ember, @rarity.epic\n",
                         "&frost.*\n",
                         "    title: Ember\n",
                         "    tags: [core_ui, promo]\n",
@@ -642,20 +642,20 @@ mod overlay_tests {
         let base = &documents[1];
         assert_eq!(
             base.iter().map(id_of).collect::<Vec<_>>(),
-            ["spring_2026", "winter_2026", "ember", "frost"]
+            ["ember", "frost", "spring_2026", "winter_2026"]
         );
-        assert_eq!(keys(&base[0]), ["template", "id", "title", "tier"]);
+        assert_eq!(keys(&base[2]), ["template", "id", "title", "tier"]);
         assert_eq!(
-            base[0].get("tier"),
+            base[2].get("tier"),
             Some(&Value::Text("free".to_string())),
             "an absent defaulted field is filled"
         );
         assert_eq!(
-            keys(&base[1]),
+            keys(&base[3]),
             ["template", "id", "title", "tier", "slot_count"]
         );
 
-        let ember = &base[2];
+        let ember = &base[0];
         assert_eq!(
             keys(ember),
             [
@@ -683,7 +683,7 @@ mod overlay_tests {
             ["team"]
         );
 
-        let frost = &base[3];
+        let frost = &base[1];
         assert_eq!(
             frost.get("icon"),
             Some(&Value::Text("./textures/frost.png".to_string()))
@@ -712,22 +712,22 @@ mod overlay_tests {
         let first = &documents[0];
         assert_eq!(
             first.iter().map(id_of).collect::<Vec<_>>(),
-            ["winter_2026", "ember", "frost"]
+            ["ember", "frost", "winter_2026"]
         );
         assert_eq!(
-            keys(&first[1]),
+            keys(&first[0]),
             [
                 "template", "id", "pack", "title", "icon", "rarity", "tint", "owner", "tags",
                 "copy"
             ]
         );
         assert_eq!(
-            first[1].get("tint"),
+            first[0].get("tint"),
             Some(&Value::Int(200)),
             "the clone carries tint in the version in which the field exists"
         );
 
-        // One overlay: both stickers differ from the base over 1..1, and
+        // One overlay: both options differ from the base over 1..1, and
         // spring_2026 is removed over the same range (SPEC 7.5 step 2).
         let overlays = reduce_overlays(range, &documents);
         assert_eq!(overlays.len(), 1);

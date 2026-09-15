@@ -6,8 +6,8 @@
 //! every instance, evaluates logic, and emits one compiled document in JSON,
 //! YAML or RAW form.
 //!
-//! The normative definition of the language is `docs/SPEC.md`, with the
-//! grammar in `docs/GRAMMAR.ebnf`. Every rule this crate implements cites the
+//! The normative definition of the language is `docs/reference/specification.md`, with the
+//! grammar in `docs/reference/grammar.ebnf`. Every rule this crate implements cites the
 //! section it comes from; where the code and the specification disagree, the
 //! specification wins.
 //!
@@ -86,7 +86,7 @@ pub mod limits {
 
 /// Compiler behaviour switches.
 ///
-/// There is no lenient mode in Abstract 1.0: `--allow-unknown` does not exist
+/// There is no lenient mode: `--allow-unknown` does not exist
 /// (SPEC §5.12, Appendix A52).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CompileOptions {

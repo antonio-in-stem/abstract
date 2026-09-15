@@ -636,7 +636,7 @@ mod tests {
     #[test]
     fn opens_bundle_written_by_released_1_4_0_compiler() {
         // Produced by out/delivery/abstract-1.4.0/abstract-windows-x64.exe
-        // from docs/examples/hello with this synthetic compatibility key.
+        // from examples/features/hello with this synthetic compatibility key.
         let fixture = base64(
             "QUJYMQEBKJ2e3ZCJilic4oZSCAEAALkqxYXamRupdFkVvB5RGezaMPUJgHWG8vZJ2ui7hyBsyFQj1iBRMX+jydvplikqn1biBzkjyBAZTU6U7A86oU6ufmRLeDuyPqZIuHKjr/lCoK1z2suhFfgOzGxFyQ27H+o2oJgkjMeQR3UYCnOuaeTVea20pPXWv7RQtxILUIZbvvHMANAen0ppDCPdKuI+toB3Qq+kNPSR7bEVC0DCR9pgr9emqwmCeJVU+cQftmYiuKqJ5cU6Q9jGKqwUywkUGSWTNvd7q+2P7ONcq+wsXFnLD1WcN6l/Lpb4fENYO+PA6O6oDVE8lJT25eP8+3fqrFETc3e9Bxkuo5hZxyXkfSW/bnNB0Bt5GA==",
         );

@@ -9,15 +9,15 @@ Read in this order:
    mistakes most likely to make a valid-looking file fail.
 2. The project's existing `.abt` files. They define the fields, types, enum
    members, defaults, version windows and rules that its `.ab` files must obey.
-3. [Abstract 1.2 specification](../SPEC.md) when a construct is unclear. It is
+3. [Language specification](../reference/specification.md) when a construct is unclear. It is
    the normative language contract.
-4. [Arithmetic in Abstract 1.2](../ARITHMETIC.md) before writing `calc(...)`.
-5. [Grammar](../GRAMMAR.ebnf) when exact token boundaries or punctuation
+4. [Arithmetic](../reference/arithmetic.md) before writing `calc(...)`.
+5. [Grammar](../reference/grammar.ebnf) when exact token boundaries or punctuation
    matter.
 
 For examples, start with the mechanically checked
-[smallest project](../examples/hello/) and then use the
-[documentation example index](../examples/README.md) to find one feature at a
+[smallest project](../../examples/features/hello/) and then use the
+[feature example index](../../examples/features/README.md) to find one feature at a
 time. The separate [learning projects](../../examples/README.md) provide longer
 guided examples. Copy a pattern only after reading the schema that gives it
 meaning.

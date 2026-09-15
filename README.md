@@ -1,18 +1,15 @@
-<p align="center"><img src="editors/vscode/icons/abstract-logo.png" width="96" alt="Abstract"></p>
+<p align="center"><img src="vscode/icons/abstract-logo.png" width="96" alt="Abstract"></p>
 
 # Abstract
 
-[Español](README.es.md)
+**Define objects, express their variations, and compile checked data.**
 
-**Define your objects. Write their variations.**
+Abstract is a data language for related objects. Define a schema once, write
+instances and variations, then compile validated JSON, YAML, or RAW for the
+application that uses the data.
 
-Abstract is a data language for families of objects: their shared structure,
-their individual values, and the rules each variation must satisfy. Define a
-schema once, write compact instances, and compile the project into validated
-JSON, YAML or RAW. Your application decides what those objects do.
-
-[Learn by doing](docs/learn/README.md) · [Language guide](docs/abstract-language.md) ·
-[Abstract and CUE](docs/comparison/README.md) · [Downloads](https://github.com/antonio-in-stem/abstract/releases)
+[Learn](docs/learn/README.md) · [Language guide](docs/language.md) ·
+[Reference](docs/README.md) · [Releases](https://github.com/antonio-in-stem/abstract/releases)
 
 ```text
 .abt  definitions and rules
@@ -20,9 +17,7 @@ JSON, YAML or RAW. Your application decides what those objects do.
 assets/ referenced files
 ```
 
-## One definition, several objects
-
-`data/templates/Product.abt` defines what a product can be:
+## A schema, then variations
 
 ```abstract
 schema Product {
@@ -37,12 +32,7 @@ schema Product {
         availability: enum(alpha, beta, stable) = stable
     }
 }
-```
 
-An instance supplies its values. A variation reuses those values and writes its
-differences, while retaining its own identity:
-
-```abstract
 Product :: @id.atlas, @status.active
     title: Atlas Search
     owner.team: Knowledge Systems
@@ -54,45 +44,21 @@ Product :: @id.beacon
     title: Beacon Export
 ```
 
-This is a working [example project](docs/examples/clones). Reuse does not bypass
-validation: both objects must satisfy the same schema.
-
-## What belongs in the model
-
-- **Structure:** nested schemas, bounded lists, enums, defaults and references.
-- **Variations:** clone a whole instance or a subtree, then write the differences.
-- **Rules:** require relationships between values and derive fields with checked
-  [arithmetic](docs/ARITHMETIC.md), including list aggregation.
-- **Resources:** require local files or images of a declared format and size.
-- **Versions:** compile a current data set and overlays that reconstruct earlier
-  model versions from one authored project.
-
-For example, `icon: image(png 128x128)` makes the resource requirement part of the
-schema. With asset checks enabled, the compiler checks existence, permitted
-paths, format headers and dimensions. It does not decode all pixels or establish
-that an image is safe for every downstream decoder. A `file(json)` declaration
-checks a file resource; it is not a schema validator for that file's JSON content.
-
-The ordinary output contains resource paths, not their bytes. See the
-[compiled data contract](docs/raw-data.md) before writing a consumer.
+The second instance reuses the first and writes only its differences. Both must
+satisfy the same schema. Schemas can also declare lists, defaults, references,
+resource constraints, logic, arithmetic, and model `versions`.
 
 ## Try it
 
-Download the executable for your system from
-[Releases](https://github.com/antonio-in-stem/abstract/releases). Put it in a
-folder on PATH and name it `abstract` (`abstract.exe` on Windows). No Rust
-installation is needed to run a downloaded compiler.
+Download a release and put `abstract` on PATH, then create and compile a
+project:
 
 ```sh
 abstract init my-project
 abstract compile my-project JSON --out my-project.json
 ```
 
-Open the generated `.abt`, `.ab` and JSON side by side. Change a value outside
-its schema's allowed range, then run `abstract lint my-project` to see the
-diagnostic. Start with the [first exercise](docs/learn/README.md) for guidance.
-
-To build from this repository with Rust:
+To build from this checkout:
 
 ```sh
 cargo build --release --locked
@@ -100,64 +66,33 @@ cargo run -- init my-project
 cargo run -- compile my-project JSON --out my-project.json
 ```
 
-The release executable is `target/release/abstract` (`abstract.exe` on Windows).
-Bundle encryption and hashing use maintained cryptographic crates. Building
-from source requires the Rust version declared in `Cargo.toml` or newer.
+Start with the [guided exercises](docs/learn/README.md), then use the
+[tutorials](examples/README.md) and [feature examples](examples/features/README.md).
+For AI-assisted authoring, use the [AI guide](docs/ai/README.md).
 
-Start with [six small exercises](docs/learn/README.md), each with a prompt, hint,
-starter and separately explained solution. Then try the
-[intermediate library and advanced automotive examples](examples/README.md).
+## Tooling
 
-Using an AI assistant to write `.ab` and `.abt` files? Give it the
-[AI authoring guide](docs/ai/README.md).
+The VS Code extension provides completion, diagnostics, evaluated values,
+navigation, and checked renaming. Follow the [extension guide](vscode/README.md)
+for installation and setup.
 
-## Visual Studio Code
+The Java reader is optional. It reads compiled JSON and can reconstruct a model
+version from overlays. See [its guide](java/README.md).
 
-Install `abstract-language-1.7.3.vsix` using **Extensions: Install from VSIX**.
-Set `abstract.compilerPath` to your compiler if `abstract` is not on PATH.
-
-The extension provides contextual completion, syntax explanations on hover,
-live compiler diagnostics, evaluated values, navigation and checked renaming.
-File icons and the Orbit Dark theme are optional. See the
-[extension guide](editors/vscode/README.md) for setup and supported operations.
-
-## Is Abstract the right fit?
-
-Abstract is useful when many objects share rules but differ in their details.
-It gives object identity, cloning, resource constraints and model versions an
-explicit place in the authoring workflow. A small configuration file without
-shared rules may not justify adding a compiler.
-
-CUE also combines data and constraints and supports reusable definitions.
-Abstract's clone-and-replace model is different from constraint unification;
-neither is a universal replacement for the other. The
-[executable comparison](docs/comparison/README.md) models the same problem in
-both languages and checks their results.
-
-## Project and release status
-
-This repository contains the language specification, Rust compiler, Java output
-reader, VS Code extension, examples and documentation. Compiler **1.5.0**,
-language **1.2**, and extension **1.7.3** have separate versions. The
-[compatibility guide](docs/COMPATIBILITY.md) explains how they fit together,
-including the migration for existing encrypted bundles.
-
-Release evidence and remaining limits are recorded in
-[the release checklist](docs/RELEASE.md). Automated test results are not a claim
-that every platform or every possible input has been independently verified.
+## Project layout
 
 | Directory | Contents |
 | --- | --- |
 | `src/`, `tests/` | Compiler and conformance tests |
-| `editors/vscode/` | Editor extension and its tests |
-| `examples/`, `docs/examples/` | Exercises and runnable language examples |
-| `docs/` | Guides, specification and output contracts |
-| `java/` | Compiled-output reader |
+| `vscode/` | VS Code extension |
+| `examples/` | Tutorials, feature examples, and exercises |
+| `docs/` | Learning material and language reference |
+| `java/` | Optional compiled-data reader |
 
-See [contributing](CONTRIBUTING.md) for verification commands and
-[the changelog](CHANGELOG.md) for compatibility changes.
+See [contributing](CONTRIBUTING.md), [release guidance](docs/releasing.md), and
+the [release manifest](release-manifest.json) for current component values.
 
 ## License
 
-By **Antonio M.** Source code is available under the [MIT license](LICENSE).
-The Abstract name and logo remain the property of Antonio M.
+Source code is available under the [MIT license](LICENSE). The Abstract name
+and logo remain the property of Antonio M.

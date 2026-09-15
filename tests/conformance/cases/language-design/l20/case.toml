@@ -6,7 +6,7 @@ verdict = '''confirmed'''
 kind = '''bug'''
 source_repro = '''repro/language-design/case9b/ (also references: repro/language-design/case19/)'''
 command = '''Ítem :: @id.u
-O@2 :: @id.shulker_x, @rarity.mythic'''
+O@2 :: @id.premium_x, @rarity.mythic'''
 expected_kind = '''undecided'''
 expected_note = '''Either accept unicode schema names on both sides, or reject them at the .abt with "schema names must be ASCII letters, digits and underscore". Either way, a line containing a top-level `::` whose left side is not a valid template name should say so.'''
 actual_0_2_0 = '''The .abt accepts it, `templates` lists it, the .ab can never use it, and the error blames file structure.'''

@@ -1,7 +1,8 @@
-//! The 0.2.0 regression suite, carried into 1.0 as a checklist.
+//! Legacy regression cases retained as a compatibility checklist.
 //!
-//! Every test that states a rule Abstract 1.0 keeps runs against the 1.0
-//! pipeline. The 21 that remain `#[ignore]`d are marked `invalid under 1.0`:
+//! Every test that states a current rule runs against the compiler pipeline.
+//! The 21 that remain `#[ignore]`d are marked as invalid under the current
+//! specification:
 //! the specification changed the rule they assert, and the attribute cites
 //! the section. Those are kept as a record of the migration (Appendix A) and
 //! are replaced by conformance cases, not repaired.
@@ -15,9 +16,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use abstract_lang::{compile_paths, compile_project, compile_sources, CompileOptions, SourceFile};
 
 #[test]
-#[ignore = "invalid under 1.0: RAW now renders the document envelope and one key per line (SPEC 8.6, A46, A50); examples/product-catalog/ originated in 0.2.0"]
+#[ignore = "invalid under the current specification: RAW now renders the document envelope and one key per line (SPEC 8.6, A46, A50)"]
 fn compiles_example_project_to_human_readable_data() {
-    let project = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/product-catalog");
+    let project =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/tutorials/product-catalog");
 
     let compiled =
         compile_project(&project, CompileOptions::default()).expect("example should compile");
@@ -92,7 +94,7 @@ fn expands_enum_prefix_wildcards_in_tuple_arrays() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: a RAW object is always multi-line (SPEC 8.6, A50)"]
+#[ignore = "invalid under the current specification: a RAW object is always multi-line (SPEC 8.6, A50)"]
 fn fills_group_defaults_for_tagged_objects() {
     let template = SourceFile::new(
         "templates/Product.abt",
@@ -181,12 +183,12 @@ fn coerces_single_values_into_schema_declared_lists() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: `.applicable.id == helmet` projects over a list and is E519 (SPEC 6.5)"]
+#[ignore = "invalid under the current specification: `.applicable.id == helmet` projects over a list and is E519 (SPEC 6.5)"]
 fn evaluates_logic_requirements_after_schema_validation() {
     let template = SourceFile::new(
-        "templates/Sticker.abt",
+        "templates/Option.abt",
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             flags[]: enum(hat_overrides_helmet, hat_has_variations) @optional
             applicable[] {
@@ -195,7 +197,7 @@ fn evaluates_logic_requirements_after_schema_validation() {
             variant_count: int(0, 2..15) = 0
         }
 
-        logic Sticker {
+        logic Option {
             if .flags contains "hat_has_variations" {
                 require .flags contains "hat_overrides_helmet"
                     else throw "Hat variations require helmet override."
@@ -207,9 +209,9 @@ fn evaluates_logic_requirements_after_schema_validation() {
         "#,
     );
     let instance = SourceFile::new(
-        "stickers/bad.ab",
+        "options/bad.ab",
         r#"
-        Sticker :: @id.bad, @variant_count.3
+        Option :: @id.bad, @variant_count.3
             flags: hat_has_variations
             applicable: #sword
         "#,
@@ -224,7 +226,7 @@ fn evaluates_logic_requirements_after_schema_validation() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: loop variables are always written '$name' (SPEC 6.9, A44)"]
+#[ignore = "invalid under the current specification: loop variables are always written '$name' (SPEC 6.9, A44)"]
 fn evaluates_logic_loops_and_exists_operator() {
     let template = SourceFile::new(
         "templates/Page.abt",
@@ -258,7 +260,7 @@ fn evaluates_logic_loops_and_exists_operator() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: loop variables are always written '$name' (SPEC 6.9, A44)"]
+#[ignore = "invalid under the current specification: loop variables are always written '$name' (SPEC 6.9, A44)"]
 fn logic_loops_bind_each_array_item() {
     let template = SourceFile::new(
         "templates/Page.abt",
@@ -354,7 +356,7 @@ fn serializes_compiled_project_to_json() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: every YAML mapping key is quoted (SPEC 8.5, A48)"]
+#[ignore = "invalid under the current specification: every YAML mapping key is quoted (SPEC 8.5, A48)"]
 fn serializes_compiled_project_to_yaml() {
     let template = SourceFile::new(
         "templates/Thing.abt",
@@ -382,12 +384,12 @@ fn serializes_compiled_project_to_yaml() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
-fn derives_sticker_sizes_from_slots() {
+#[ignore = "invalid under the current specification: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
+fn derives_option_sizes_from_slots() {
     let template = SourceFile::new(
-        "templates/Sticker.abt",
+        "templates/Option.abt",
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             item_size: enum(single, double) = double
             render_size: enum(none, single, double) = double
@@ -408,7 +410,7 @@ fn derives_sticker_sizes_from_slots() {
             mode: enum(custom) @tag
         }
 
-        logic Sticker {
+        logic Option {
             derive .item_size = single
             derive .render_size = none
 
@@ -427,9 +429,9 @@ fn derives_sticker_sizes_from_slots() {
         "#,
     );
     let instance = SourceFile::new(
-        "stickers/clockwork.ab",
+        "options/clockwork.ab",
         r#"
-        Sticker :: @id.clockwork
+        Option :: @id.clockwork
             slots.1: #generate(distribution: ./textures/sword.png)
             slots.2: #generate(distribution: ./textures/axe.png)
             slots.{3, 4}: #custom
@@ -437,7 +439,7 @@ fn derives_sticker_sizes_from_slots() {
     );
 
     let compiled = compile_sources(vec![template, instance], CompileOptions::default())
-        .expect("sticker sizes should derive from slots");
+        .expect("option sizes should derive from slots");
     let json = compiled.to_json_string();
 
     assert!(json.contains("\"item_size\": \"double\""));
@@ -483,12 +485,12 @@ fn logic_derive_is_template_defined_not_compiler_builtin() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
-fn sticker_slot_four_requires_slot_three() {
+#[ignore = "invalid under the current specification: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
+fn option_slot_four_requires_slot_three() {
     let template = SourceFile::new(
-        "templates/Sticker.abt",
+        "templates/Option.abt",
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             item_size: enum(single, double) = double
             render_size: enum(none, single, double) = double
@@ -509,7 +511,7 @@ fn sticker_slot_four_requires_slot_three() {
             mode: enum(custom) @tag
         }
 
-        logic Sticker {
+        logic Option {
             if .slots.4 exists {
                 require .slots.3 exists
                     else throw "Slots: slot 4 requires slot 3."
@@ -518,9 +520,9 @@ fn sticker_slot_four_requires_slot_three() {
         "#,
     );
     let instance = SourceFile::new(
-        "stickers/bad.ab",
+        "options/bad.ab",
         r#"
-        Sticker :: @id.bad
+        Option :: @id.bad
             slots.1: #generate(distribution: ./textures/sword.png)
             slots.4: #custom
         "#,
@@ -533,7 +535,7 @@ fn sticker_slot_four_requires_slot_three() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: a quoted `$id` in a condition is literal text (SPEC 6.9); @tag on a root field is E311"]
+#[ignore = "invalid under the current specification: a quoted `$id` in a condition is literal text (SPEC 6.9); @tag on a root field is E311"]
 fn logic_supports_literal_for_variables_length_and_dynamic_paths() {
     let template = SourceFile::new(
         "templates/Rule.abt",
@@ -586,7 +588,7 @@ fn logic_supports_literal_for_variables_length_and_dynamic_paths() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
+#[ignore = "invalid under the current specification: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
 fn logic_interpolates_loop_variables_in_errors() {
     let template = SourceFile::new(
         "templates/Rule.abt",
@@ -628,7 +630,7 @@ fn logic_interpolates_loop_variables_in_errors() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
+#[ignore = "invalid under the current specification: @tag on a root field is E311 and '#tag' on a $(Schema) field is E412 (SPEC 4.8, 5.10)"]
 fn interpolates_root_variables_inside_file_paths() {
     let project = unique_temp_project("path_interpolation");
     fs::create_dir_all(project.join("data")).expect("data dir");
@@ -639,9 +641,9 @@ fn interpolates_root_variables_inside_file_paths() {
     )
     .expect("asset file");
     fs::write(
-        project.join("data/Sticker.abt"),
+        project.join("data/Option.abt"),
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             slots {
                 1: $(Slot)
@@ -659,7 +661,7 @@ fn interpolates_root_variables_inside_file_paths() {
     fs::write(
         project.join("data/red_dragon.ab"),
         r#"
-        Sticker :: @id.red_dragon
+        Option :: @id.red_dragon
             slots.1: #generate(distribution: ./textures/item/sets/$id/sword.png)
         "#,
     )
@@ -673,7 +675,7 @@ fn interpolates_root_variables_inside_file_paths() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: a clone is written after the header (SPEC 5.7, E404, A3); @tag on a root field is E311"]
+#[ignore = "invalid under the current specification: a clone is written after the header (SPEC 5.7, E404, A3); @tag on a root field is E311"]
 fn clone_interpolates_paths_after_overrides() {
     let project = unique_temp_project("clone_path_interpolation");
     fs::create_dir_all(project.join("data")).expect("data dir");
@@ -692,9 +694,9 @@ fn clone_interpolates_paths_after_overrides() {
     )
     .expect("purple asset file");
     fs::write(
-        project.join("data/Sticker.abt"),
+        project.join("data/Option.abt"),
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             slots {
                 1: $(Slot)
@@ -706,7 +708,7 @@ fn clone_interpolates_paths_after_overrides() {
             distribution[]: file(png)
         }
 
-        logic Sticker {
+        logic Option {
             require .slots.1.distribution exists
                 else throw "missing distribution"
         }
@@ -716,7 +718,7 @@ fn clone_interpolates_paths_after_overrides() {
     fs::write(
         project.join("data/red_dragon.ab"),
         r#"
-        Sticker :: @id.red_dragon
+        Option :: @id.red_dragon
             slots.1: #generate(distribution: ./textures/item/sets/$id/sword.png)
         "#,
     )
@@ -726,7 +728,7 @@ fn clone_interpolates_paths_after_overrides() {
         r#"
         &red_dragon.*
 
-        Sticker :: @id.purple_dragon
+        Option :: @id.purple_dragon
         "#,
     )
     .expect("purple instance");
@@ -740,14 +742,14 @@ fn clone_interpolates_paths_after_overrides() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: @tag on a root field is E311 (SPEC 4.8)"]
+#[ignore = "invalid under the current specification: @tag on a root field is E311 (SPEC 4.8)"]
 fn file_type_fails_when_file_is_missing_on_disk() {
     let project = unique_temp_project("missing_file");
     fs::create_dir_all(project.join("data")).expect("data dir");
     fs::write(
-        project.join("data/Sticker.abt"),
+        project.join("data/Option.abt"),
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             slots {
                 1: $(Slot)
@@ -765,7 +767,7 @@ fn file_type_fails_when_file_is_missing_on_disk() {
     fs::write(
         project.join("data/red_dragon.ab"),
         r#"
-        Sticker :: @id.red_dragon
+        Option :: @id.red_dragon
             slots.1: #generate(distribution: ./textures/item/sets/$id/sword.png)
         "#,
     )
@@ -779,7 +781,7 @@ fn file_type_fails_when_file_is_missing_on_disk() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: naming a .abt on the command line is E806 and the direct form is gone (SPEC 2.5, A53)"]
+#[ignore = "invalid under the current specification: naming a .abt on the command line is E806 and the direct form is gone (SPEC 2.5, A53)"]
 fn direct_file_compile_uses_siblings_as_context_without_validating_unrequested_instances() {
     let project = unique_temp_project("direct_ignores_invalid_sibling");
     fs::create_dir_all(project.join("data")).expect("data dir");
@@ -790,9 +792,9 @@ fn direct_file_compile_uses_siblings_as_context_without_validating_unrequested_i
     )
     .expect("asset file");
     fs::write(
-        project.join("data/Sticker.abt"),
+        project.join("data/Option.abt"),
         r#"
-        schema Sticker {
+        schema Option {
             id: text(1..40)
             slots {
                 1: $(Slot)
@@ -810,7 +812,7 @@ fn direct_file_compile_uses_siblings_as_context_without_validating_unrequested_i
     fs::write(
         project.join("data/red_dragon.ab"),
         r#"
-        Sticker :: @id.red_dragon
+        Option :: @id.red_dragon
             slots.1: #generate(distribution: ./textures/item/sets/red_dragon/sword.png)
         "#,
     )
@@ -818,7 +820,7 @@ fn direct_file_compile_uses_siblings_as_context_without_validating_unrequested_i
     fs::write(
         project.join("data/black_dragon.ab"),
         r#"
-        Sticker :: @id.black_dragon
+        Option :: @id.black_dragon
             slots.1: #generate(distribution: ./textures/item/sets/black_dragon/missing.png)
         "#,
     )
@@ -827,7 +829,7 @@ fn direct_file_compile_uses_siblings_as_context_without_validating_unrequested_i
     let direct = compile_paths(
         &[
             project.join("data/red_dragon.ab"),
-            project.join("data/Sticker.abt"),
+            project.join("data/Option.abt"),
         ],
         CompileOptions::default(),
     )
@@ -910,7 +912,7 @@ fn comments_require_whitespace_before_the_slashes() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: a clone is written after the header, before any assignment (SPEC 5.7, E404, A3)"]
+#[ignore = "invalid under the current specification: a clone is written after the header, before any assignment (SPEC 5.7, E404, A3)"]
 fn multiple_clones_merge_in_order() {
     let template = SourceFile::new(
         "templates/Thing.abt",
@@ -964,7 +966,7 @@ fn multiple_clones_merge_in_order() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: a clone is written after the header, before any assignment (SPEC 5.7, E404, A3)"]
+#[ignore = "invalid under the current specification: a clone is written after the header, before any assignment (SPEC 5.7, E404, A3)"]
 fn partial_clones_copy_a_single_subtree() {
     let template = SourceFile::new(
         "templates/Thing.abt",
@@ -1036,7 +1038,7 @@ fn unknown_fields_are_rejected_with_a_suggestion() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: there is no lenient mode; an undeclared field is E409 (SPEC 5.12, A52)"]
+#[ignore = "invalid under the current specification: there is no lenient mode; an undeclared field is E409 (SPEC 5.12, A52)"]
 fn unknown_fields_can_be_allowed_explicitly() {
     let template = SourceFile::new(
         "templates/Thing.abt",
@@ -1077,7 +1079,7 @@ fn duplicate_instance_ids_are_rejected() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: E301 reads: Schema `{name}` is already declared (SPEC 10.3)"]
+#[ignore = "invalid under the current specification: E301 reads: Schema `{name}` is already declared (SPEC 10.3)"]
 fn duplicate_schema_names_are_rejected() {
     let first = SourceFile::new("templates/A.abt", "schema Thing {\n id: text(1..40)\n}\n");
     let second = SourceFile::new("templates/B.abt", "schema Thing {\n id: text(1..40)\n}\n");
@@ -1137,7 +1139,7 @@ fn quoted_strings_with_braces_are_never_expanded() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: brace patterns expand only in file/image list values (SPEC 5.8, E434)"]
+#[ignore = "invalid under the current specification: brace patterns expand only in file/image list values (SPEC 5.8, E434)"]
 fn brace_patterns_allow_spaces_inside_the_braces() {
     let template = SourceFile::new(
         "templates/Thing.abt",
@@ -1164,7 +1166,7 @@ fn brace_patterns_allow_spaces_inside_the_braces() {
 }
 
 #[test]
-#[ignore = "invalid under 1.0: E416 names the row, the counts and the columns (SPEC 10.4)"]
+#[ignore = "invalid under the current specification: E416 names the row, the counts and the columns (SPEC 10.4)"]
 fn tuples_respect_quotes_with_parentheses_and_arity_is_checked() {
     let template = SourceFile::new(
         "templates/Page.abt",
@@ -1229,7 +1231,7 @@ fn escaped_quotes_and_backslashes_roundtrip() {
 // ---------------------------------------------------------------------------
 
 #[test]
-#[ignore = "invalid under 1.0: every YAML mapping key is quoted (SPEC 8.5, A48)"]
+#[ignore = "invalid under the current specification: every YAML mapping key is quoted (SPEC 8.5, A48)"]
 fn bool_and_float_values_keep_native_types_in_output() {
     let template = SourceFile::new(
         "templates/Item.abt",

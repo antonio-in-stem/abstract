@@ -1,4 +1,4 @@
-// Reproduces editors/vscode/src/extension.js:178-183 (lintDocument) exactly:
+// Reproduces vscode/src/extension.js:178-183 (lintDocument) exactly:
 //   const command = `"${compiler}" lint "${target}"`;
 //   cp.exec(command, {cwd, windowsHide:true}, ...)
 // `target` comes from resolveProjectPath(document) -> a filesystem path the
