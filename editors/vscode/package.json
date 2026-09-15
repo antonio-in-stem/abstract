@@ -2,7 +2,7 @@
   "name": "abstract-language",
   "displayName": "Abstract Language",
   "description": "Write and validate families of objects in Abstract with schema-aware completion, live diagnostics, navigation and checked refactoring.",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "publisher": "antonio-in-stem",
   "icon": "icons/abstract-logo.png",
   "author": {

@@ -21,11 +21,15 @@ evidence that a platform passed; check the run for the release being prepared.
 
 1. Confirm that the tag, manifest, compiler and intended extension versions match.
 2. Check every native build, Java test and extension job for failures.
-3. Download the files and verify them against `SHA256SUMS.txt`.
-4. Run each native artifact on its target platform and install the VSIX in a
-   clean VS Code profile. Record any unavailable platform checks in release notes.
-5. Review installation instructions, migration steps and known limits before
-   publishing the draft.
+3. Before publishing the draft, locally verify its checksums, the Windows
+   binary and the VSIX in a clean VS Code profile.
+4. Publish the draft as a private prerelease, then dispatch **Verify downloaded
+   release** with the tag. It downloads each native binary only on its matching
+   platform, checks its named SHA-256 entry, manifest and version, then runs
+   lint, compilation, bundle round-trip and tamper-rejection checks.
+5. Promote the private prerelease only after all five verification jobs pass,
+   then review installation instructions, migration steps and known limits.
+   Record any unavailable platform checks in the release notes.
 
 On Linux or macOS, run `sha256sum --check SHA256SUMS.txt` where available; on
 macOS the equivalent is `shasum -a 256 --check SHA256SUMS.txt`. On Windows, use
@@ -33,8 +37,10 @@ macOS the equivalent is `shasum -a 256 --check SHA256SUMS.txt`. On Windows, use
 the corresponding entry. Checksums detect corrupted downloads; trust also
 requires obtaining the manifest and artifacts from the intended release.
 
-The download-verification workflow accepts a release tag and exercises the
-shipped Linux binary. The release must be accessible to that workflow's token.
+The download-verification workflow uses only the selected artifact,
+`SHA256SUMS.txt` and the release manifest in each job. The release must be
+published as a private prerelease: a `contents: read` workflow token cannot
+download draft assets.
 
 ## Distribution
 

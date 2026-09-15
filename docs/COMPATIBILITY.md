@@ -10,7 +10,7 @@ together. CI checks it against their source declarations.
 | Language | 1.2 | `.ab` and `.abt` syntax and evaluation rules |
 | Compiled document | 1 | JSON, YAML and RAW envelope and overlays |
 | Editor analysis | 1 | `abstract-analysis` protocol; request magic `ABANLZ01` |
-| VS Code extension | 1.7.2 | Authoring support; VS Code 1.92.0 or newer |
+| VS Code extension | 1.7.3 | Authoring support; VS Code 1.92.0 or newer |
 | Java reader | 1.1.0 | Document format 1 and ABX1; Java 8 or newer |
 | Optional bundle | ABX1 | Container framing and authenticated encryption |
 

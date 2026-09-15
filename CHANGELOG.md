@@ -18,12 +18,14 @@ versioning. Language, document format and tool versions are separate; see
   real VS Code host integration and extension packaging.
 - Added macOS and ARM64 release builds, a checked component-version manifest,
   focused Cargo packaging and installation instructions without Rust.
+- Refreshed the VS Code package documentation and license metadata; extension
+  patch 1.7.3 carries no editor or language behavior changes.
 - Corrected the consumer contract for source projects with no instances.
 
 Migration: replace passphrase-based `bundle --key` commands with random keys
 from `abstract keygen`. Existing bundles remain readable. Java runtime 1.1.0
-requires Bouncy Castle on the runtime classpath. Language 1.2, document format 1,
-analysis protocol 1 and extension 1.7.2 are unchanged.
+requires Bouncy Castle on the runtime classpath. Language 1.2, document format 1
+and analysis protocol 1 are unchanged.
 
 ## 1.4.0
 

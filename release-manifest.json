@@ -3,7 +3,7 @@
   "language": "1.2",
   "documentFormat": 1,
   "analysisProtocol": 1,
-  "extension": "1.7.2",
+  "extension": "1.7.3",
   "vscodeMinimum": "1.92.0",
   "javaRuntime": "1.1.0",
   "javaMinimum": 8,

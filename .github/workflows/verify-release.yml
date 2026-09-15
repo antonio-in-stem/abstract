@@ -11,8 +11,23 @@ permissions:
   contents: read
 
 jobs:
-  linux-artifact:
-    runs-on: ubuntu-latest
+  native-artifact:
+    name: Verify ${{ matrix.asset }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: abstract-linux-x64
+          - os: ubuntu-24.04-arm
+            asset: abstract-linux-arm64
+          - os: windows-latest
+            asset: abstract-windows-x64.exe
+          - os: macos-15-intel
+            asset: abstract-macos-x64
+          - os: macos-15
+            asset: abstract-macos-arm64
     env:
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
@@ -20,46 +35,30 @@ jobs:
         with:
           ref: ${{ inputs.tag }}
           persist-credentials: false
-      - name: Download and verify shipped artifacts
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Download this platform's artifact and its verification metadata
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: |
-          gh release download "$RELEASE_TAG" --dir release-check
-          cd release-check
-          test -s SHA256SUMS.txt
-          sha256sum --strict --check SHA256SUMS.txt
-      - name: Run shipped Linux compiler against the reference project
-        run: |
-          chmod +x release-check/abstract-linux-x64
-          case "$RELEASE_TAG" in
-            v*) expected_version="${RELEASE_TAG#v}" ;;
-            *) echo "release tag must start with v: $RELEASE_TAG" >&2; exit 1 ;;
-          esac
-          actual_version="$(release-check/abstract-linux-x64 --version)"
-          test "$actual_version" = "abstract $expected_version"
-          if test -f release-check/release-manifest.json; then
-            python3 - "$expected_version" "$actual_version" <<'PY'
-          import json
-          import sys
-
-          manifest = json.load(open("release-check/release-manifest.json", encoding="utf-8"))
-          actual = sys.argv[2].removeprefix("abstract ")
-          if manifest.get("compiler") != sys.argv[1] or actual != sys.argv[1]:
-              raise SystemExit("release tag, compatibility manifest, and compiler version disagree")
-          PY
-          fi
-          release-check/abstract-linux-x64 lint examples/automotive
-          release-check/abstract-linux-x64 compile examples/automotive JSON > release-check/automotive.actual.json
-          python3 - examples/automotive/expected.json release-check/automotive.actual.json <<'PY'
-          import json
-          import sys
-
-          def normalise(path):
-              document = json.load(open(path, encoding="utf-8"))
-              document["abstract"].pop("compiler")
-              return document
-
-          if normalise(sys.argv[1]) != normalise(sys.argv[2]):
-              raise SystemExit("automotive JSON differs outside abstract.compiler")
-          PY
+        shell: bash
+        run: >-
+          gh release download "$RELEASE_TAG"
+          --pattern "${{ matrix.asset }}"
+          --pattern SHA256SUMS.txt
+          --pattern release-manifest.json
+          --dir release-check
+      - name: Make the downloaded binary executable
+        if: runner.os != 'Windows'
+        shell: bash
+        run: chmod +x "release-check/${{ matrix.asset }}"
+      - name: Verify and exercise the shipped compiler
+        shell: bash
+        run: >-
+          python scripts/verify-release.py
+          --tag "$RELEASE_TAG"
+          --asset "release-check/${{ matrix.asset }}"
+          --checksums release-check/SHA256SUMS.txt
+          --manifest release-check/release-manifest.json
+          --automotive examples/automotive
