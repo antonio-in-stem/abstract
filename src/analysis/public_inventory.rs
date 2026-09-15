@@ -532,7 +532,8 @@ mod tests {
             Self(root)
         }
         fn report(&self, overlays: &HashMap<PathBuf, String>) -> Report {
-            let layout = project::resolve_with_overlays(&[self.0.clone()], overlays).unwrap();
+            let layout =
+                project::resolve_with_overlays(std::slice::from_ref(&self.0), overlays).unwrap();
             compile((&layout, overlays))
                 .unwrap_or_else(|errors| panic!("ordinary errors: {errors:?}"))
         }
@@ -588,7 +589,7 @@ mod tests {
     #[test]
     fn complete_envelope_budget_failure_returns_unavailable_without_partial_data() {
         let fixture = Fixture::new("schema Settings {}\n", "");
-        let layout = project::resolve(&[fixture.0.clone()]).unwrap();
+        let layout = project::resolve(std::slice::from_ref(&fixture.0)).unwrap();
         let request = Request {
             id: 1,
             overlays: HashMap::new(),
@@ -613,7 +614,7 @@ mod tests {
             "schema Unused {\n group {\n a: int\n b: int\n c: int\n }\n}\n",
             "",
         );
-        let layout = project::resolve(&[fixture.0.clone()]).unwrap();
+        let layout = project::resolve(std::slice::from_ref(&fixture.0)).unwrap();
         let (templates, _) = crate::parse_sources(&layout.sources).unwrap();
         let tables = crate::schema::build_tables(&templates).unwrap();
         let mut budget = Budget {
@@ -653,13 +654,16 @@ mod tests {
                 ("id", text("main")),
                 ("n", Value::Int(1)),
             ]);
-            let ordinary = crate::compile_paths(&[fixture.0.clone()], CompileOptions::default())
-                .expect("u32 maximum is a valid project version");
+            let ordinary =
+                crate::compile_paths(std::slice::from_ref(&fixture.0), CompileOptions::default())
+                    .expect("u32 maximum is a valid project version");
             assert_eq!(ordinary.data(), &[expected]);
             assert!(ordinary.overlays().is_empty());
-            let export =
-                crate::compile_public_paths(&[fixture.0.clone()], CompileOptions::default())
-                    .unwrap();
+            let export = crate::compile_public_paths(
+                std::slice::from_ref(&fixture.0),
+                CompileOptions::default(),
+            )
+            .unwrap();
             assert_eq!(export.document, ordinary);
             let value = fixture.saved();
             assert_admitted(&value);
@@ -681,7 +685,8 @@ mod tests {
         let previous = max - 1;
         let fixture = Fixture::new(&format!("versions {previous}..{max}\nschema Settings {{\n gone: int @public @removed({max}) = 1\n zero: float @public\n label: text @public @optional\n}}\n"), &format!("Settings :: @id.main\n zero: -0.0 @removed({max})\n zero: 0.0 @since({max})\n label: latest @since({max})\n"));
         let ordinary =
-            crate::compile_paths(&[fixture.0.clone()], CompileOptions::default()).unwrap();
+            crate::compile_paths(std::slice::from_ref(&fixture.0), CompileOptions::default())
+                .unwrap();
         assert_eq!(ordinary.data().len(), 1);
         assert_eq!(ordinary.data()[0].get("gone"), None);
         assert_eq!(ordinary.data()[0].get("label"), Some(&text("latest")));
@@ -779,8 +784,11 @@ mod tests {
                 named(&value, "n").get("declaringPath")
             );
         }
-        let exported =
-            crate::compile_public_paths(&[fixture.0.clone()], CompileOptions::default()).unwrap();
+        let exported = crate::compile_public_paths(
+            std::slice::from_ref(&fixture.0),
+            CompileOptions::default(),
+        )
+        .unwrap();
         assert_eq!(value.get("fragment"), Some(exported.fragment()));
     }
 

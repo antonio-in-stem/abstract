@@ -22,6 +22,17 @@ jobs:
           - os: windows-latest
             asset: abstract-windows-x64.exe
             stage: Copy-Item target\release\abstract.exe abstract-windows-x64.exe
+          # GitHub documents these as standard hosted runners for private
+          # repositories, so each native asset is built on its own platform.
+          - os: ubuntu-24.04-arm
+            asset: abstract-linux-arm64
+            stage: cp target/release/abstract abstract-linux-arm64
+          - os: macos-15-intel
+            asset: abstract-macos-x64
+            stage: cp target/release/abstract abstract-macos-x64
+          - os: macos-15
+            asset: abstract-macos-arm64
+            stage: cp target/release/abstract abstract-macos-arm64
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,6 +74,14 @@ jobs:
       - run: cargo build --locked --bin abstract
         working-directory: .
       - run: npm test
+      - name: Run against VS Code 1.92
+        env:
+          ABSTRACT_VSCODE_VERSION: '1.92.0'
+        run: xvfb-run --auto-servernum npm run test:integration
+      - name: Run against stable VS Code
+        env:
+          ABSTRACT_VSCODE_VERSION: stable
+        run: xvfb-run --auto-servernum npm run test:integration
       - run: npm run package
       - uses: actions/upload-artifact@v7
         with:
@@ -76,13 +95,21 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag'
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v7
         with:
           path: release-assets
           merge-multiple: true
+      - name: Include the release compatibility manifest
+        run: cp release-manifest.json release-assets/release-manifest.json
       - name: Record release checksums
         working-directory: release-assets
-        run: sha256sum abstract-linux-x64 abstract-windows-x64.exe abstract-language-*.vsix > SHA256SUMS.txt
+        run: |
+          mapfile -d '' artifacts < <(find . -maxdepth 1 -type f -print0 | sort -z)
+          test "${#artifacts[@]}" -gt 0
+          sha256sum "${artifacts[@]}" > SHA256SUMS.txt
       - name: Create draft release from verified artifacts
         env:
           GH_TOKEN: ${{ github.token }}

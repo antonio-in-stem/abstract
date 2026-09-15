@@ -9,7 +9,7 @@
 //! written (E810). A reader that closes stdout — `abstract compile . | head` —
 //! ends the process quietly with code 0.
 //!
-//! `bundle` and `unbundle` are optional tooling (SPEC §9.9, Appendix D). The
+//! `bundle`, `unbundle` and `keygen` are optional tooling (SPEC §9.9, Appendix D). The
 //! specification defines neither their arguments nor an identifier for their
 //! failures, so their diagnostics are printed as `abstract: error: …` with no
 //! catalogue identifier, which is the calling convention `bundle.rs` documents.
@@ -53,8 +53,9 @@ Flags:
 Optional tooling, outside the language specification:
   analyze --capabilities | analyze <project> --stdio [--symbols | --public | --values]
   public-contract --capabilities | public-contract <path>... [--out <file>] [--skip-assets]
-  bundle <path>... [--key <k> | --plain] [--out <file>]
-  unbundle <file.abx> [--key <k>] [--out <file>]";
+  bundle <path>... [--key hex:<64-digits> | --plain] [--out <file>]
+  unbundle <file.abx> [--key <legacy-or-hex-key>] [--out <file>]
+  keygen                  print a new hex:<64-digits> key to stdout";
 
 /// How a command failed.
 ///
@@ -106,6 +107,7 @@ fn dispatch(args: &[String]) -> Result<i32, Failure> {
         "init" => command_init(rest),
         "bundle" => command_bundle(rest),
         "unbundle" => command_unbundle(rest),
+        "keygen" => command_keygen(rest),
         "analyze" => command_analyze(rest),
         "public-contract" => command_public_contract(rest),
         "--help" | "-h" | "help" => {
@@ -572,13 +574,13 @@ fn command_init(args: &[String]) -> Result<i32, Failure> {
 }
 
 // ---------------------------------------------------------------------------
-// Optional tooling: bundle and unbundle (SPEC §9.9, Appendix D.1)
+// Optional tooling: bundle, unbundle and keygen (SPEC §9.9, Appendix D.1)
 // ---------------------------------------------------------------------------
 
 fn command_bundle(args: &[String]) -> Result<i32, Failure> {
     let invocation = bundle_invocation(args)?;
     let paths = input_paths(&invocation.positionals)?;
-    let key = bundle_key(invocation.flags.key.as_deref())?;
+    let key = bundle_creation_key(invocation.flags.key.as_deref())?;
 
     let layout = resolve_project(&paths)?;
     if let Some(destination) = &invocation.flags.out {
@@ -588,7 +590,11 @@ fn command_bundle(args: &[String]) -> Result<i32, Failure> {
 
     let document = compile_paths(&paths, CompileOptions::default())?;
     let json = document.render(Format::Json)?;
-    let container = bundle::encode(json.as_bytes(), key.as_ref());
+    let container =
+        bundle::try_encode(json.as_bytes(), key.as_ref()).map_err(|message| Failure::Plain {
+            message: format!("Could not create bundle: {message}."),
+            code: 1,
+        })?;
 
     match &invocation.flags.out {
         Some(destination) => {
@@ -615,7 +621,7 @@ fn command_unbundle(args: &[String]) -> Result<i32, Failure> {
         });
     }
     let source = only_positional(&invocation.positionals, no_path_given)?;
-    let key = bundle_key(invocation.flags.key.as_deref())?;
+    let key = bundle_decode_key(invocation.flags.key.as_deref())?;
     if let Some(destination) = &invocation.flags.out {
         check_destination_parent(destination)?;
     }
@@ -648,6 +654,25 @@ fn command_unbundle(args: &[String]) -> Result<i32, Failure> {
     }
 }
 
+fn command_keygen(args: &[String]) -> Result<i32, Failure> {
+    expect_no_arguments(args)?;
+    let key = bundle::generate_key().map_err(|message| Failure::Plain {
+        message: format!("Could not generate a bundle key: {message}."),
+        code: 1,
+    })?;
+    write_stdout(&format!("{}\n", format_bundle_key(&key)))
+}
+
+fn format_bundle_key(key: &[u8; 32]) -> String {
+    let mut material = String::with_capacity(68);
+    material.push_str("hex:");
+    for byte in key {
+        use std::fmt::Write as _;
+        write!(&mut material, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    material
+}
+
 /// Validates the flags of `bundle` and `unbundle`, which SPEC §9.9 leaves
 /// outside the catalogue: the wording and the exit code come from
 /// [`BundleFlagError`] itself, as `bundle.rs` documents.
@@ -658,18 +683,32 @@ fn bundle_invocation(args: &[String]) -> Result<BundleInvocation, Failure> {
     })
 }
 
-/// Derives the bundle key. The key material itself is never echoed: a
-/// diagnostic that quoted it would leak a passphrase into build logs.
-fn bundle_key(material: Option<&str>) -> Result<Option<[u8; 32]>, Failure> {
+/// Parses key material for a new sealed bundle. Diagnostics never echo key
+/// material, including malformed values.
+fn bundle_creation_key(material: Option<&str>) -> Result<Option<[u8; 32]>, Failure> {
     match material {
         None => Ok(None),
-        Some(material) => match bundle::derive_key(material) {
+        Some(material) => match bundle::parse_key(material) {
             Ok(key) => Ok(Some(key)),
             Err(reason) => Err(Failure::Plain {
                 message: format!("Flag '--key' requires valid key material: {reason}."),
                 code: EXIT_USAGE,
             }),
         },
+    }
+}
+
+/// Preserves the legacy passphrase rule for opening existing ABX1 bundles.
+/// Diagnostics never echo the supplied material.
+fn bundle_decode_key(material: Option<&str>) -> Result<Option<[u8; 32]>, Failure> {
+    match material {
+        None => Ok(None),
+        Some(material) => bundle::derive_key(material)
+            .map(Some)
+            .map_err(|reason| Failure::Plain {
+                message: format!("Flag '--key' requires valid key material: {reason}."),
+                code: EXIT_USAGE,
+            }),
     }
 }
 
@@ -1153,13 +1192,28 @@ mod tests {
     }
 
     #[test]
-    fn empty_key_material_is_refused_without_echoing_it() {
-        let Err(Failure::Plain { message, code }) = bundle_key(Some("   ")) else {
-            panic!("empty key material is refused");
+    fn creation_requires_explicit_hex_without_echoing_key_material() {
+        let Err(Failure::Plain { message, code }) = bundle_creation_key(Some("passphrase")) else {
+            panic!("passphrases are refused for new bundles");
         };
         assert_eq!(code, EXIT_USAGE);
-        assert!(!message.contains("   "));
-        assert!(bundle_key(Some("passphrase")).expect("derives").is_some());
-        assert!(bundle_key(None).expect("no key").is_none());
+        assert!(!message.contains("passphrase"));
+        assert!(bundle_creation_key(Some(
+            "hex:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+        ))
+        .expect("raw key")
+        .is_some());
+        assert!(bundle_creation_key(None).expect("no key").is_none());
+    }
+
+    #[test]
+    fn decode_keeps_legacy_passphrases_and_key_format_is_cli_ready() {
+        assert!(bundle_decode_key(Some("legacy passphrase"))
+            .expect("legacy key")
+            .is_some());
+        assert_eq!(
+            format_bundle_key(&[0xab; 32]),
+            "hex:abababababababababababababababababababababababababababababababab"
+        );
     }
 }

@@ -1,4 +1,13 @@
-# Abstract 1.0 conformance corpus - index
+# Abstract conformance corpus — original case inventory
+
+This inventory preserves each case's original report classification. In
+particular, `expected_kind: undecided` describes that original report, not an
+unresolved rule in the current compiler. Current expectations live in each
+case's `expectation_1_0` notes and checked-in expected outputs. Run
+`cargo test --test conformance --locked` to check them against the compiler.
+
+The counts below are inventory metadata, not a count of passing or failing
+tests. Later language features also have regression tests outside this corpus.
 
 Total cases: 301
 

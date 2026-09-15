@@ -11,9 +11,9 @@
 //! section it comes from; where the code and the specification disagree, the
 //! specification wins.
 //!
-//! The crate has no dependencies, by design. Four modules extend the compiler
-//! core: [`media`] probes image headers without decoding pixels, [`crypto`]
-//! implements the RFC 8439 AEAD used by bundles, [`bundle`] seals compiled
+//! Four modules extend the compiler core: [`media`] probes image headers
+//! without decoding pixels, [`crypto`] wraps maintained cryptographic crates
+//! for hashes and the RFC 8439 AEAD used by bundles, [`bundle`] seals compiled
 //! data into `.abx` containers, and [`output`] renders the three formats.
 
 #![deny(warnings)]

@@ -1,10 +1,10 @@
 //! ABX bundles: sealed, tamper-evident containers for compiled Abstract data.
 //!
 //! `abstract bundle` compiles a project and writes an `.abx` file that ships
-//! inside an application (for example a Java plugin jar). The payload is the
-//! compiled JSON document encrypted with ChaCha20-Poly1305, so the authored
-//! data never appears as plain text inside the artifact and any modification
-//! is detected when the bundle is opened.
+//! inside an application. Sealed bundles encrypt the compiled JSON document
+//! with ChaCha20-Poly1305 and authenticate it before returning plaintext.
+//! Confidentiality requires keeping the key secret. Plain bundles carry an
+//! unkeyed checksum and provide no authenticity.
 //!
 //! Layout (little-endian):
 //!
@@ -55,32 +55,15 @@
 //!   is supported and returns the payload. `--key` against such a container is
 //!   refused.
 //!
-//! # Nonce construction (SPEC Appendix D.1 item 5)
+//! # Nonces
 //!
-//! Every seal derives its 12-byte nonce in [`derive_nonce`] as the first 12
-//! bytes of `SHA-256(SHA-256(payload) ‖ key ‖ clock ‖ counter)`, where:
-//!
-//! - `clock` is the wall clock as nanoseconds since the Unix epoch, 16 bytes
-//!   little-endian, or 16 zero bytes when the clock is before the epoch;
-//! - `counter` is `SEAL_COUNTER`, a process-local `AtomicU64` incremented once
-//!   per seal, 8 bytes little-endian.
-//!
-//! `SEAL_COUNTER` starts at 0 and is reset by exactly one event: the start of
-//! a new process. It is never reset while the process runs, is shared by every
-//! thread, and is not persisted anywhere, so two seals in one process always
-//! use different counter values even when the clock does not advance. Across
-//! processes the counters do repeat, and uniqueness then rests on the clock
-//! and on the key and payload digests being mixed in. A key is therefore safe
-//! for as many seals as the pair (clock, counter) is unique; re-sealing the
-//! same payload with the same key produces a fresh nonce and fresh ciphertext.
+//! Every sealed container receives a new 96-bit nonce from the operating
+//! system's secure random source. [`try_encode`] reports an error instead of
+//! producing a container when that source fails.
 
 use std::fmt;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::crypto::{open, seal, sha256};
-
-static SEAL_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// File signature for bundle version 1.
 pub const MAGIC: [u8; 4] = *b"ABX1";
@@ -252,24 +235,31 @@ fn take_value(
     Ok(value.clone())
 }
 
-/// Derives a 32-byte bundle key from CLI key material.
+/// Parses the explicit 32-byte key form required when creating a sealed
+/// bundle. The accepted form is `hex:` followed by exactly 64 hexadecimal
+/// digits.
+pub fn parse_key(material: &str) -> Result<[u8; 32], String> {
+    if !material.starts_with("hex:") {
+        return Err(
+            "sealed bundles require 'hex:' followed by exactly 64 hexadecimal digits".to_string(),
+        );
+    }
+    parse_hex_key(material)
+}
+
+/// Legacy ABX1 decoder compatibility for key material accepted by earlier
+/// releases.
 ///
 /// - `hex:<64 hex digits>` uses the exact key bytes.
-/// - anything else is hashed with SHA-256, so passphrases of any length work.
+/// - anything else is hashed once with SHA-256.
+///
+/// This single-hash passphrase rule is not a password KDF and must not be used
+/// to create new sealed bundles. It remains available so existing ABX1 files
+/// can still be opened. New code should use [`parse_key`] with a key produced
+/// by [`generate_key`].
 pub fn derive_key(material: &str) -> Result<[u8; 32], String> {
     if let Some(hex_part) = material.strip_prefix("hex:") {
-        let digits: Vec<char> = hex_part.chars().collect();
-        if digits.len() != 64 || !digits.iter().all(|ch| ch.is_ascii_hexdigit()) {
-            return Err(
-                "hex keys must contain exactly 64 hexadecimal digits after 'hex:'".to_string(),
-            );
-        }
-        let mut key = [0u8; 32];
-        for (index, pair) in hex_part.as_bytes().chunks(2).enumerate() {
-            let text = std::str::from_utf8(pair).map_err(|_| "invalid hex key".to_string())?;
-            key[index] = u8::from_str_radix(text, 16).map_err(|_| "invalid hex key".to_string())?;
-        }
-        return Ok(key);
+        return parse_hex_digits(hex_part);
     }
     if material.trim().is_empty() {
         return Err("bundle keys must not be empty".to_string());
@@ -277,10 +267,56 @@ pub fn derive_key(material: &str) -> Result<[u8; 32], String> {
     Ok(sha256(material.as_bytes()))
 }
 
+fn parse_hex_key(material: &str) -> Result<[u8; 32], String> {
+    let hex_part = material
+        .strip_prefix("hex:")
+        .expect("parse_key verifies the prefix");
+    parse_hex_digits(hex_part)
+}
+
+fn parse_hex_digits(hex_part: &str) -> Result<[u8; 32], String> {
+    if hex_part.len() != 64 || !hex_part.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err("hex keys must contain exactly 64 hexadecimal digits after 'hex:'".to_string());
+    }
+    let mut key = [0u8; 32];
+    for (index, pair) in hex_part.as_bytes().chunks_exact(2).enumerate() {
+        let text = std::str::from_utf8(pair).expect("ASCII hex was validated");
+        key[index] = u8::from_str_radix(text, 16).expect("ASCII hex was validated");
+    }
+    Ok(key)
+}
+
+/// Generates a new 32-byte bundle key with the operating system's secure
+/// random source.
+pub fn generate_key() -> Result<[u8; 32], String> {
+    let mut key = [0u8; 32];
+    fill_secure_random(&mut key)?;
+    Ok(key)
+}
+
 /// Encodes `payload` into an ABX bundle. When `key` is provided the payload
-/// is sealed with ChaCha20-Poly1305; otherwise it is stored as plain bytes
-/// (useful for debugging, not for shipping).
+/// is sealed with ChaCha20-Poly1305; otherwise it is stored as plain bytes.
+/// Panics if encoding fails, including unavailable OS randomness. Call
+/// [`try_encode`] when errors must be handled by the application.
 pub fn encode(payload: &[u8], key: Option<&[u8; 32]>) -> Vec<u8> {
+    try_encode(payload, key).unwrap_or_else(|error| panic!("failed to encode ABX bundle: {error}"))
+}
+
+/// Fallible form of [`encode`]. A sealed bundle is returned only after the
+/// operating system has filled its complete nonce; entropy failure produces
+/// an error and no container bytes.
+pub fn try_encode(payload: &[u8], key: Option<&[u8; 32]>) -> Result<Vec<u8>, String> {
+    encode_with_nonce_source(payload, key, fill_secure_random)
+}
+
+fn encode_with_nonce_source<F>(
+    payload: &[u8],
+    key: Option<&[u8; 32]>,
+    fill_nonce: F,
+) -> Result<Vec<u8>, String>
+where
+    F: FnOnce(&mut [u8]) -> Result<(), String>,
+{
     let mut header = [0u8; HEADER_LENGTH];
     header[..4].copy_from_slice(&MAGIC);
     header[5] = FORMAT_JSON;
@@ -288,24 +324,36 @@ pub fn encode(payload: &[u8], key: Option<&[u8; 32]>) -> Vec<u8> {
     match key {
         Some(key) => {
             header[4] = FLAG_ENCRYPTED;
-            let nonce = derive_nonce(payload, key);
+            let mut nonce = [0u8; 12];
+            fill_nonce(&mut nonce)?;
             header[6..18].copy_from_slice(&nonce);
-            let sealed_length = payload.len() + TAG_LENGTH;
-            header[18..22].copy_from_slice(&(sealed_length as u32).to_le_bytes());
+            let sealed_length = payload
+                .len()
+                .checked_add(TAG_LENGTH)
+                .and_then(|length| u32::try_from(length).ok())
+                .ok_or_else(|| "bundle payload is too large".to_string())?;
+            header[18..22].copy_from_slice(&sealed_length.to_le_bytes());
             let sealed = seal(key, &nonce, &header, payload);
             let mut output = header.to_vec();
             output.extend_from_slice(&sealed);
-            output
+            Ok(output)
         }
         None => {
-            header[18..22].copy_from_slice(&(payload.len() as u32).to_le_bytes());
+            let payload_length =
+                u32::try_from(payload.len()).map_err(|_| "bundle payload is too large")?;
+            header[18..22].copy_from_slice(&payload_length.to_le_bytes());
             let checksum = plain_checksum(&header, payload);
             header[6..18].copy_from_slice(&checksum);
             let mut output = header.to_vec();
             output.extend_from_slice(payload);
-            output
+            Ok(output)
         }
     }
+}
+
+fn fill_secure_random(bytes: &mut [u8]) -> Result<(), String> {
+    getrandom::fill(bytes)
+        .map_err(|_| "operating-system secure randomness is unavailable".to_string())
 }
 
 /// The keyless checksum a plain container carries in bytes 6..18: the first 12
@@ -313,8 +361,8 @@ pub fn encode(payload: &[u8], key: Option<&[u8; 32]>) -> Vec<u8> {
 /// header set to zero.
 ///
 /// It is an integrity check, not an authentication tag: anyone can recompute
-/// it, so it does not prove who wrote the container. What it does prove is
-/// that the container was written as a plain container. A sealed container
+/// it, so it does not prove who wrote the container or how it originated.
+/// A sealed container
 /// whose encryption flag is cleared keeps its AEAD nonce in this field and
 /// fails the check, which is how Appendix D.1 item 3 is satisfied without a
 /// key (see [`decode`]).
@@ -385,30 +433,39 @@ pub fn decode(bytes: &[u8], key: Option<&[u8; 32]>) -> Result<Vec<u8>, String> {
         .ok_or_else(|| "bundle authentication failed (wrong key or modified data)".to_string())
 }
 
-/// Builds a unique nonce for this seal operation. Uniqueness comes from the
-/// payload digest mixed with the wall clock and a process-local counter, so
-/// re-bundling identical data still produces fresh ciphertext even on
-/// platforms with coarse clocks.
-fn derive_nonce(payload: &[u8], key: &[u8; 32]) -> [u8; 12] {
-    let clock = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_nanos())
-        .unwrap_or(0);
-    let counter = SEAL_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let mut material = Vec::with_capacity(96);
-    material.extend_from_slice(&sha256(payload));
-    material.extend_from_slice(key);
-    material.extend_from_slice(&clock.to_le_bytes());
-    material.extend_from_slice(&counter.to_le_bytes());
-    let digest = sha256(&material);
-    let mut nonce = [0u8; 12];
-    nonce.copy_from_slice(&digest[..12]);
-    nonce
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn base64(text: &str) -> Vec<u8> {
+        let mut output = Vec::with_capacity(text.len() / 4 * 3);
+        let mut block = [0u8; 4];
+        let mut used = 0;
+        for byte in text.bytes().filter(|byte| !byte.is_ascii_whitespace()) {
+            block[used] = match byte {
+                b'A'..=b'Z' => byte - b'A',
+                b'a'..=b'z' => byte - b'a' + 26,
+                b'0'..=b'9' => byte - b'0' + 52,
+                b'+' => 62,
+                b'/' => 63,
+                b'=' => 64,
+                _ => panic!("invalid base64 fixture"),
+            };
+            used += 1;
+            if used == 4 {
+                output.push((block[0] << 2) | (block[1] >> 4));
+                if block[2] != 64 {
+                    output.push((block[1] << 4) | (block[2] >> 2));
+                }
+                if block[3] != 64 {
+                    output.push((block[2] << 6) | block[3]);
+                }
+                used = 0;
+            }
+        }
+        assert_eq!(used, 0, "complete base64 fixture");
+        output
+    }
 
     #[test]
     fn plain_bundles_roundtrip() {
@@ -448,6 +505,15 @@ mod tests {
         assert_eq!(key[31], 0x1f);
         assert!(derive_key("hex:abcd").is_err());
         assert!(derive_key("").is_err());
+        assert!(parse_key("passphrase").is_err());
+        assert!(
+            parse_key("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").is_err()
+        );
+        assert_eq!(
+            parse_key("hex:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+                .unwrap(),
+            key
+        );
     }
 
     fn args(tokens: &[&str]) -> Vec<String> {
@@ -565,5 +631,40 @@ mod tests {
         let first = encode(payload, Some(&key));
         let second = encode(payload, Some(&key));
         assert_ne!(first[6..18], second[6..18]);
+    }
+
+    #[test]
+    fn opens_bundle_written_by_released_1_4_0_compiler() {
+        // Produced by out/delivery/abstract-1.4.0/abstract-windows-x64.exe
+        // from docs/examples/hello with this synthetic compatibility key.
+        let fixture = base64(
+            "QUJYMQEBKJ2e3ZCJilic4oZSCAEAALkqxYXamRupdFkVvB5RGezaMPUJgHWG8vZJ2ui7hyBsyFQj1iBRMX+jydvplikqn1biBzkjyBAZTU6U7A86oU6ufmRLeDuyPqZIuHKjr/lCoK1z2suhFfgOzGxFyQ27H+o2oJgkjMeQR3UYCnOuaeTVea20pPXWv7RQtxILUIZbvvHMANAen0ppDCPdKuI+toB3Qq+kNPSR7bEVC0DCR9pgr9emqwmCeJVU+cQftmYiuKqJ5cU6Q9jGKqwUywkUGSWTNvd7q+2P7ONcq+wsXFnLD1WcN6l/Lpb4fENYO+PA6O6oDVE8lJT25eP8+3fqrFETc3e9Bxkuo5hZxyXkfSW/bnNB0Bt5GA==",
+        );
+        let key = derive_key("abstract-1.4.0 compatibility fixture").unwrap();
+        let payload = decode(&fixture, Some(&key)).expect("legacy ABX1 opens");
+
+        assert!(String::from_utf8(payload)
+            .unwrap()
+            .contains("\"compiler\": \"1.4.0\""));
+    }
+
+    #[test]
+    fn entropy_failure_returns_no_sealed_container() {
+        let error = encode_with_nonce_source(b"payload", Some(&[7u8; 32]), |_| {
+            Err("simulated entropy failure".to_string())
+        })
+        .expect_err("sealing must fail closed");
+
+        assert_eq!(error, "simulated entropy failure");
+    }
+
+    #[test]
+    fn plain_encoding_does_not_request_entropy() {
+        let bundle = encode_with_nonce_source(b"payload", None, |_| {
+            panic!("plain containers must not request entropy")
+        })
+        .expect("plain bundle");
+
+        assert_eq!(decode(&bundle, None).unwrap(), b"payload");
     }
 }

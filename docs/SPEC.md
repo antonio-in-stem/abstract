@@ -2944,7 +2944,13 @@ Exit code 1; nothing is written to stdout. Version 1 is named because versions a
 2. No flag value may begin with `-` (§9.3): `bundle data --key --out x.abx` is a usage error, not a container sealed with the passphrase `--out`.
 3. Opening a container whose encryption flag has been cleared MUST fail whether or not the caller supplied a key. The refusal MUST NOT depend on caller behaviour.
 4. `unbundle` without a key on an unencrypted container is supported, and `--key` against a container that declares itself unencrypted is refused. Both MUST be documented.
-5. The nonce construction MUST be documented completely, including any per-process counter and what resets it.
+5. The nonce construction MUST be documented completely. Compiler 1.5.0 uses 96 bits from the operating system's cryptographically secure random source, fails if that source is unavailable, and uses no clock or process-local counter. Random selection has a collision probability; it is not a uniqueness proof. See [bundle security](../java/SECURITY.md) for the per-key usage limit.
+
+Starting with compiler 1.5.0, creating a sealed bundle requires a 32-byte key
+written as `hex:` followed by 64 hexadecimal digits. `abstract keygen` generates
+such a key using the operating system's secure random source. Passphrase-based
+creation is refused. This optional tooling change does not change language 1.2
+or the ABX1 format. Legacy passphrase derivation remains available for decoding.
 
 A `bundle` or `unbundle` usage error carries **no chapter 10 identifier**: chapter 10 catalogues the diagnostics of the language, and none of these conditions can arise in `compile`, `lint`, `templates` or `init`. The reference implementation prints such an error as `abstract: error: {message}` and exits 2. The behaviour is what these items fix; the spelling of the identifier is not, because there is none to assign.
 
@@ -2954,7 +2960,7 @@ A `bundle` or `unbundle` usage error carries **no chapter 10 identifier**: chapt
 7. The JSON reader MUST reject a leading `+`, leading zeros, duplicate object keys and lone surrogates.
 8. Every parsing failure, including a malformed `\u` escape, MUST surface as the runtime's own exception type.
 9. `fromHex(null)` and non-hexadecimal digits MUST surface as the runtime's own exception type, never as `NullPointerException` or `NumberFormatException`.
-10. Key derivation MUST follow the same rule as the compiler: a bare 64-character hexadecimal string is a passphrase, and only the `hex:` prefix selects raw key bytes.
+10. Legacy key derivation MUST follow the same rule as `unbundle`: a bare 64-character hexadecimal string is a passphrase, and only the `hex:` prefix selects raw key bytes. This compatibility rule does not authorize passphrase-based creation of new bundles.
 11. The runtime MUST expose the version axis (`forVersion(int)`), applying **every** overlay whose range contains the requested version, exactly as §7.5 step 3 prescribes: replace or add by `id` from the overlay's `data`, then delete the ids in its `removed`. It MUST NOT assume that at most one overlay matches a version, and MUST NOT assume that every id in an overlay is already present in the base.
 
 **D.3 Editor extension**

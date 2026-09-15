@@ -46,7 +46,12 @@ async function main() {
         { path: "semantic", name: "semantic" }, { path: "hover", name: "hover" }, { path: "math", name: "math" }],
       settings: { "abstract.compilerPath": compiler }
     }));
-    const executable = process.env.ABSTRACT_VSCODE_PATH || await downloadAndUnzipVSCode({ version: "1.92.0", cachePath: path.resolve(__dirname, "../.vscode-test") });
+    const executable = process.env.ABSTRACT_VSCODE_PATH || await downloadAndUnzipVSCode({
+      // CI exercises the engine minimum and the current stable host. Local
+      // runs retain the extension's declared minimum by default.
+      version: process.env.ABSTRACT_VSCODE_VERSION || "1.92.0",
+      cachePath: path.resolve(__dirname, "../.vscode-test")
+    });
     // vscode-test's runTests adds --disable-workspace-trust unconditionally.
     // Launch the official test host directly so Restricted Mode is exercised;
     // explicit profiles and argv also avoid a Windows shell around test paths.

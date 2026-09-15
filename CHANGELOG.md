@@ -1,10 +1,29 @@
 # Changelog
 
 All notable changes to Abstract are recorded here. Versions follow semantic
-versioning; the language itself is versioned by this document's `1.0.0` entry
-and by the `abstract.format` number in every compiled document.
+versioning. Language, document format and tool versions are separate; see
+[the compatibility guide](docs/COMPATIBILITY.md).
 
 ---
+
+## 1.5.0
+
+- Replaced handwritten Rust and Java bundle cryptography with maintained
+  libraries. New bundles draw nonces from the operating system's secure random
+  source and fail when randomness is unavailable.
+- Added `abstract keygen`. Creating a sealed bundle now requires a 256-bit
+  hexadecimal key; weak passphrase derivation remains available only for
+  reading legacy files. The ABX1 wire format is unchanged.
+- Added CI checks for Rust formatting, Clippy, the minimum Rust version, Java,
+  real VS Code host integration and extension packaging.
+- Added macOS and ARM64 release builds, a checked component-version manifest,
+  focused Cargo packaging and installation instructions without Rust.
+- Corrected the consumer contract for source projects with no instances.
+
+Migration: replace passphrase-based `bundle --key` commands with random keys
+from `abstract keygen`. Existing bundles remain readable. Java runtime 1.1.0
+requires Bouncy Castle on the runtime classpath. Language 1.2, document format 1,
+analysis protocol 1 and extension 1.7.2 are unchanged.
 
 ## 1.4.0
 
