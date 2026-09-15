@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3
+
+- Refreshed the packaged README, documentation and license metadata for the
+  compiler 1.5 release. No editor behavior or language support changed.
+
 ## 1.7.2
 
 - Rewrote the extension page around object definitions, variations and practical

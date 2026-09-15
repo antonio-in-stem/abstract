@@ -62,7 +62,7 @@ específico de identidad, clonación, recursos y versiones.
 
 ## Proyecto
 
-Compilador **1.5.0**, lenguaje **1.2**, extensión **1.7.2**. Los tres tienen versiones
+Compilador **1.5.0**, lenguaje **1.2**, extensión **1.7.3**. Los tres tienen versiones
 independientes. La [guía de release](docs/RELEASE.md) recoge verificaciones y límites.
 La [guía de compatibilidad](docs/COMPATIBILITY.md) explica los contratos y la
 migración de bundles antiguos. La [documentación principal](README.md) enlaza

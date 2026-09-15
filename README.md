@@ -113,7 +113,7 @@ Using an AI assistant to write `.ab` and `.abt` files? Give it the
 
 ## Visual Studio Code
 
-Install `abstract-language-1.7.2.vsix` using **Extensions: Install from VSIX**.
+Install `abstract-language-1.7.3.vsix` using **Extensions: Install from VSIX**.
 Set `abstract.compilerPath` to your compiler if `abstract` is not on PATH.
 
 The extension provides contextual completion, syntax explanations on hover,
@@ -138,7 +138,7 @@ both languages and checks their results.
 
 This repository contains the language specification, Rust compiler, Java output
 reader, VS Code extension, examples and documentation. Compiler **1.5.0**,
-language **1.2**, and extension **1.7.2** have separate versions. The
+language **1.2**, and extension **1.7.3** have separate versions. The
 [compatibility guide](docs/COMPATIBILITY.md) explains how they fit together,
 including the migration for existing encrypted bundles.
 
