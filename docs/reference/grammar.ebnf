@@ -1,0 +1,494 @@
+(* ============================================================================
+   Abstract grammar for .abt (template) and .ab (instance) files.
+
+   Normative reference: specification.md. Every rule name defined here is
+   referenced from specification.md by the name used below.
+
+   Notation (ISO/IEC 14977 style):
+     =            definition
+     ,            concatenation
+     |            alternation
+     [ x ]        optional
+     { x }        zero or more repetitions
+     ( x )        grouping
+     "x"          terminal
+     (* ... *)    comment
+     ? ... ?      special sequence (constraint expressed in prose)
+
+   ----------------------------------------------------------------------------
+   LEXICAL CONVENTIONS ASSUMED BY THIS GRAMMAR
+   ----------------------------------------------------------------------------
+   L1. Input is UTF-8. An optional U+FEFF byte-order mark at offset 0 is
+       removed before lexing and is not a token.
+   L2. Line terminators are LF and CRLF; both produce a single NL token.
+       A final line need not be terminated.
+   L3. A comment starts at "//" when the "//" is at the start of a line or is
+       immediately preceded by a space or tab, and is not inside a
+       quoted_string. It extends to the end of the physical line. Comment text
+       is discarded before parsing and never appears in output.
+   L4. Horizontal whitespace (space, tab) separates tokens and is otherwise
+       insignificant. Indentation carries no meaning. No other whitespace
+       character may appear BETWEEN tokens (E210); inside a token the token's
+       own rule governs, so a non-ASCII whitespace character inside a bare_text
+       or a quoted_string is an ordinary character of that value (SPEC 3.1,
+       3.5).
+   L5. LINE JOINING. The lexer maintains a VALUE-BRACKET STACK for "(" ")",
+       "[" "]" and for the "{" "}" of a multi_path_assignment key list (types
+       must match). A "{" immediately preceded by "." opens a multi-path key
+       list; every other "{" is a BLOCK BRACE. Brackets inside a quoted_string
+       are neither pushed nor popped.
+       This rule governs "{" as a TOKEN. Inside a bare_text both "{" and "}"
+       are ordinary characters that raise and lower that run's own bracket
+       depth and are subject only to its balance requirement, which is what
+       makes the depth-0 comma of a brace pattern part of the value (SPEC 3.6,
+       5.8). The "{" of a "${" belongs to that lexeme (L9) and is neither.
+       While the value-bracket stack is non-empty, a line terminator produces
+       no NL token: the logical line continues. While it is empty, a line
+       terminator produces exactly one NL token. Consecutive NL tokens collapse
+       to one.
+       A block brace - the "{" of a schema_decl, a group_field, a logic_decl, a
+       block or a body_block - is matched against its "}" but is never pushed
+       onto the value-bracket stack, so the NL after it is produced normally.
+       There are exactly two further continuation rules, both of which suppress
+       the NL:
+         (a) inside a header_tag_list, when the logical line so far ends ",";
+         (b) inside a logic_decl, when the next token after the line terminator
+             is "else". The test is on the next TOKEN: blank lines and comment
+             lines carry none, so any number of them may sit between a "}" and
+             its "else", or between a require condition and its "else throw"
+             (SPEC 3.6, 6.3). The rule does not ask what precedes the "else":
+             it joins the lines wherever the next token is one, and a join the
+             grammar does not admit is a malformed logical line (SPEC 6.3).
+   L6. A quoted_string MUST open and close on the same physical line, and is
+       lexed as one token: brackets, comment starts, annotations and separators
+       inside it are ordinary characters.
+   L7. NL is written explicitly in the rules below. Leading and trailing NL
+       tokens of a file are permitted and carry no meaning.
+   L8. LONGEST MATCH. At each position the lexer takes the longest match, with
+       one exception: a "." immediately followed by another "." is always the
+       two-character token ".." and is never part of a float_literal. So
+       "1..3" is 1, "..", 3, and "1.5..2.5" is 1.5, "..", 2.5.
+   L9. ADJACENCY. These are single lexemes and contain no internal whitespace
+       (SPEC 3.1): the "[" "]" pair of a field_head; "::"; ".."; "${"; "$$";
+       "derive?"; the "(" that opens a parameterised type, a ref(, a $(, a
+       tag_object argument list, a tuple_array_assignment column list or a
+       since_annotation / removed_annotation; a size_token; and the "#", "@",
+       "&" or "$" that introduces a tag_object, a header_tag, a
+       field_modifier, a clone_statement or a variable, together with the
+       identifier that follows it.
+       The annotation "(" is what separates "@since(2)" (a version_annotation)
+       from "@since" (a header_tag flag) and "@since.2" (a header_tag with a
+       value): the parser never looks further than that one character.
+   ============================================================================ *)
+
+
+(* ==========================================================================
+   1. CHARACTER CLASSES AND BASIC TOKENS
+   ========================================================================== *)
+
+ascii_letter        = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I"
+                    | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R"
+                    | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+                    | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+                    | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r"
+                    | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+digit               = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+ident_start         = ascii_letter | digit | "_" ;
+ident_char          = ascii_letter | digit | "_" | "-" ;
+
+(* An identifier MUST NOT end with "-" (E207). A run of ident_char that begins
+   with "-" is not an identifier at all: the "-" is a token that cannot begin
+   one, and it is E210 (SPEC 3.3). A character outside ident_char inside the run
+   is E206. Identifiers are normalised before use: ASCII-lowercased, then every
+   "-" replaced by "_" (SPEC 3.3). *)
+identifier          = ident_start , { ident_char } ;
+
+(* Schema names are NOT normalised; they are matched exactly, case-sensitively. *)
+schema_name         = ascii_letter , { ascii_letter | digit | "_" } ;
+
+uint                = digit , { digit } ;
+int_literal         = [ "-" ] , uint ;
+version_number      = uint ;                       (* MUST be >= 1 *)
+
+float_literal       = [ "-" ] , uint , "." , uint , [ exponent ]
+                    | [ "-" ] , uint , exponent ;
+exponent            = ( "e" | "E" ) , [ "+" | "-" ] , uint ;
+
+bool_literal        = "true" | "false" ;
+
+ws                  = ? one or more space or tab characters ? ;
+
+string_escape       = "\" , ( '"' | "\" | "n" | "r" | "t" ) ;
+string_char         = ? any Unicode scalar value except '"', "\" and any
+                        line terminator ? ;
+quoted_string       = '"' , { string_char | string_escape } , '"' ;
+
+(* A bare_text token is the raw, undecoded lexeme of an unquoted value. It is
+   the maximal run of characters that:
+     - does not begin with '"', "#" or "[" (SPEC 5.5: a leading '"' starts a
+       quoted_string, a leading "#" starts a tag_object, and a leading "["
+       starts a list_value; quote the value to write one literally);
+     - does not begin with "//" and contains no " //" (SPEC 3.2). The first
+       half holds wherever the value begins, including immediately after the
+       ":", where no comment rule fires: "label://x" is E210;
+     - contains no C0 control (U+0000..U+001F), no U+007F and no C1 control
+       (U+0080..U+009F); one of those inside a value is E210 at the character
+       (SPEC 3.5). Every other Unicode scalar value is admitted, non-ASCII
+       whitespace included, and is an ordinary character of the value;
+     - contains no line terminator;
+     - contains no comment start (see L3);
+     - contains no "," at bracket depth 0 of the value;
+     - in a body_statement, does not include a trailing annotation_list: the
+       lexeme ends before the last run of tokens that matches annotation_list
+       immediately preceding the NL (SPEC 5.13);
+     - is terminated by NL, by a depth-0 "," or by the closing bracket of
+       the enclosing list;
+     - has leading and trailing whitespace removed;
+     - is not empty (an empty right-hand side is E210).
+   Brackets inside a bare_text MUST be balanced and correctly typed, and so
+   MUST its braces: a "{" left open is E203 and a "}" with nothing open is
+   E205, whatever the field's declared type (SPEC 3.6). The "{" of a "${" is
+   part of that lexeme and is excluded from the count; an unterminated one is
+   E427 (SPEC 5.11). *)
+bare_text           = ? see prose above ? ;
+
+NL                  = ? logical line terminator, see L5 ? ;
+
+
+(* ==========================================================================
+   2. SHARED CONSTRUCTS
+   ========================================================================== *)
+
+since_annotation    = "@since" , "(" , version_number , ")" ;
+removed_annotation  = "@removed" , "(" , version_number , ")" ;
+version_annotation  = since_annotation | removed_annotation ;
+
+(* At most one since_annotation and at most one removed_annotation may appear
+   in one annotation_list, in either order (a repeat is E303). An
+   annotation_list appears in exactly three places: as a field_modifier
+   (scoping a field), at the end of a body_statement (scoping a statement,
+   SPEC 5.13), and at the end of an instance_header (scoping a whole instance,
+   SPEC 5.14). Anywhere else - on a header_tag, a clone_statement or a
+   body_block - it is E437. *)
+annotation_list     = version_annotation , [ version_annotation ] ;
+
+path                = identifier , { "." , identifier } ;
+
+(* Assignment, multi-path, body-block and clone paths admit no index syntax: a
+   segment written name[0] is E316. Index syntax exists only in logic_segment,
+   and there only for reads (SPEC 4.9, 5.4). *)
+
+instance_id         = identifier ;
+
+
+(* ==========================================================================
+   3. VALUE GRAMMAR  (shared by .ab assignments, schema defaults and derive)
+   ========================================================================== *)
+
+value               = list_value | bare_list ;
+
+(* A bare_list of two or more items is a list; a bare_list of one item is that
+   single value. A trailing "," at bracket depth 0 is rejected (SPEC 3.6,
+   E442), which is why bare_list has no optional trailing comma.
+   A value whose first non-whitespace character is "[" is always a list_value:
+   bare_text cannot begin with "[". *)
+bare_list           = single_value , { "," , single_value } ;
+
+list_value          = "[" , [ single_value , { "," , single_value } , [ "," ] ] , "]" ;
+
+single_value        = quoted_string
+                    | tag_object
+                    | bare_text ;
+
+(* An element that begins with "[" is E441 (SPEC 5.5); the grammar cannot
+   express a nested list. An empty element (a,,b) is E441. *)
+
+tag_object          = "#" , identifier , [ "(" , [ tag_arg , { "," , tag_arg } ] , ")" ] ;
+
+tag_arg             = tag_arg_key , ":" , tag_arg_value   (* named argument *)
+                    | identifier ;                        (* boolean flag   *)
+
+tag_arg_key         = identifier , { "." , identifier } ;
+
+(* A tag_arg_value may be a bracketed list or a nested tag_object; a bare
+   comma-separated list is not available here, because a "," at this depth
+   separates arguments (SPEC 5.5). *)
+tag_arg_value       = quoted_string
+                    | tag_object
+                    | list_value
+                    | bare_text ;
+
+
+(* ==========================================================================
+   4. TEMPLATE FILES (.abt)
+   ========================================================================== *)
+
+template_file       = { NL } , { template_item } ;
+
+template_item       = ( versions_decl | schema_decl | logic_decl ) , { NL } ;
+
+(* max - min + 1 MUST NOT exceed 4096; a wider range is E602 (SPEC 3.7, 4.12). *)
+versions_decl       = "versions" , version_number , ".." , version_number , NL ;
+
+schema_decl         = "schema" , schema_name , "{" , NL ,
+                        field_list ,
+                      "}" , NL ;
+
+field_list          = { field_decl } ;
+
+field_decl          = ( scalar_field | group_field ) , { NL } ;
+
+(* A scalar_field named "template" is E314. A scalar_field named "id" at the
+   root of a schema is E314 unless it is exactly
+       "id" ":" text_type
+   with no "[" "]" head, no field_modifier and no default_value; the implicit
+   declaration, when none is written, is id: text(1..64) (SPEC 4.11). Inside a
+   group_field both names are ordinary field names. *)
+scalar_field        = field_head , ":" , type_expr ,
+                      { field_modifier } ,
+                      [ "=" , default_value ] , NL ;
+
+group_field         = field_head , { field_modifier } , "{" , NL ,
+                        field_list ,
+                      "}" , NL ;
+
+field_head          = identifier , [ "[" , [ cardinality ] , "]" ] ;
+
+(* Any other bracket content - "[3]", "[..4]", "[4..2]" - is E323. *)
+cardinality         = uint , ".." , [ uint ] ;
+
+field_modifier      = "@optional" | "@tag" | "@public" | version_annotation ;
+
+(* @public is an argument-free author nomination, at most once per field
+   (repeat E303). It does not change type, presence, value or version semantics,
+   and a group nomination does not nominate its children. Export profiles and
+   runtime consumers require a separate contract; nomination alone is not
+   acceptance by either. Existing reserved envelope rules still apply (SPEC 4.3). *)
+
+(* Every field_modifier precedes the "=". A modifier after a default is E303
+   (SPEC 4.3). A default that is a list on a non-list field is E313. *)
+default_value       = value ;
+
+type_expr           = text_type
+                    | int_type
+                    | float_type
+                    | bool_type
+                    | enum_type
+                    | file_type
+                    | image_type
+                    | ref_type
+                    | nested_schema_type ;
+
+text_type           = "text" , [ "(" , [ int_range_list ] , ")" ] ;
+int_type            = "int"  , [ "(" , [ int_range_list ] , ")" ] ;
+float_type          = "float", [ "(" , [ float_range_list ] , ")" ] ;
+bool_type           = "bool" ;
+
+int_range_list      = int_range , { "," , int_range } ;
+int_range           = int_literal , [ ".." , int_literal ] ;
+
+float_range_list    = float_range , { "," , float_range } ;
+float_range         = number , [ ".." , number ] ;
+number              = int_literal | float_literal ;
+
+enum_type           = "enum" , "(" , identifier , { "," , identifier } , ")" ;
+
+file_type           = "file" , "(" , extension , { "," , extension } , ")" ;
+extension           = [ "." ] , ( ascii_letter | digit ) , { ascii_letter | digit } ;
+
+image_type          = "image" , "(" , image_alt , { "," , image_alt } , ")" ;
+
+(* The size_token is one lexeme (L9) and is separated from the extension by at
+   least one space or tab, so "png128x128" is a single extension and is E307
+   (SPEC 4.4.7). *)
+image_alt           = extension , [ ws , size_token ] ;
+size_token          = ( uint | "*" ) , "x" , ( uint | "*" ) ;
+
+ref_type            = "ref" , "(" , schema_name , ")" ;
+
+nested_schema_type  = "$(" , schema_name , ")" ;
+
+
+(* ==========================================================================
+   5. LOGIC BLOCKS (.abt)
+   ========================================================================== *)
+
+logic_decl          = "logic" , schema_name , "{" , NL ,
+                        logic_body ,
+                      "}" , NL ;
+
+logic_body          = { logic_statement } ;
+
+logic_statement     = ( derive_statement
+                      | require_statement
+                      | if_statement
+                      | for_statement ) , { NL } ;
+
+derive_statement    = ( "derive" | "derive?" ) , logic_path , "=" , derive_expr , NL ;
+
+(* An adjacent calc( selects numeric grammar first. Otherwise the right-hand
+   side is read as one of the four non-value alternatives when its
+   first token is ".", a loop_variable, the keyword "length" or the keyword
+   "version"; in every other case it is an ordinary value - a literal, or text
+   carrying "$" interpolation, interpreted by the target field's declared type
+   (SPEC 5.10) and interpolated (SPEC 5.11). To write ".owner.team",
+   "length(.tags)" or "version" as literal text, quote it (SPEC 6.4).
+   A logic_path keeps the type of the value it resolves to. *)
+derive_expr         = calc_call
+                    | logic_path
+                    | length_call
+                    | version_builtin
+                    | loop_variable
+                    | value ;
+
+require_statement   = "require" , condition , "else" , "throw" , quoted_string , NL ;
+
+if_statement        = "if" , condition , block ,
+                      { "else" , "if" , condition , block } ,
+                      [ "else" , block ] ;
+
+for_statement       = "for" , loop_variable , "in" , iterable , block ;
+(* Iteration and calc share a work budget (arithmetic.md). Without arithmetic,
+   the logic of one instance may execute at most
+   1000000 for-bodies for one version, and crossing that is E523, not E209
+   (SPEC 3.7, 6.2, 10.5). *)
+
+loop_variable       = "$" , identifier ;
+
+(* The elements of a literal list iterable are typed by SPEC 3.5, with no
+   target field to direct interpretation (SPEC 6.2). *)
+iterable            = logic_path | list_value ;
+
+block               = "{" , NL , logic_body , "}" , NL ;
+(* A "}" and a following "else", and a require condition and a following
+   "else throw", MAY be written on two physical lines, with any number of blank
+   lines and comment lines between them: see L5 rule (b). *)
+
+(* --- conditions: lowest precedence first ------------------------------- *)
+
+condition           = or_condition ;
+
+or_condition        = and_condition , { ( "or" | "||" ) , and_condition } ;
+
+and_condition       = not_condition , { ( "and" | "&&" ) , not_condition } ;
+
+(* "not" wraps a whole comparison and binds looser than every comparison
+   operator (SPEC 6.6). *)
+not_condition       = [ "not" | "!" ] , comparison ;
+
+comparison          = operand , comparison_op , operand
+                    | operand , "contains" , operand
+                    | operand , "exists"
+                    | operand ;
+
+comparison_op       = "==" | "!=" | ">=" | "<=" | ">" | "<" ;
+
+operand             = "(" , condition , ")"
+                    | calc_call
+                    | length_call
+                    | version_builtin
+                    | logic_path
+                    | loop_variable
+                    | quoted_string
+                    | number
+                    | bool_literal ;
+
+length_call         = "length" , "(" , ( logic_path | loop_variable ) , ")" ;
+
+(* Explicit numeric grammar; adjacency and numeric semantics are specified in
+   arithmetic.md. Hyphens remain part of identifiers; space subtraction. *)
+calc_call           = "calc(" , numeric_sum , ")" ;
+numeric_sum         = numeric_product , { ( "+" | "-" ) , numeric_product } ;
+numeric_product     = numeric_unary , { ( "*" | "/" | "%" ) , numeric_unary } ;
+numeric_unary       = { "+" | "-" } , numeric_atom ;
+numeric_atom        = number | logic_path | loop_variable | version_builtin
+                    | length_call
+                    | "(" , numeric_sum , ")" | numeric_call ;
+numeric_call        = numeric_function , "(" , numeric_sum ,
+                      { "," , numeric_sum } , ")" ;
+numeric_function    = "abs" | "min" | "max" | "clamp" | "div"
+                    | "round" | "floor" | "ceil" | "sqrt" | "pow"
+                    | "sum" | "avg" ;
+
+(* The integer version being compiled (SPEC 6.6). It is a bare word: a field is
+   always written with a leading ".", a loop variable with a leading "$", and a
+   quoted "version" is literal text, so the three never collide. *)
+version_builtin     = "version" ;
+
+(* --- logic paths ------------------------------------------------------- *)
+
+logic_path          = root_path | loop_path ;
+
+root_path           = "." , logic_segment , { "." , logic_segment } ;
+
+loop_path           = loop_variable , "." , logic_segment , { "." , logic_segment } ;
+
+(* The index is read-only, and a loop_variable segment is a read position: a
+   derive target containing one is E520 (SPEC 6.4). *)
+logic_segment       = ( identifier | loop_variable ) , [ "[" , uint , "]" ] ;
+
+
+(* ==========================================================================
+   6. INSTANCE FILES (.ab)
+   ========================================================================== *)
+
+instance_file       = { NL } , { instance } ;
+
+instance            = instance_header ,
+                      { clone_statement } ,
+                      { body_item } ;
+
+(* The trailing annotation_list is the INSTANCE VERSION WINDOW (SPEC 5.14). It
+   follows every header_tag and scopes the whole instance. It is distinguished
+   from a header_tag lexically, never by look-ahead: "@since" and "@removed"
+   are annotations when, and only when, the identifier is followed immediately
+   by "(" (L9). "@since.2" is therefore a header_tag and "@since(2)" is a
+   window. A header_tag_value ends at the next depth-0 "," or "@" (SPEC 5.2),
+   so the window never runs into the value before it. A header_tag itself may
+   not carry an annotation_list (E437). *)
+instance_header     = schema_name , "::" , [ header_tag_list ] ,
+                      [ annotation_list ] , NL ;
+
+header_tag_list     = header_tag , { "," , header_tag } ;
+(* A trailing "," with no following header_tag is rejected (SPEC 5.2, E442). *)
+
+header_tag          = "@" , identifier , [ "." , header_tag_value ] ;
+
+(* A header tag value is never a list, a tag_object, a tuple row or a brace
+   pattern (SPEC 5.2). *)
+header_tag_value    = quoted_string | bare_header_value ;
+
+(* bare_header_value is a bare_text that additionally contains no depth-0
+   "@" and no depth-0 ",". *)
+bare_header_value   = ? see prose above ? ;
+
+clone_statement     = "&" , instance_id , [ "." , ( "*" | path ) ] , NL ;
+
+body_item           = body_statement | body_block ;
+
+body_statement      = assignment , [ annotation_list ] , NL ;
+
+(* A body_block is sugar for repeating its path as a prefix (SPEC 5.4). Its
+   "{" is a block brace and joins no lines; it carries no annotation_list. *)
+body_block          = path , "{" , NL , { body_item } , "}" , NL ;
+
+assignment          = tuple_array_assignment
+                    | multi_path_assignment
+                    | path_assignment ;
+
+path_assignment     = path , ":" , value ;
+
+multi_path_assignment
+                    = path , "." , "{" , identifier , { "," , identifier } , "}" ,
+                      ":" , value ;
+
+tuple_array_assignment
+                    = path , "(" , identifier , { "," , identifier } , ")" , ":" ,
+                      ( tuple_row , { "," , tuple_row }
+                      | "[" , tuple_row , { "," , tuple_row } , [ "," ] , "]" ) ;
+
+tuple_row           = "(" , tuple_cell , { "," , tuple_cell } , ")" ;
+
+tuple_cell          = quoted_string | bare_text ;

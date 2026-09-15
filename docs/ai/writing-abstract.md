@@ -1,7 +1,7 @@
 # Writing Abstract
 
-This guide helps an AI assistant author correct Abstract 1.2 source. It is a
-compact working guide; [SPEC.md](../SPEC.md) remains normative.
+This guide helps an AI assistant author correct Abstract source. It is a
+compact working guide; [the specification](../reference/specification.md) remains normative.
 
 ## Start from the contract
 
@@ -45,7 +45,7 @@ Label :: @id.hello
 ```
 
 The complete project and expected JSON are under
-[`docs/examples/hello`](../examples/hello/). The repository test suite compiles
+[`examples/features/hello`](../../examples/features/hello/). The repository test suite compiles
 that project and compares its output with the checked-in result.
 
 ## Write `.abt` schemas
@@ -175,13 +175,13 @@ Product :: @id.beacon
 A clone copies authored values before defaults, interpolation and logic. The
 new instance's statements override cloned values. When overriding a cloned
 list, restate the complete list unless the schema's keyed-list behavior is
-specifically intended. See [SPEC 5.7](../SPEC.md#57-clones) before composing
+specifically intended. See [SPEC 5.7](../reference/specification.md#57-clones) before composing
 multiple clones.
 
 `$name`, `${name}` and `$id` interpolate root scalar values. Interpolation
 happens after cloning, so a cloned `./textures/$id.png` uses the new instance's
 id. Use `$$` for a literal dollar sign; interpolation also applies inside quoted
-values. See [SPEC 5.11](../SPEC.md#511-interpolation).
+values. See [SPEC 5.11](../reference/specification.md#511-interpolation).
 
 Use `@since(n)` and `@removed(n)` only within the declared project range. A
 field exists for `since <= version < removed`. An unannotated assignment to a
@@ -219,7 +219,7 @@ logic Line {
 ```
 
 An instance value such as `note: 2 + 3` is text, not a calculation. Read the
-normative [arithmetic contract](../ARITHMETIC.md) before using operators or
+normative [arithmetic contract](../reference/arithmetic.md) before using operators or
 numeric functions. Use integer minor units for exact money values; `float` is
 finite IEEE-754 binary64.
 

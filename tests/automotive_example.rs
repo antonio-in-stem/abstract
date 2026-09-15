@@ -16,7 +16,12 @@ fn run(root: &Path, arguments: &[&str]) -> Output {
 
 fn analyze(root: &Path) -> Output {
     let mut child = Command::new(env!("CARGO_BIN_EXE_abstract"))
-        .args(["analyze", "examples/automotive", "--stdio", "--symbols"])
+        .args([
+            "analyze",
+            "examples/tutorials/automotive",
+            "--stdio",
+            "--symbols",
+        ])
         .current_dir(root)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -38,7 +43,10 @@ fn automotive_project_matches_json_yaml_and_raw_goldens() {
         ("YML", "expected.yml"),
         ("RAW", "expected.raw"),
     ] {
-        let output = run(&repository, &["compile", "examples/automotive", format]);
+        let output = run(
+            &repository,
+            &["compile", "examples/tutorials/automotive", format],
+        );
         assert!(
             output.status.success(),
             "{format}: {}",
@@ -47,7 +55,12 @@ fn automotive_project_matches_json_yaml_and_raw_goldens() {
         assert!(output.stderr.is_empty(), "{format} wrote stderr");
         assert_eq!(
             output.stdout,
-            fs::read(repository.join("examples/automotive").join(expected)).unwrap(),
+            fs::read(
+                repository
+                    .join("examples/tutorials/automotive")
+                    .join(expected)
+            )
+            .unwrap(),
             "{format} golden drifted"
         );
     }
@@ -64,7 +77,7 @@ fn automotive_teaching_failures_report_the_documented_diagnostic() {
         "steering",
         "performance",
     ] {
-        let project = format!("examples/automotive/negative-cases/{name}");
+        let project = format!("examples/tutorials/automotive/negative-cases/{name}");
         let output = run(&repository, &["compile", &project, "JSON"]);
         assert!(!output.status.success(), "{name} unexpectedly compiled");
         assert!(output.stdout.is_empty(), "{name} wrote a partial document");

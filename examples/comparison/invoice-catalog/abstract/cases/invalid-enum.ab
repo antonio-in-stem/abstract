@@ -1,6 +1,0 @@
-Invoice :: @id.inv_1001, @status.cancelled, @currency.mxn
-    number: INV-1001
-    customer.name: Acme Studio
-    customer.address.city: Mexico City
-    customer.address.country: mx
-    lines(sku, kind, quantity, unit_price_cents): (CONSULT, service, 2, 15000), (LICENSE, goods, 3, 2500)

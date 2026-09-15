@@ -17,7 +17,7 @@ OUTPUT (exit 0):
 # real-world evidence of the change that needs migrating (read-only):
 cd "<private corpus>"
 abstract compile example/data JSON --skip-assets
-OUTPUT: abstract: dragons_den/golden_dragon.ab: Unknown field 'applicable' at Sticker. Declared fields: id, rarity, origin, glue_type, applies_to, tooltip_style, variant_count, flags, item_pool, lang_values, slots, template, id.
+OUTPUT: abstract: dragons_den/golden_dragon.ab: Unknown field 'applicable' at Option. Declared fields: id, rarity, origin, glue_type, applies_to, tooltip_style, variant_count, flags, item_pool, lang_values, slots, template, id.
 # and the compiler is fail-fast: 3 broken files, 1 error reported
 ./project/target/release/abstract.exe compile repro/language-design/case18b/data JSON
 OUTPUT: abstract: objects/e1.ab: Unknown field 'bad1' at V. ...   (e2.ab and e3.ab never mentioned)'''

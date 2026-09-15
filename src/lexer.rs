@@ -3350,7 +3350,7 @@ mod tests {
     }
 }
 
-/// The shapes the 0.2.0 audit found silently mis-handled, panicking or
+/// Inputs that earlier audits found silently mishandled, panicking or
 /// swallowing input. Each one now ends in a token stream or a diagnostic.
 #[cfg(test)]
 mod audit_regressions {
@@ -3359,13 +3359,13 @@ mod audit_regressions {
 
     #[test]
     fn a_malformed_tag_object_is_a_diagnostic_not_a_panic() {
-        // LP-005: `#tag)x(` aborted the 0.2.0 compiler.
+        // LP-005: `#tag)x(` once aborted the compiler.
         assert!(errors("a.ab", "Thing :: @id.x\n    note: #tag)x(\n").contains(&ErrorId::E205));
     }
 
     #[test]
     fn out_of_order_braces_in_a_value_are_a_diagnostic() {
-        // LP-006: `a}.{b` aborted brace expansion in 0.2.0. The braces are
+        // LP-006: `a}.{b` once aborted brace expansion. The braces are
         // ordinary characters but must balance (SPEC §3.5, §5.5): the `}`
         // closes nothing, which is E205, and the `{` is then never closed,
         // which is E203 at the end of the line.

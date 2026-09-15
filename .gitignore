@@ -15,6 +15,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .local-references/
-/site/qa-*.png
 java/out/
 *.vsix

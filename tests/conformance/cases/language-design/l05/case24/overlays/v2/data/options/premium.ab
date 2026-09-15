@@ -1,0 +1,2 @@
+Option :: @id.premium_v2, @rarity.mythic
+    icon: ./textures/$id.png

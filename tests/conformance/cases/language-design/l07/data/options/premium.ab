@@ -1,0 +1,3 @@
+Option :: @id.premium, @rarity.epic
+    legacy_flag: v1_only
+    icon: ./textures/$id.png

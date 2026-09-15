@@ -1,6 +1,6 @@
 //! The project scaffold written by `abstract init` (SPEC §9.2).
 //!
-//! The scaffold is a valid Abstract 1.0 project that exercises the constructs
+//! The scaffold is a valid Abstract project that exercises the constructs
 //! an author meets first: one `.abt` carrying a `versions` range, a schema
 //! using `text`, `int`, `float`, `bool` and `enum`, a group, a list group with
 //! `@tag`, one `@optional` field, one default and one `ref`; a `logic` block

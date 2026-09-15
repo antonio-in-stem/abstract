@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: editors/vscode
+        working-directory: vscode
     steps:
       - uses: actions/checkout@v7
         with:
@@ -89,7 +89,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: editors/vscode/package-lock.json
+          cache-dependency-path: vscode/package-lock.json
       - run: npm ci
       - run: cargo build --locked --bin abstract
         working-directory: .
@@ -104,7 +104,7 @@ jobs:
         vscode-version: ['1.92.0', stable]
     defaults:
       run:
-        working-directory: editors/vscode
+        working-directory: vscode
     steps:
       - uses: actions/checkout@v7
         with:
@@ -114,7 +114,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: editors/vscode/package-lock.json
+          cache-dependency-path: vscode/package-lock.json
       - run: npm ci
       - run: cargo build --locked --bin abstract
         working-directory: .
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: editors/vscode
+        working-directory: vscode
     steps:
       - uses: actions/checkout@v7
         with:
@@ -138,11 +138,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: editors/vscode/package-lock.json
+          cache-dependency-path: vscode/package-lock.json
       - run: npm ci
       - run: npm run package
       - uses: actions/upload-artifact@v7
         with:
           name: abstract-language-vsix
-          path: editors/vscode/*.vsix
+          path: vscode/*.vsix
           if-no-files-found: error

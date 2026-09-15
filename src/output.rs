@@ -631,7 +631,7 @@ overlays: []
       "slot_count": 3
     },
     {
-      "template": "Sticker",
+      "template": "Option",
       "id": "ember",
       "pack": "winter_2026",
       "title": "Ember",
@@ -662,7 +662,7 @@ overlays: []
       ]
     },
     {
-      "template": "Sticker",
+      "template": "Option",
       "id": "frost",
       "pack": "winter_2026",
       "title": "Frost",
@@ -701,7 +701,7 @@ overlays: []
       },
       "data": [
         {
-          "template": "Sticker",
+          "template": "Option",
           "id": "ember",
           "pack": "winter_2026",
           "title": "Ember",
@@ -732,7 +732,7 @@ overlays: []
           ]
         },
         {
-          "template": "Sticker",
+          "template": "Option",
           "id": "frost",
           "pack": "winter_2026",
           "title": "Frost",
@@ -788,7 +788,7 @@ overlays: []
     "title": "Winter 2026"
     "tier": "plus"
     "slot_count": 3
-  - "template": "Sticker"
+  - "template": "Option"
     "id": "ember"
     "pack": "winter_2026"
     "title": "Ember"
@@ -808,7 +808,7 @@ overlays: []
         "value": "Brasa"
       - "key": "es_mx"
         "value": "Brasa"
-  - "template": "Sticker"
+  - "template": "Option"
     "id": "frost"
     "pack": "winter_2026"
     "title": "Frost"
@@ -833,7 +833,7 @@ overlays: []
       "min": 1
       "max": 1
     "data":
-      - "template": "Sticker"
+      - "template": "Option"
         "id": "ember"
         "pack": "winter_2026"
         "title": "Ember"
@@ -853,7 +853,7 @@ overlays: []
             "value": "Brasa"
           - "key": "es_mx"
             "value": "Brasa"
-      - "template": "Sticker"
+      - "template": "Option"
         "id": "frost"
         "pack": "winter_2026"
         "title": "Frost"
@@ -976,7 +976,7 @@ overlays: []
             ("slot_count", Value::Int(3)),
         ]);
         let ember = object(&[
-            ("template", text("Sticker")),
+            ("template", text("Option")),
             ("id", text("ember")),
             ("pack", text("winter_2026")),
             ("title", text("Ember")),
@@ -991,7 +991,7 @@ overlays: []
             ),
         ]);
         let frost = object(&[
-            ("template", text("Sticker")),
+            ("template", text("Option")),
             ("id", text("frost")),
             ("pack", text("winter_2026")),
             ("title", text("Frost")),
@@ -1010,7 +1010,7 @@ overlays: []
             ),
         ]);
         let ember_v1 = object(&[
-            ("template", text("Sticker")),
+            ("template", text("Option")),
             ("id", text("ember")),
             ("pack", text("winter_2026")),
             ("title", text("Ember")),
@@ -1025,7 +1025,7 @@ overlays: []
             ),
         ]);
         let frost_v1 = object(&[
-            ("template", text("Sticker")),
+            ("template", text("Option")),
             ("id", text("frost")),
             ("pack", text("winter_2026")),
             ("title", text("Frost")),

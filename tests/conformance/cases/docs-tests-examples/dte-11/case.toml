@@ -8,7 +8,7 @@ source_repro = '''repro/docs-tests-examples/raw-indentation/'''
 command = '''cd .../repro/docs-tests-examples/raw-indentation && abstract compile data RAW | cat -A
 cd <crate> && ./target/release/abstract.exe compile example RAW'''
 expected_kind = '''undecided'''
-expected_note = '''Per docs/raw-data.md:45-54:
+expected_note = '''Per docs/reference/compiled-data.md:45-54:
 data: [
     {
         template: "Product",

@@ -1,0 +1,8 @@
+Option :: @id.frost, @rarity.rare
+    pack: winter_2026
+    title: Frost
+    icon: ./textures/$id.png
+    tint: 200
+    owner.team: Studio A
+    tags: core_*
+    copy(key, value): (en_us, Frost), (es_*, Escarcha)

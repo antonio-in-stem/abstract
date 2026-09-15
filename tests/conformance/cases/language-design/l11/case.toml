@@ -30,9 +30,7 @@ An unknown variable is E425 and never survives into output (5.11, A.1 A18). The 
 is the instance root fields whose syntax value is Bare or Quoted, built in 7.3 step 2 BEFORE
 defaults, so "$tier" (supplied only by a schema default) is not a variable and is E425, and
 "$nested" names a group and is not a variable either, which is a second E425.
-IMPORTANT: this contradicts the design decisions record item F/L11, which says the table
-is built after defaults; the spec text wins and the contradiction is reported in
-SPEC-ISSUES-docs-tests-examples.md issue 3.
+The specification text controls when the table is built.
 case5 has a second open question: "$id-" consumes the maximal identifier-character run, which
 includes "-" (5.11, A.1 A19), and the resulting name ends with "-". The expectation assumes
 E425 for that name; see SPEC-ISSUES issue 4. "$missing" is E425 under every reading.

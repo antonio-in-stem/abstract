@@ -10,7 +10,7 @@ abstract compile . RAW
 cd ../oc5-raw-empty
 abstract compile . RAW'''
 expected_kind = '''undecided'''
-expected_note = '''docs/raw-data.md:45-54:
+expected_note = '''docs/reference/compiled-data.md:45-54:
 data: [
     {
         template: "Product",

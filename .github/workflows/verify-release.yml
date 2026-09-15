@@ -61,4 +61,4 @@ jobs:
           --asset "release-check/${{ matrix.asset }}"
           --checksums release-check/SHA256SUMS.txt
           --manifest release-check/release-manifest.json
-          --automotive examples/automotive
+          --automotive examples/tutorials/automotive

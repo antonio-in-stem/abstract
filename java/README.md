@@ -15,11 +15,13 @@ Add the locally installed library to your application:
 <dependency>
     <groupId>com.abstractlang</groupId>
     <artifactId>abstract-runtime</artifactId>
-    <version>1.1.0</version>
+    <version>${abstract.runtime.version}</version>
 </dependency>
 ```
 
-The library is not published to Maven Central. Maven resolves Bouncy Castle
+Set `abstract.runtime.version` from the Java runtime value in
+[`release-manifest.json`](../release-manifest.json). The library is not
+published to Maven Central. Maven resolves Bouncy Castle
 as a transitive dependency for bundle cryptography. Include that dependency
 when assembling your application's runtime classpath or distribution.
 
@@ -36,7 +38,7 @@ for (AbstractObject product : data.byTemplate("Product")) {
 ```
 
 Compile the input with `abstract compile path/to/project JSON --out catalog.json`.
-See the [compiled data contract](../docs/raw-data.md) for the envelope and
+See the [compiled data contract](../docs/reference/compiled-data.md) for the envelope and
 resource-path semantics.
 
 | Call | Result |
@@ -97,7 +99,7 @@ Supplying a key for a plain container is refused.
 
 Existing passphrase-based bundles remain readable through
 `AbstractKeys.fromKeyMaterial(...)`. That legacy derivation is unsuitable for
-new keys. See [compatibility and migration](../docs/COMPATIBILITY.md).
+new keys. See [compatibility and migration](../docs/compatibility.md).
 
 Encryption depends on keeping the key secret. Delivering the key with the
 application lets a recipient who controls that runtime recover the plaintext.

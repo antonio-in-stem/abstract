@@ -774,10 +774,10 @@ mod filesystem_tests {
     #[test]
     fn the_data_marker_and_extensions_are_matched_case_insensitively() {
         let sandbox = Sandbox::new("case");
-        sandbox.write("pack/DATA/items/Frost.AB", "Sticker :: @id.frost\n");
-        sandbox.write("pack/DATA/Sticker.ABT", "schema Sticker {\n}\n");
+        sandbox.write("pack/DATA/items/Frost.AB", "Option :: @id.frost\n");
+        sandbox.write("pack/DATA/Option.ABT", "schema Option {\n}\n");
         let layout = resolve(&[sandbox.path("pack")]).expect("project");
-        assert_eq!(paths(&layout), ["DATA/Sticker.ABT", "DATA/items/Frost.AB"]);
+        assert_eq!(paths(&layout), ["DATA/Option.ABT", "DATA/items/Frost.AB"]);
         assert_eq!(layout.data_dir, Some(layout.project_root.join("DATA")));
     }
 

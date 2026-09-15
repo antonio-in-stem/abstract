@@ -1,4 +1,4 @@
-//! Optional, compiler-owned editor protocol. See docs/ANALYSIS-PROTOCOL.md.
+//! Optional, compiler-owned editor protocol. See docs/reference/editor-protocol.md.
 //! One bounded request per process; the client cancels by terminating that
 //! process. Source overrides never modify disk or the resolved assets root.
 

@@ -22,13 +22,13 @@ def capture(pattern, path):
 
 def main():
     manifest = json.loads(read("release-manifest.json"))
-    extension = json.loads(read("editors/vscode/package.json"))
+    extension = json.loads(read("vscode/package.json"))
     pom = ET.fromstring(read("java/pom.xml"))
     ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+    language = manifest.get("language")
     actual = {
         "compiler": capture(r'^version = "([^"]+)"', "Cargo.toml"),
         "rustMinimum": capture(r'^rust-version = "([^"]+)"', "Cargo.toml"),
-        "language": capture(r"^# Abstract ([\d.]+)", "docs/SPEC.md"),
         "documentFormat": int(capture(r"DOCUMENT_FORMAT: i64 = (\d+)", "src/lib.rs")),
         "analysisProtocol": int(capture(r'\("version", number\((\d+)\)\)', "src/analysis.rs")),
         "bundleFormat": capture(r'MAGIC: \[u8; 4\] = \*b"([^"]+)"', "src/bundle.rs"),
@@ -39,10 +39,15 @@ def main():
     }
     errors = [f"{key}: manifest={manifest.get(key)!r}, source={value!r}"
               for key, value in actual.items() if manifest.get(key) != value]
+    if not isinstance(language, str) or not re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)", language):
+        errors.append(f"language: expected a major.minor version, found {language!r}")
     if errors:
         print("Release manifest is out of date:\n" + "\n".join(errors), file=sys.stderr)
         return 1
-    print(f"Release manifest matches all {len(actual)} component contracts.")
+    print(
+        f"Release manifest matches all {len(actual)} source contracts "
+        "and its language version is valid."
+    )
     return 0
 
 

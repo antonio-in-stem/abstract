@@ -11,7 +11,7 @@ OUTPUT (exit 1): abstract: templates/D.abt: Duplicate schema 'D'. It is already 
 Same failure on the real corpus (read-only):
 cd "<private corpus>"
 .../abstract.exe example/pack.ab abstract-data/templates/Meta.abt JSON --skip-assets
-OUTPUT: abstract: data/templates/Sticker.abt: Duplicate schema 'Sticker'. It is already defined in 'Sticker.abt'; ...
+OUTPUT: abstract: data/templates/Option.abt: Duplicate schema 'Option'. It is already defined in 'Option.abt'; ...
 (It happens to work when the .ab is in a subdirectory that does not contain the templates: case13 with data/objects/d1.ab + data/templates/D.abt compiles fine — so the failure is layout-dependent and looks random to a user.)'''
 expected_kind = '''undecided'''
 expected_note = '''Naming a template explicitly should never conflict with finding the same template by directory walk.'''

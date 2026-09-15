@@ -9,7 +9,7 @@ command = '''&base.*
 legacy_flag:
 -field
 -legacy_flag
-touch overlays/v2/assets/textures/shulker_v2.png'''
+touch overlays/v2/assets/textures/premium_v2.png'''
 expected_kind = '''undecided'''
 expected_note = '''One project should carry N versions of the same instance under one id, with keys added/removed/changed per version, for both .ab data and assets, and the compiled output should let a consumer pick a version deterministically.'''
 actual_0_2_0 = '''No unset operator; variants require distinct ids; overlays/<v>/x.ab with a matching id is a duplicate-id error; compiled JSON has no version axis; the Java runtime would silently keep only the last of any same-id pair.'''
@@ -26,5 +26,5 @@ as its own outcome. The primary and case16 trees put a clone before the first he
 5.1); the primary additionally has an empty right-hand side, which is E210 (5.4). case19's
 "O@2 :: ..." is a top-level "::" whose left side is not a schema name, which is the dedicated
 E439. case24 compiles the base tree only: 2.3 makes the discovery root the data directory, so
-overlays/v2/ is outside the project and its second "schema Sticker" is never read.
+overlays/v2/ is outside the project and its second "schema Option" is never read.
 '''

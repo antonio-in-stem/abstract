@@ -23,7 +23,7 @@ a human passphrase is refused. Legacy readers still accept the old SHA-256
 passphrase mapping so existing files can be migrated. That mapping has no salt
 or password-hardening cost and must not be used for new keys.
 
-Compiler 1.5.0 samples each 96-bit nonce from the operating system's secure random
+The compiler samples each 96-bit nonce from the operating system's secure random
 source. Failure to obtain randomness aborts sealing. Nonces do not depend on
 the wall clock, process identity, payload or a resettable counter. For `q`
 independent seals under one key, the nonce-collision bound is

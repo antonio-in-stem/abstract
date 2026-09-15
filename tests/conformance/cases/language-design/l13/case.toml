@@ -18,6 +18,5 @@ multi-path whose "{" is the one brace that joins lines, because it follows a "."
 On the right, brace expansion happens only in a value of a file or image LIST field (5.8); on
 a text list the braces are ordinary characters and the whole value is one element, so
 whitespace has no part in the decision. A brace pattern on a non-list file or image field is
-E434. See SPEC-ISSUES-docs-tests-examples.md issue 1 on braces inside a value and the
-value-bracket stack.
+E434.
 '''

@@ -1,6 +1,6 @@
 //! The worked examples printed in the documentation, checked mechanically.
 //!
-//! `docs/examples/<name>/` and each `examples/exercises/<name>/solution/` are
+//! `examples/features/<name>/` and each `examples/exercises/<name>/solution/` are
 //! complete projects whose compiled bytes the documentation quotes;
 //! `expected.json` — and, for `formats`, `expected.yml` and `expected.abraw` —
 //! hold those bytes. Each one is compiled through the binary and compared
@@ -18,17 +18,17 @@ const NORMALISED_COMPILER: &str = "0.0.0";
 
 #[test]
 fn every_documentation_example_compiles_to_its_recorded_bytes() {
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("docs/examples");
-    assert!(root.is_dir(), "docs/examples is missing");
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/features");
+    assert!(root.is_dir(), "examples/features is missing");
 
     let mut names: Vec<String> = fs::read_dir(&root)
-        .expect("docs/examples is readable")
+        .expect("examples/features is readable")
         .flatten()
         .filter(|entry| entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false))
         .map(|entry| entry.file_name().to_string_lossy().into_owned())
         .collect();
     names.sort();
-    assert!(!names.is_empty(), "docs/examples holds no project");
+    assert!(!names.is_empty(), "examples/features holds no project");
 
     let mut compared = 0usize;
     let mut failures: Vec<String> = Vec::new();

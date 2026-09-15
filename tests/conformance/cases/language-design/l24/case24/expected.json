@@ -9,11 +9,11 @@
   },
   "data": [
     {
-      "template": "Sticker",
-      "id": "shulker",
+      "template": "Option",
+      "id": "premium",
       "rarity": "epic",
       "legacy_flag": "v1_only",
-      "icon": "./textures/shulker.png"
+      "icon": "./textures/premium.png"
     }
   ],
   "overlays": []
